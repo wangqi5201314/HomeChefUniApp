@@ -1,0 +1,102 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页"
+      }
+    },
+    {
+      "path": "pages/chef/detail",
+      "style": {
+        "navigationBarTitleText": "厨师详情"
+      }
+    },
+    {
+      "path": "pages/address/list",
+      "style": {
+        "navigationBarTitleText": "地址列表"
+      }
+    },
+    {
+      "path": "pages/address/edit",
+      "style": {
+        "navigationBarTitleText": "地址编辑"
+      }
+    },
+    {
+      "path": "pages/order/confirm",
+      "style": {
+        "navigationBarTitleText": "确认订单"
+      }
+    },
+    {
+      "path": "pages/order/list",
+      "style": {
+        "navigationBarTitleText": "我的订单"
+      }
+    },
+    {
+      "path": "pages/order/detail",
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
+    },
+    {
+      "path": "pages/pay/result",
+      "style": {
+        "navigationBarTitleText": "支付结果"
+      }
+    },
+    {
+      "path": "pages/review/create",
+      "style": {
+        "navigationBarTitleText": "评价"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "私房菜上门",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#D96C3A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/logo.png",
+        "selectedIconPath": "static/logo.png"
+      },
+      {
+        "pagePath": "pages/order/list",
+        "text": "订单",
+        "iconPath": "static/logo.png",
+        "selectedIconPath": "static/logo.png"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的",
+        "iconPath": "static/logo.png",
+        "selectedIconPath": "static/logo.png"
+      }
+    ]
+  }
+}

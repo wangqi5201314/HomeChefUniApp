@@ -1,0 +1,53 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/home/index",
+    "pages/chef/detail",
+    "pages/address/list",
+    "pages/address/edit",
+    "pages/order/confirm",
+    "pages/order/list",
+    "pages/order/detail",
+    "pages/pay/result",
+    "pages/review/create",
+    "pages/mine/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "私房菜上门",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#D96C3A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/logo.png",
+        "selectedIconPath": "static/logo.png"
+      },
+      {
+        "pagePath": "pages/order/list",
+        "text": "订单",
+        "iconPath": "static/logo.png",
+        "selectedIconPath": "static/logo.png"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的",
+        "iconPath": "static/logo.png",
+        "selectedIconPath": "static/logo.png"
+      }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "获取用户位置"
+    }
+  },
+  "usingComponents": {}
+}
