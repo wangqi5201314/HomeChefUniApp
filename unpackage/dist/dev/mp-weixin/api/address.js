@@ -3,6 +3,9 @@ const api_request = require("./request.js");
 function getUserAddressList(params) {
   return api_request.request.get("/api/user/address/list", params);
 }
+function getDefaultUserAddress(params) {
+  return api_request.request.get("/api/user/address/default", params);
+}
 function getAddressDetail(id) {
   return api_request.request.get(`/api/user/address/${id}`);
 }
@@ -21,6 +24,7 @@ function setDefaultAddress(id, data) {
 exports.createAddress = createAddress;
 exports.deleteAddress = deleteAddress;
 exports.getAddressDetail = getAddressDetail;
+exports.getDefaultUserAddress = getDefaultUserAddress;
 exports.getUserAddressList = getUserAddressList;
 exports.setDefaultAddress = setDefaultAddress;
 exports.updateAddress = updateAddress;
