@@ -1,10 +1,187 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_user = require("../../api/user.js");
+const api_upload = require("../../api/upload.js");
+const utils_auth = require("../../utils/auth.js");
+function createDefaultForm() {
+  return {
+    phone: "",
+    status: "",
+    nickname: "",
+    avatar: "",
+    gender: 0,
+    birthday: "",
+    tastePreference: "",
+    allergyInfo: "",
+    emergencyContactName: "",
+    emergencyContactPhone: ""
+  };
+}
 const _sfc_main = {
-  name: "MineProfilePage"
+  name: "MineProfilePage",
+  data() {
+    return {
+      saving: false,
+      avatarUploading: false,
+      genderOptions: [
+        { label: "未知", value: 0 },
+        { label: "男", value: 1 },
+        { label: "女", value: 2 }
+      ],
+      form: createDefaultForm()
+    };
+  },
+  computed: {
+    avatarText() {
+      const text = this.form.nickname || this.form.phone || "我";
+      return String(text).slice(0, 1);
+    },
+    genderIndex() {
+      const index = this.genderOptions.findIndex((item) => item.value === Number(this.form.gender));
+      return index === -1 ? 0 : index;
+    },
+    genderLabel() {
+      const current = this.genderOptions.find((item) => item.value === Number(this.form.gender));
+      return current ? current.label : "未知";
+    },
+    phoneDisplay() {
+      return this.form.phone || "-";
+    },
+    statusDisplay() {
+      if (this.form.status === 1) {
+        return "正常";
+      }
+      if (this.form.status === 0) {
+        return "禁用";
+      }
+      return this.form.status || "-";
+    }
+  },
+  onLoad() {
+    this.loadUserProfile();
+  },
+  methods: {
+    async loadUserProfile() {
+      try {
+        const data = await api_user.getCurrentUserInfo();
+        this.form = {
+          phone: data.phone || "",
+          status: data.status,
+          nickname: data.nickname || "",
+          avatar: data.avatar || "",
+          gender: data.gender === 0 || data.gender ? Number(data.gender) : 0,
+          birthday: data.birthday || "",
+          tastePreference: data.tastePreference || "",
+          allergyInfo: data.allergyInfo || "",
+          emergencyContactName: data.emergencyContactName || "",
+          emergencyContactPhone: data.emergencyContactPhone || ""
+        };
+      } catch (error) {
+      }
+    },
+    handleGenderChange(event) {
+      const index = Number(event.detail.value);
+      const current = this.genderOptions[index];
+      this.form.gender = current ? current.value : 0;
+    },
+    handleBirthdayChange(event) {
+      this.form.birthday = event.detail.value || "";
+    },
+    chooseAvatar() {
+      if (this.avatarUploading) {
+        return;
+      }
+      common_vendor.index.chooseImage({
+        count: 1,
+        sizeType: ["compressed"],
+        sourceType: ["album", "camera"],
+        success: async (res) => {
+          const filePath = res.tempFilePaths && res.tempFilePaths[0];
+          if (!filePath) {
+            return;
+          }
+          this.avatarUploading = true;
+          try {
+            const result = await api_upload.uploadImage(filePath);
+            this.form.avatar = result.fileUrl || "";
+          } catch (error) {
+          } finally {
+            this.avatarUploading = false;
+          }
+        }
+      });
+    },
+    buildPayload() {
+      return {
+        nickname: this.form.nickname.trim(),
+        avatar: this.form.avatar || "",
+        gender: Number(this.form.gender),
+        birthday: this.form.birthday || "",
+        tastePreference: this.form.tastePreference.trim(),
+        allergyInfo: this.form.allergyInfo.trim(),
+        emergencyContactName: this.form.emergencyContactName.trim(),
+        emergencyContactPhone: this.form.emergencyContactPhone.trim()
+      };
+    },
+    async submitProfile() {
+      if (this.saving || this.avatarUploading) {
+        return;
+      }
+      this.saving = true;
+      try {
+        await api_user.updateCurrentUserInfo(this.buildPayload());
+        const latestUserInfo = await api_user.getCurrentUserInfo();
+        utils_auth.setUserInfo(latestUserInfo || {});
+        common_vendor.index.showToast({
+          title: "保存成功",
+          icon: "success"
+        });
+        setTimeout(() => {
+          common_vendor.index.navigateBack({
+            delta: 1
+          });
+        }, 300);
+      } catch (error) {
+      } finally {
+        this.saving = false;
+      }
+    }
+  }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {};
+  return common_vendor.e({
+    a: $data.form.avatar
+  }, $data.form.avatar ? {
+    b: $data.form.avatar
+  } : {
+    c: common_vendor.t($options.avatarText)
+  }, {
+    d: common_vendor.t($data.avatarUploading ? "上传中..." : "更换头像"),
+    e: common_vendor.o((...args) => $options.chooseAvatar && $options.chooseAvatar(...args)),
+    f: common_vendor.t($options.phoneDisplay),
+    g: common_vendor.t($options.statusDisplay),
+    h: $data.form.nickname,
+    i: common_vendor.o(($event) => $data.form.nickname = $event.detail.value),
+    j: common_vendor.t($options.genderLabel),
+    k: $data.genderOptions,
+    l: $options.genderIndex,
+    m: common_vendor.o((...args) => $options.handleGenderChange && $options.handleGenderChange(...args)),
+    n: common_vendor.t($data.form.birthday || "请选择生日"),
+    o: $data.form.birthday,
+    p: common_vendor.o((...args) => $options.handleBirthdayChange && $options.handleBirthdayChange(...args)),
+    q: $data.form.tastePreference,
+    r: common_vendor.o(($event) => $data.form.tastePreference = $event.detail.value),
+    s: $data.form.allergyInfo,
+    t: common_vendor.o(($event) => $data.form.allergyInfo = $event.detail.value),
+    v: $data.form.emergencyContactName,
+    w: common_vendor.o(($event) => $data.form.emergencyContactName = $event.detail.value),
+    x: $data.form.emergencyContactPhone,
+    y: common_vendor.o(($event) => $data.form.emergencyContactPhone = $event.detail.value),
+    z: common_vendor.t($data.saving ? "保存中..." : "保存资料"),
+    A: $data.saving,
+    B: $data.saving || $data.avatarUploading,
+    C: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
+  });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-935803c6"]]);
 wx.createPage(MiniProgramPage);
