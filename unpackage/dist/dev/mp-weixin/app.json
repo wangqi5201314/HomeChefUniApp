@@ -10,7 +10,8 @@
     "pages/order/detail",
     "pages/pay/result",
     "pages/review/create",
-    "pages/mine/index"
+    "pages/mine/index",
+    "pages/mine/profile"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -20,27 +21,27 @@
   },
   "tabBar": {
     "color": "#666666",
-    "selectedColor": "#D96C3A",
+    "selectedColor": "#1296db",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/home/index",
         "text": "首页",
-        "iconPath": "static/logo.png",
-        "selectedIconPath": "static/logo.png"
+        "iconPath": "static/index.png",
+        "selectedIconPath": "static/index-active.png"
       },
       {
         "pagePath": "pages/order/list",
         "text": "订单",
-        "iconPath": "static/logo.png",
-        "selectedIconPath": "static/logo.png"
+        "iconPath": "static/order.png",
+        "selectedIconPath": "static/order-active.png"
       },
       {
         "pagePath": "pages/mine/index",
         "text": "我的",
-        "iconPath": "static/logo.png",
-        "selectedIconPath": "static/logo.png"
+        "iconPath": "static/my.png",
+        "selectedIconPath": "static/my-active.png"
       }
     ]
   },
