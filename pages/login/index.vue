@@ -32,11 +32,20 @@
       <button
         class="login-btn"
         type="primary"
-        :loading="loading"
-        :disabled="loading"
+        :loading="loading || wechatLoading"
+        :disabled="loading || wechatLoading"
         @click="handleLogin"
       >
         {{ loading ? '登录中...' : '登录' }}
+      </button>
+
+      <button
+        class="wechat-btn"
+        :loading="wechatLoading"
+        :disabled="loading || wechatLoading"
+        @click="handleWechatLogin"
+      >
+        {{ wechatLoading ? '微信登录中...' : '微信快捷登录' }}
       </button>
 
       <view class="footer">
@@ -48,7 +57,7 @@
 </template>
 
 <script>
-import { getUserInfo, login } from '../../api/user'
+import { getUserInfo, login, wechatLogin } from '../../api/user'
 import { clearAuth, setAdminId, setToken, setUserId, setUserInfo, setUserType } from '../../utils/auth'
 
 export default {
@@ -56,6 +65,8 @@ export default {
   data() {
     return {
       loading: false,
+      wechatLoading: false,
+      redirecting: false,
       form: {
         phone: '',
         password: ''
@@ -63,6 +74,23 @@ export default {
     }
   },
   methods: {
+    async handleLoginSuccess(loginData) {
+      if (!loginData || !loginData.token) {
+        throw new Error('登录返回缺少 token')
+      }
+
+      this.redirecting = true
+      setToken(loginData.token)
+      setUserId(loginData.userId || '')
+      setUserType(loginData.userType || '')
+      setAdminId(loginData.adminId || 0)
+
+      const profile = await getUserInfo()
+      setUserInfo(profile || {})
+      uni.switchTab({
+        url: '/pages/home/index'
+      })
+    },
     validateForm() {
       const phone = this.form.phone.trim()
       const password = this.form.password.trim()
@@ -105,31 +133,10 @@ export default {
           phone: this.form.phone.trim(),
           password: this.form.password
         })
-
-        if (!loginData || !loginData.token) {
-          throw new Error('登录返回缺少 token')
-        }
-
-        setToken(loginData.token)
-        setUserId(loginData.userId || '')
-        setUserType(loginData.userType || '')
-        setAdminId(loginData.adminId || 0)
-
-        const profile = await getUserInfo()
-        setUserInfo(profile || {})
-
-        uni.showToast({
-          title: '登录成功',
-          icon: 'success'
-        })
-
-        setTimeout(() => {
-          uni.switchTab({
-            url: '/pages/home/index'
-          })
-        }, 300)
+        await this.handleLoginSuccess(loginData)
       } catch (error) {
         clearAuth()
+        this.redirecting = false
 
         if (error && error.message) {
           uni.showToast({
@@ -141,8 +148,55 @@ export default {
         this.loading = false
       }
     },
+    handleWechatLogin() {
+      if (this.loading || this.wechatLoading) {
+        return
+      }
+
+      this.wechatLoading = true
+
+      wx.login({
+        success: async (res) => {
+          if (!res.code) {
+            uni.showToast({
+              title: '微信登录未获取到 code',
+              icon: 'none'
+            })
+            this.wechatLoading = false
+            return
+          }
+
+          try {
+            const loginData = await wechatLogin({
+              code: res.code
+            })
+            await this.handleLoginSuccess(loginData)
+          } catch (error) {
+            clearAuth()
+            this.redirecting = false
+
+            if (error && error.message) {
+              uni.showToast({
+                title: error.message,
+                icon: 'none'
+              })
+            }
+          } finally {
+            this.wechatLoading = false
+          }
+        },
+        fail: () => {
+          uni.showToast({
+            title: '微信登录失败，请稍后重试',
+            icon: 'none'
+          })
+          this.redirecting = false
+          this.wechatLoading = false
+        }
+      })
+    },
     goRegister() {
-      if (this.loading) {
+      if (this.loading || this.wechatLoading) {
         return
       }
 
@@ -222,6 +276,22 @@ export default {
 }
 
 .login-btn::after {
+  border: none;
+}
+
+.wechat-btn {
+  height: 88rpx;
+  line-height: 88rpx;
+  margin-top: 20rpx;
+  border: 2rpx solid #d7e7da;
+  border-radius: 16rpx;
+  background: #f2fbf4;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #2f8f55;
+}
+
+.wechat-btn::after {
   border: none;
 }
 

@@ -4,6 +4,10 @@ export function login(data) {
   return request.post('/api/user/login', data)
 }
 
+export function wechatLogin(data) {
+  return request.post('/api/user/login/wechat', data)
+}
+
 export function register(data) {
   return request.post('/api/user/register', data)
 }
@@ -27,6 +31,7 @@ export const updateCurrentUserInfo = updateUserInfo
 
 export default {
   login,
+  wechatLogin,
   register,
   getUserInfo,
   updateUserInfo,

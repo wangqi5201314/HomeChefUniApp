@@ -78,9 +78,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: $data.searchName,
     c: common_vendor.o(($event) => $data.searchName = $event.detail.value),
     d: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
-    e: $data.loading
-  }, $data.loading ? {} : $data.chefList.length === 0 ? {} : {
-    g: common_vendor.f($data.chefList, (item, k0, i0) => {
+    e: $data.loading && !$data.chefList.length
+  }, $data.loading && !$data.chefList.length ? {} : !$data.loading && $data.chefList.length === 0 ? {} : common_vendor.e({
+    g: $data.loading
+  }, $data.loading ? {} : {}, {
+    h: common_vendor.f($data.chefList, (item, k0, i0) => {
       return common_vendor.e({
         a: item.avatar
       }, item.avatar ? {
@@ -97,8 +99,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         j: common_vendor.o(($event) => $options.goToDetail(item.id), item.id)
       });
     })
-  }, {
-    f: $data.chefList.length === 0
+  }), {
+    f: !$data.loading && $data.chefList.length === 0
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-4978fed5"]]);

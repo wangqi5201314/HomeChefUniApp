@@ -3,6 +3,9 @@ const api_request = require("./request.js");
 function login(data) {
   return api_request.request.post("/api/user/login", data);
 }
+function wechatLogin(data) {
+  return api_request.request.post("/api/user/login/wechat", data);
+}
 function register(data) {
   return api_request.request.post("/api/user/register", data);
 }
@@ -23,4 +26,5 @@ exports.getUserInfo = getUserInfo;
 exports.login = login;
 exports.register = register;
 exports.updateCurrentUserInfo = updateCurrentUserInfo;
+exports.wechatLogin = wechatLogin;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/api/user.js.map

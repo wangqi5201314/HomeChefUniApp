@@ -59,6 +59,20 @@
 .login-btn.data-v-d08ef7d4::after {
   border: none;
 }
+.wechat-btn.data-v-d08ef7d4 {
+  height: 88rpx;
+  line-height: 88rpx;
+  margin-top: 20rpx;
+  border: 2rpx solid #d7e7da;
+  border-radius: 16rpx;
+  background: #f2fbf4;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #2f8f55;
+}
+.wechat-btn.data-v-d08ef7d4::after {
+  border: none;
+}
 .footer.data-v-d08ef7d4 {
   display: flex;
   justify-content: center;

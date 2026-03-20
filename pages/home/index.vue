@@ -12,15 +12,22 @@
       <button class="search-btn" size="mini" @click="handleSearch">搜索</button>
     </view>
 
-    <view v-if="loading" class="state-wrap">
-      <text class="state-text">加载中...</text>
+    <view v-if="loading && !chefList.length" class="loading-card">
+      <view class="loading-block large"></view>
+      <view class="loading-block medium"></view>
+      <view class="loading-block short"></view>
     </view>
 
-    <view v-else-if="chefList.length === 0" class="state-wrap">
+    <view v-else-if="!loading && chefList.length === 0" class="state-wrap">
       <text class="state-text">暂无厨师数据</text>
     </view>
 
-    <view v-else class="list">
+    <view v-else class="list-wrap">
+      <view v-if="loading" class="inline-loading">
+        <text class="inline-loading-text">正在刷新列表...</text>
+      </view>
+
+      <view class="list">
       <view
         v-for="item in chefList"
         :key="item.id"
@@ -50,6 +57,7 @@
             <text class="meta-text">接单 {{ formatCount(item.orderCount) }}</text>
           </view>
         </view>
+      </view>
       </view>
     </view>
   </view>
@@ -195,6 +203,50 @@ export default {
   color: #8a8f99;
 }
 
+.loading-card {
+  padding: 28rpx 24rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+}
+
+.loading-block {
+  height: 28rpx;
+  margin-bottom: 22rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #f1f3f6 25%, #f7f8fa 37%, #f1f3f6 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.loading-block.large {
+  width: 92%;
+}
+
+.loading-block.medium {
+  width: 68%;
+}
+
+.loading-block.short {
+  width: 44%;
+  margin-bottom: 0;
+}
+
+.list-wrap {
+  position: relative;
+}
+
+.inline-loading {
+  margin-bottom: 16rpx;
+  padding: 14rpx 20rpx;
+  border-radius: 16rpx;
+  background: #fff5ee;
+}
+
+.inline-loading-text {
+  font-size: 24rpx;
+  color: #c66a42;
+}
+
 .list {
   display: flex;
   flex-direction: column;
@@ -266,5 +318,15 @@ export default {
 .meta-text {
   font-size: 26rpx;
   color: #8a8f99;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
 }
 </style>
