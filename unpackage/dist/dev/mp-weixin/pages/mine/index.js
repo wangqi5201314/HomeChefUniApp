@@ -71,6 +71,11 @@ const _sfc_main = {
         url: "/pages/address/list"
       });
     },
+    goChangePassword() {
+      common_vendor.index.navigateTo({
+        url: "/pages/mine/change-password"
+      });
+    },
     goOrderList() {
       common_vendor.index.switchTab({
         url: "/pages/order/list"
@@ -109,9 +114,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.t($data.orderCount),
     g: common_vendor.t($data.addressCount),
     h: common_vendor.o((...args) => $options.goProfile && $options.goProfile(...args)),
-    i: common_vendor.o((...args) => $options.goAddressList && $options.goAddressList(...args)),
-    j: common_vendor.o((...args) => $options.goOrderList && $options.goOrderList(...args)),
-    k: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    i: common_vendor.o((...args) => $options.goChangePassword && $options.goChangePassword(...args)),
+    j: common_vendor.o((...args) => $options.goAddressList && $options.goAddressList(...args)),
+    k: common_vendor.o((...args) => $options.goOrderList && $options.goOrderList(...args)),
+    l: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-569e925a"]]);

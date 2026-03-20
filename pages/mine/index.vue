@@ -36,6 +36,10 @@
         <text class="menu-text">我的资料</text>
         <text class="menu-arrow">›</text>
       </view>
+      <view class="menu-item" @click="goChangePassword">
+        <text class="menu-text">修改密码</text>
+        <text class="menu-arrow">›</text>
+      </view>
       <view class="menu-item" @click="goAddressList">
         <text class="menu-text">我的地址</text>
         <text class="menu-arrow">›</text>
@@ -125,6 +129,11 @@ export default {
     goAddressList() {
       uni.navigateTo({
         url: '/pages/address/list'
+      })
+    },
+    goChangePassword() {
+      uni.navigateTo({
+        url: '/pages/mine/change-password'
       })
     },
     goOrderList() {

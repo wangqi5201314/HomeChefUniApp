@@ -1,6 +1,9 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
 const utils_config = require("./config.js");
+const USER_ID_KEY = "user_id";
+const USER_TYPE_KEY = "user_type";
+const ADMIN_ID_KEY = "admin_id";
 function getToken() {
   return common_vendor.index.getStorageSync(utils_config.TOKEN_KEY) || "";
 }
@@ -19,13 +22,37 @@ function setUserInfo(userInfo) {
 function removeUserInfo() {
   common_vendor.index.removeStorageSync(utils_config.USER_INFO_KEY);
 }
+function setUserId(userId) {
+  common_vendor.index.setStorageSync(USER_ID_KEY, userId || "");
+}
+function removeUserId() {
+  common_vendor.index.removeStorageSync(USER_ID_KEY);
+}
+function setUserType(userType) {
+  common_vendor.index.setStorageSync(USER_TYPE_KEY, userType || "");
+}
+function removeUserType() {
+  common_vendor.index.removeStorageSync(USER_TYPE_KEY);
+}
+function setAdminId(adminId) {
+  common_vendor.index.setStorageSync(ADMIN_ID_KEY, adminId || 0);
+}
+function removeAdminId() {
+  common_vendor.index.removeStorageSync(ADMIN_ID_KEY);
+}
 function clearAuth() {
   removeToken();
   removeUserInfo();
+  removeUserId();
+  removeUserType();
+  removeAdminId();
 }
 exports.clearAuth = clearAuth;
 exports.getToken = getToken;
 exports.getUserInfo = getUserInfo;
+exports.setAdminId = setAdminId;
 exports.setToken = setToken;
+exports.setUserId = setUserId;
 exports.setUserInfo = setUserInfo;
+exports.setUserType = setUserType;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/utils/auth.js.map

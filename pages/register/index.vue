@@ -1,8 +1,8 @@
 <template>
   <view class="page">
     <view class="header">
-      <text class="title">私房菜上门服务</text>
-      <text class="subtitle">手机号 + 密码登录</text>
+      <text class="title">注册账号</text>
+      <text class="subtitle">填写手机号和密码完成注册</text>
     </view>
 
     <view class="form-card">
@@ -19,53 +19,71 @@
       </view>
 
       <view class="form-item">
+        <text class="label">昵称</text>
+        <input
+          v-model="form.nickname"
+          class="input"
+          placeholder="请输入昵称"
+          :disabled="loading"
+        />
+      </view>
+
+      <view class="form-item">
         <text class="label">密码</text>
         <input
           v-model="form.password"
           class="input"
           password
-          placeholder="请输入密码"
+          placeholder="请输入至少 6 位密码"
+          :disabled="loading"
+        />
+      </view>
+
+      <view class="form-item">
+        <text class="label">确认密码</text>
+        <input
+          v-model="form.confirmPassword"
+          class="input"
+          password
+          placeholder="请再次输入密码"
           :disabled="loading"
         />
       </view>
 
       <button
-        class="login-btn"
+        class="register-btn"
         type="primary"
         :loading="loading"
         :disabled="loading"
-        @click="handleLogin"
+        @click="handleRegister"
       >
-        {{ loading ? '登录中...' : '登录' }}
+        {{ loading ? '注册中...' : '注册' }}
       </button>
-
-      <view class="footer">
-        <text class="footer-text">还没有账号？</text>
-        <text class="footer-link" @click="goRegister">去注册</text>
-      </view>
     </view>
   </view>
 </template>
 
 <script>
-import { getUserInfo, login } from '../../api/user'
-import { clearAuth, setAdminId, setToken, setUserId, setUserInfo, setUserType } from '../../utils/auth'
+import { register } from '../../api/user'
 
 export default {
-  name: 'LoginPage',
+  name: 'RegisterPage',
   data() {
     return {
       loading: false,
       form: {
         phone: '',
-        password: ''
+        password: '',
+        confirmPassword: '',
+        nickname: ''
       }
     }
   },
   methods: {
     validateForm() {
       const phone = this.form.phone.trim()
-      const password = this.form.password.trim()
+      const password = this.form.password
+      const confirmPassword = this.form.confirmPassword
 
       if (!phone) {
         uni.showToast({
@@ -91,9 +109,25 @@ export default {
         return false
       }
 
+      if (password.length < 6) {
+        uni.showToast({
+          title: '密码至少 6 位',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (confirmPassword !== password) {
+        uni.showToast({
+          title: '两次密码输入不一致',
+          icon: 'none'
+        })
+        return false
+      }
+
       return true
     },
-    async handleLogin() {
+    async handleRegister() {
       if (this.loading || !this.validateForm()) {
         return
       }
@@ -101,54 +135,27 @@ export default {
       this.loading = true
 
       try {
-        const loginData = await login({
+        await register({
           phone: this.form.phone.trim(),
-          password: this.form.password
+          password: this.form.password,
+          confirmPassword: this.form.confirmPassword,
+          nickname: this.form.nickname.trim()
         })
 
-        if (!loginData || !loginData.token) {
-          throw new Error('登录返回缺少 token')
-        }
-
-        setToken(loginData.token)
-        setUserId(loginData.userId || '')
-        setUserType(loginData.userType || '')
-        setAdminId(loginData.adminId || 0)
-
-        const profile = await getUserInfo()
-        setUserInfo(profile || {})
-
         uni.showToast({
-          title: '登录成功',
+          title: '注册成功',
           icon: 'success'
         })
 
         setTimeout(() => {
-          uni.switchTab({
-            url: '/pages/home/index'
+          uni.navigateBack({
+            delta: 1
           })
         }, 300)
       } catch (error) {
-        clearAuth()
-
-        if (error && error.message) {
-          uni.showToast({
-            title: error.message,
-            icon: 'none'
-          })
-        }
       } finally {
         this.loading = false
       }
-    },
-    goRegister() {
-      if (this.loading) {
-        return
-      }
-
-      uni.navigateTo({
-        url: '/pages/register/index'
-      })
     }
   }
 }
@@ -157,21 +164,20 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 120rpx 40rpx 40rpx;
+  padding: 100rpx 40rpx 40rpx;
   background: linear-gradient(180deg, #fff7f0 0%, #f7f8fa 45%, #f7f8fa 100%);
   box-sizing: border-box;
 }
 
 .header {
-  margin-bottom: 60rpx;
+  margin-bottom: 48rpx;
 }
 
 .title {
   display: block;
-  font-size: 48rpx;
+  font-size: 46rpx;
   font-weight: 600;
   color: #2f2f2f;
-  line-height: 1.4;
 }
 
 .subtitle {
@@ -184,17 +190,17 @@ export default {
 .form-card {
   padding: 40rpx 32rpx;
   border-radius: 24rpx;
-  background-color: #ffffff;
+  background: #ffffff;
   box-shadow: 0 12rpx 36rpx rgba(25, 31, 37, 0.06);
 }
 
 .form-item {
-  margin-bottom: 32rpx;
+  margin-bottom: 28rpx;
 }
 
 .label {
   display: block;
-  margin-bottom: 20rpx;
+  margin-bottom: 18rpx;
   font-size: 28rpx;
   color: #333333;
 }
@@ -204,16 +210,16 @@ export default {
   padding: 0 24rpx;
   border: 2rpx solid #eceef2;
   border-radius: 16rpx;
-  background-color: #fafbfc;
+  background: #fafbfc;
   font-size: 30rpx;
   color: #222222;
   box-sizing: border-box;
 }
 
-.login-btn {
+.register-btn {
   height: 88rpx;
   line-height: 88rpx;
-  margin-top: 16rpx;
+  margin-top: 12rpx;
   border: none;
   border-radius: 16rpx;
   background: #d96c3a;
@@ -221,25 +227,7 @@ export default {
   font-weight: 500;
 }
 
-.login-btn::after {
+.register-btn::after {
   border: none;
-}
-
-.footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12rpx;
-  margin-top: 32rpx;
-}
-
-.footer-text {
-  font-size: 26rpx;
-  color: #8a8f99;
-}
-
-.footer-link {
-  font-size: 26rpx;
-  color: #d96c3a;
 }
 </style>

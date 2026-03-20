@@ -28,7 +28,7 @@
   box-shadow: 0 12rpx 36rpx rgba(25, 31, 37, 0.06);
 }
 .form-item.data-v-d08ef7d4 {
-  margin-bottom: 40rpx;
+  margin-bottom: 32rpx;
 }
 .label.data-v-d08ef7d4 {
   display: block;
@@ -49,6 +49,7 @@
 .login-btn.data-v-d08ef7d4 {
   height: 88rpx;
   line-height: 88rpx;
+  margin-top: 16rpx;
   border: none;
   border-radius: 16rpx;
   background: #d96c3a;
@@ -57,4 +58,19 @@
 }
 .login-btn.data-v-d08ef7d4::after {
   border: none;
+}
+.footer.data-v-d08ef7d4 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 32rpx;
+}
+.footer-text.data-v-d08ef7d4 {
+  font-size: 26rpx;
+  color: #8a8f99;
+}
+.footer-link.data-v-d08ef7d4 {
+  font-size: 26rpx;
+  color: #d96c3a;
 }

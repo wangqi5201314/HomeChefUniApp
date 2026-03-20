@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/login/index",
+    "pages/register/index",
     "pages/home/index",
     "pages/chef/detail",
     "pages/address/list",
@@ -11,7 +12,8 @@
     "pages/pay/result",
     "pages/review/create",
     "pages/mine/index",
-    "pages/mine/profile"
+    "pages/mine/profile",
+    "pages/mine/change-password"
   ],
   "window": {
     "navigationBarTextStyle": "black",

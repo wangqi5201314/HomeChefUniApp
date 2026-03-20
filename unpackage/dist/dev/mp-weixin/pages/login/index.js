@@ -2,19 +2,21 @@
 const common_vendor = require("../../common/vendor.js");
 const api_user = require("../../api/user.js");
 const utils_auth = require("../../utils/auth.js");
-const USER_ID_KEY = "user_id";
-const USER_TYPE_KEY = "user_type";
-const ADMIN_ID_KEY = "admin_id";
 const _sfc_main = {
+  name: "LoginPage",
   data() {
     return {
-      phone: "",
-      loading: false
+      loading: false,
+      form: {
+        phone: "",
+        password: ""
+      }
     };
   },
   methods: {
-    validatePhone() {
-      const phone = (this.phone || "").trim();
+    validateForm() {
+      const phone = this.form.phone.trim();
+      const password = this.form.password.trim();
       if (!phone) {
         common_vendor.index.showToast({
           title: "请输入手机号",
@@ -24,7 +26,14 @@ const _sfc_main = {
       }
       if (!/^1\d{10}$/.test(phone)) {
         common_vendor.index.showToast({
-          title: "请输入正确的 11 位手机号",
+          title: "请输入正确的手机号",
+          icon: "none"
+        });
+        return false;
+      }
+      if (!password) {
+        common_vendor.index.showToast({
+          title: "请输入密码",
           icon: "none"
         });
         return false;
@@ -32,22 +41,23 @@ const _sfc_main = {
       return true;
     },
     async handleLogin() {
-      if (this.loading || !this.validatePhone()) {
+      if (this.loading || !this.validateForm()) {
         return;
       }
       this.loading = true;
       try {
-        const loginData = await api_user.loginUser({
-          phone: this.phone.trim()
+        const loginData = await api_user.login({
+          phone: this.form.phone.trim(),
+          password: this.form.password
         });
         if (!loginData || !loginData.token) {
           throw new Error("登录返回缺少 token");
         }
         utils_auth.setToken(loginData.token);
-        common_vendor.index.setStorageSync(USER_ID_KEY, loginData.userId || "");
-        common_vendor.index.setStorageSync(USER_TYPE_KEY, loginData.userType || "");
-        common_vendor.index.setStorageSync(ADMIN_ID_KEY, loginData.adminId || 0);
-        const profile = await api_user.getCurrentUserInfo();
+        utils_auth.setUserId(loginData.userId || "");
+        utils_auth.setUserType(loginData.userType || "");
+        utils_auth.setAdminId(loginData.adminId || 0);
+        const profile = await api_user.getUserInfo();
         utils_auth.setUserInfo(profile || {});
         common_vendor.index.showToast({
           title: "登录成功",
@@ -60,9 +70,6 @@ const _sfc_main = {
         }, 300);
       } catch (error) {
         utils_auth.clearAuth();
-        common_vendor.index.removeStorageSync(USER_ID_KEY);
-        common_vendor.index.removeStorageSync(USER_TYPE_KEY);
-        common_vendor.index.removeStorageSync(ADMIN_ID_KEY);
         if (error && error.message) {
           common_vendor.index.showToast({
             title: error.message,
@@ -72,18 +79,30 @@ const _sfc_main = {
       } finally {
         this.loading = false;
       }
+    },
+    goRegister() {
+      if (this.loading) {
+        return;
+      }
+      common_vendor.index.navigateTo({
+        url: "/pages/register/index"
+      });
     }
   }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: $data.loading,
-    b: $data.phone,
-    c: common_vendor.o(($event) => $data.phone = $event.detail.value),
-    d: common_vendor.t($data.loading ? "登录中..." : "登录"),
-    e: $data.loading,
-    f: $data.loading,
-    g: common_vendor.o((...args) => $options.handleLogin && $options.handleLogin(...args))
+    b: $data.form.phone,
+    c: common_vendor.o(($event) => $data.form.phone = $event.detail.value),
+    d: $data.loading,
+    e: $data.form.password,
+    f: common_vendor.o(($event) => $data.form.password = $event.detail.value),
+    g: common_vendor.t($data.loading ? "登录中..." : "登录"),
+    h: $data.loading,
+    i: $data.loading,
+    j: common_vendor.o((...args) => $options.handleLogin && $options.handleLogin(...args)),
+    k: common_vendor.o((...args) => $options.goRegister && $options.goRegister(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-d08ef7d4"]]);
