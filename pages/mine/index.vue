@@ -34,15 +34,15 @@
     <view class="menu-card">
       <view class="menu-item" @click="goProfile">
         <text class="menu-text">我的资料</text>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" @click="goAddressList">
         <text class="menu-text">我的地址</text>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item last" @click="goOrderList">
         <text class="menu-text">我的订单</text>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
     </view>
 

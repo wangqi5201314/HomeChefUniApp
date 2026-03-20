@@ -1,8 +1,8 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_user = require("../../api/user.js");
-const api_upload = require("../../api/upload.js");
 const utils_auth = require("../../utils/auth.js");
+const utils_config = require("../../utils/config.js");
 function createDefaultForm() {
   return {
     phone: "",
@@ -76,6 +76,7 @@ const _sfc_main = {
           emergencyContactName: data.emergencyContactName || "",
           emergencyContactPhone: data.emergencyContactPhone || ""
         };
+        utils_auth.setUserInfo(data || {});
       } catch (error) {
       }
     },
@@ -87,6 +88,21 @@ const _sfc_main = {
     handleBirthdayChange(event) {
       this.form.birthday = event.detail.value || "";
     },
+    async handleAvatarUploaded(fileUrl) {
+      await api_user.updateCurrentUserInfo({
+        nickname: this.form.nickname.trim(),
+        avatar: fileUrl || "",
+        gender: Number(this.form.gender),
+        birthday: this.form.birthday || "",
+        tastePreference: this.form.tastePreference.trim(),
+        allergyInfo: this.form.allergyInfo.trim(),
+        emergencyContactName: this.form.emergencyContactName.trim(),
+        emergencyContactPhone: this.form.emergencyContactPhone.trim()
+      });
+      this.form.avatar = fileUrl || "";
+      const latestUserInfo = await api_user.getCurrentUserInfo();
+      utils_auth.setUserInfo(latestUserInfo || {});
+    },
     chooseAvatar() {
       if (this.avatarUploading) {
         return;
@@ -95,19 +111,69 @@ const _sfc_main = {
         count: 1,
         sizeType: ["compressed"],
         sourceType: ["album", "camera"],
-        success: async (res) => {
+        success: (res) => {
           const filePath = res.tempFilePaths && res.tempFilePaths[0];
           if (!filePath) {
             return;
           }
           this.avatarUploading = true;
-          try {
-            const result = await api_upload.uploadImage(filePath);
-            this.form.avatar = result.fileUrl || "";
-          } catch (error) {
-          } finally {
-            this.avatarUploading = false;
-          }
+          common_vendor.wx$1.uploadFile({
+            url: `${utils_config.BASE_URL}/api/upload/image`,
+            filePath,
+            name: "file",
+            header: utils_auth.getToken() ? { Authorization: `Bearer ${utils_auth.getToken()}` } : {},
+            success: async (uploadRes) => {
+              let result = null;
+              try {
+                result = JSON.parse(uploadRes.data);
+              } catch (error) {
+                common_vendor.index.showToast({
+                  title: "上传返回格式错误",
+                  icon: "none"
+                });
+                return;
+              }
+              if (uploadRes.statusCode === 401 || result.code === 401) {
+                utils_auth.clearAuth();
+                common_vendor.index.reLaunch({
+                  url: "/pages/login/index"
+                });
+                return;
+              }
+              if (uploadRes.statusCode < 200 || uploadRes.statusCode >= 300 || result.code !== 200) {
+                common_vendor.index.showToast({
+                  title: result.message || "上传失败",
+                  icon: "none"
+                });
+                return;
+              }
+              const fileUrl = result.data && result.data.fileUrl ? result.data.fileUrl : "";
+              if (!fileUrl) {
+                common_vendor.index.showToast({
+                  title: "未获取到头像地址",
+                  icon: "none"
+                });
+                return;
+              }
+              try {
+                await this.handleAvatarUploaded(fileUrl);
+                common_vendor.index.showToast({
+                  title: "头像已更新",
+                  icon: "success"
+                });
+              } catch (error) {
+              }
+            },
+            fail: () => {
+              common_vendor.index.showToast({
+                title: "上传失败，请稍后重试",
+                icon: "none"
+              });
+            },
+            complete: () => {
+              this.avatarUploading = false;
+            }
+          });
         }
       });
     },

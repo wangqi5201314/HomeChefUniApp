@@ -96,8 +96,8 @@
 
 <script>
 import { getCurrentUserInfo, updateCurrentUserInfo } from '../../api/user'
-import { uploadImage } from '../../api/upload'
-import { setUserInfo } from '../../utils/auth'
+import { clearAuth, getToken, setUserInfo } from '../../utils/auth'
+import { BASE_URL } from '../../utils/config'
 
 function createDefaultForm() {
   return {
@@ -175,6 +175,7 @@ export default {
           emergencyContactName: data.emergencyContactName || '',
           emergencyContactPhone: data.emergencyContactPhone || ''
         }
+        setUserInfo(data || {})
       } catch (error) {
       }
     },
@@ -186,6 +187,23 @@ export default {
     handleBirthdayChange(event) {
       this.form.birthday = event.detail.value || ''
     },
+    async handleAvatarUploaded(fileUrl) {
+      await updateCurrentUserInfo({
+        nickname: this.form.nickname.trim(),
+        avatar: fileUrl || '',
+        gender: Number(this.form.gender),
+        birthday: this.form.birthday || '',
+        tastePreference: this.form.tastePreference.trim(),
+        allergyInfo: this.form.allergyInfo.trim(),
+        emergencyContactName: this.form.emergencyContactName.trim(),
+        emergencyContactPhone: this.form.emergencyContactPhone.trim()
+      })
+
+      this.form.avatar = fileUrl || ''
+
+      const latestUserInfo = await getCurrentUserInfo()
+      setUserInfo(latestUserInfo || {})
+    },
     chooseAvatar() {
       if (this.avatarUploading) {
         return
@@ -195,7 +213,7 @@ export default {
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
-        success: async (res) => {
+        success: (res) => {
           const filePath = res.tempFilePaths && res.tempFilePaths[0]
           if (!filePath) {
             return
@@ -203,13 +221,68 @@ export default {
 
           this.avatarUploading = true
 
-          try {
-            const result = await uploadImage(filePath)
-            this.form.avatar = result.fileUrl || ''
-          } catch (error) {
-          } finally {
-            this.avatarUploading = false
-          }
+          wx.uploadFile({
+            url: `${BASE_URL}/api/upload/image`,
+            filePath,
+            name: 'file',
+            header: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
+            success: async (uploadRes) => {
+              let result = null
+
+              try {
+                result = JSON.parse(uploadRes.data)
+              } catch (error) {
+                uni.showToast({
+                  title: '上传返回格式错误',
+                  icon: 'none'
+                })
+                return
+              }
+
+              if (uploadRes.statusCode === 401 || result.code === 401) {
+                clearAuth()
+                uni.reLaunch({
+                  url: '/pages/login/index'
+                })
+                return
+              }
+
+              if (uploadRes.statusCode < 200 || uploadRes.statusCode >= 300 || result.code !== 200) {
+                uni.showToast({
+                  title: result.message || '上传失败',
+                  icon: 'none'
+                })
+                return
+              }
+
+              const fileUrl = result.data && result.data.fileUrl ? result.data.fileUrl : ''
+              if (!fileUrl) {
+                uni.showToast({
+                  title: '未获取到头像地址',
+                  icon: 'none'
+                })
+                return
+              }
+
+              try {
+                await this.handleAvatarUploaded(fileUrl)
+                uni.showToast({
+                  title: '头像已更新',
+                  icon: 'success'
+                })
+              } catch (error) {
+              }
+            },
+            fail: () => {
+              uni.showToast({
+                title: '上传失败，请稍后重试',
+                icon: 'none'
+              })
+            },
+            complete: () => {
+              this.avatarUploading = false
+            }
+          })
         }
       })
     },

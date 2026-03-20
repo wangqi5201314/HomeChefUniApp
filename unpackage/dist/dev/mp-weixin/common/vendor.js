@@ -7899,4 +7899,5 @@ exports.index = index;
 exports.n = n;
 exports.o = o;
 exports.t = t;
+exports.wx$1 = wx$1;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/common/vendor.js.map
