@@ -20,7 +20,7 @@ const _sfc_main = {
       return this.orderDetail.orderStatus === "PENDING_CONFIRM" || this.orderDetail.orderStatus === "WAIT_PAY" || this.orderDetail.orderStatus === "PAID";
     },
     showPayButton() {
-      return this.orderDetail.orderStatus === "WAIT_PAY" || this.orderDetail.orderStatus === "PENDING_CONFIRM";
+      return this.orderDetail.orderStatus === "WAIT_PAY";
     },
     showReviewButton() {
       return this.orderDetail.orderStatus === "COMPLETED";
