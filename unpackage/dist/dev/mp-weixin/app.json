@@ -15,6 +15,22 @@
     "pages/mine/profile",
     "pages/mine/change-password"
   ],
+  "subPackages": [
+    {
+      "root": "pages-chef",
+      "pages": [
+        "login/index",
+        "home/index",
+        "order/list",
+        "order/detail",
+        "schedule/index",
+        "certification/index",
+        "mine/index",
+        "mine/profile",
+        "mine/change-password"
+      ]
+    }
+  ],
   "window": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "私房菜上门",

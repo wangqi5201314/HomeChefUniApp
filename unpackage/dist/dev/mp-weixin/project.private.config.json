@@ -1,0 +1,15 @@
+{
+	"condition": {
+		"miniprogram": {
+			"list": [
+				{
+					"name": "pages-chef/login/index",
+					"pathName": "pages-chef/login/index",
+					"query": "",
+					"scene": null,
+					"launchMode": "default"
+				}
+			]
+		}
+	}
+}

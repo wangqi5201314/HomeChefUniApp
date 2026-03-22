@@ -4,6 +4,8 @@ const utils_config = require("./config.js");
 const USER_ID_KEY = "user_id";
 const USER_TYPE_KEY = "user_type";
 const ADMIN_ID_KEY = "admin_id";
+const CHEF_ID_KEY = "chef_id";
+const CHEF_INFO_KEY = "chef_info";
 function getToken() {
   return common_vendor.index.getStorageSync(utils_config.TOKEN_KEY) || "";
 }
@@ -40,17 +42,37 @@ function setAdminId(adminId) {
 function removeAdminId() {
   common_vendor.index.removeStorageSync(ADMIN_ID_KEY);
 }
+function setChefId(chefId) {
+  common_vendor.index.setStorageSync(CHEF_ID_KEY, chefId || "");
+}
+function removeChefId() {
+  common_vendor.index.removeStorageSync(CHEF_ID_KEY);
+}
+function getChefInfo() {
+  return common_vendor.index.getStorageSync(CHEF_INFO_KEY) || null;
+}
+function setChefInfo(chefInfo) {
+  common_vendor.index.setStorageSync(CHEF_INFO_KEY, chefInfo || null);
+}
+function removeChefInfo() {
+  common_vendor.index.removeStorageSync(CHEF_INFO_KEY);
+}
 function clearAuth() {
   removeToken();
   removeUserInfo();
   removeUserId();
   removeUserType();
   removeAdminId();
+  removeChefId();
+  removeChefInfo();
 }
 exports.clearAuth = clearAuth;
+exports.getChefInfo = getChefInfo;
 exports.getToken = getToken;
 exports.getUserInfo = getUserInfo;
 exports.setAdminId = setAdminId;
+exports.setChefId = setChefId;
+exports.setChefInfo = setChefInfo;
 exports.setToken = setToken;
 exports.setUserId = setUserId;
 exports.setUserInfo = setUserInfo;

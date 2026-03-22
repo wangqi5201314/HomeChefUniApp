@@ -16,6 +16,15 @@ if (!Math) {
   "./pages/mine/index.js";
   "./pages/mine/profile.js";
   "./pages/mine/change-password.js";
+  "./pages-chef/login/index.js";
+  "./pages-chef/home/index.js";
+  "./pages-chef/order/list.js";
+  "./pages-chef/order/detail.js";
+  "./pages-chef/schedule/index.js";
+  "./pages-chef/certification/index.js";
+  "./pages-chef/mine/index.js";
+  "./pages-chef/mine/profile.js";
+  "./pages-chef/mine/change-password.js";
 }
 const _sfc_main = {
   onLaunch: function() {

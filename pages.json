@@ -120,5 +120,66 @@
         "selectedIconPath": "static/my-active.png"
       }
     ]
-  }
+  },
+  "subPackages": [
+    {
+      "root": "pages-chef",
+      "pages": [
+        {
+          "path": "login/index",
+          "style": {
+            "navigationBarTitleText": "厨师端登录"
+          }
+        },
+        {
+          "path": "home/index",
+          "style": {
+            "navigationBarTitleText": "厨师端首页"
+          }
+        },
+        {
+          "path": "order/list",
+          "style": {
+            "navigationBarTitleText": "我的订单"
+          }
+        },
+        {
+          "path": "order/detail",
+          "style": {
+            "navigationBarTitleText": "订单详情"
+          }
+        },
+        {
+          "path": "schedule/index",
+          "style": {
+            "navigationBarTitleText": "我的档期"
+          }
+        },
+        {
+          "path": "certification/index",
+          "style": {
+            "navigationBarTitleText": "认证资料"
+          }
+        },
+        {
+          "path": "mine/index",
+          "style": {
+            "navigationBarTitleText": "我的"
+          }
+        },
+        {
+          "path": "mine/profile",
+          "style": {
+            "navigationBarTitleText": "我的资料"
+          }
+        },
+        {
+          "path": "mine/change-password",
+          "style": {
+            "navigationBarTitleText": "修改密码"
+          }
+        }
+      ]
+    }
+  ]
 }

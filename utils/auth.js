@@ -3,6 +3,8 @@ import { TOKEN_KEY, USER_INFO_KEY } from './config'
 export const USER_ID_KEY = 'user_id'
 export const USER_TYPE_KEY = 'user_type'
 export const ADMIN_ID_KEY = 'admin_id'
+export const CHEF_ID_KEY = 'chef_id'
+export const CHEF_INFO_KEY = 'chef_info'
 
 export function getToken() {
   return uni.getStorageSync(TOKEN_KEY) || ''
@@ -64,12 +66,38 @@ export function removeAdminId() {
   uni.removeStorageSync(ADMIN_ID_KEY)
 }
 
+export function getChefId() {
+  return uni.getStorageSync(CHEF_ID_KEY) || ''
+}
+
+export function setChefId(chefId) {
+  uni.setStorageSync(CHEF_ID_KEY, chefId || '')
+}
+
+export function removeChefId() {
+  uni.removeStorageSync(CHEF_ID_KEY)
+}
+
+export function getChefInfo() {
+  return uni.getStorageSync(CHEF_INFO_KEY) || null
+}
+
+export function setChefInfo(chefInfo) {
+  uni.setStorageSync(CHEF_INFO_KEY, chefInfo || null)
+}
+
+export function removeChefInfo() {
+  uni.removeStorageSync(CHEF_INFO_KEY)
+}
+
 export function clearAuth() {
   removeToken()
   removeUserInfo()
   removeUserId()
   removeUserType()
   removeAdminId()
+  removeChefId()
+  removeChefInfo()
 }
 
 export default {
@@ -88,5 +116,11 @@ export default {
   getAdminId,
   setAdminId,
   removeAdminId,
+  getChefId,
+  setChefId,
+  removeChefId,
+  getChefInfo,
+  setChefInfo,
+  removeChefInfo,
   clearAuth
 }
