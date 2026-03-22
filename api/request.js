@@ -1,12 +1,15 @@
 import { BASE_URL, LOGIN_PAGE } from '../utils/config'
 import { clearAuth, getToken } from '../utils/auth'
 
+const CHEF_LOGIN_PAGE = '/pages-chef/login/index'
+
 let redirectingToLogin = false
 
 function buildUrl(url) {
   if (/^https?:\/\//.test(url)) {
     return url
   }
+
   return `${BASE_URL}${url}`
 }
 
@@ -44,10 +47,11 @@ function redirectToLogin(message) {
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
   const currentRoute = currentPage ? `/${currentPage.route}` : ''
+  const targetLoginPage = currentRoute.indexOf('/pages-chef/') === 0 ? CHEF_LOGIN_PAGE : LOGIN_PAGE
 
-  if (currentRoute !== LOGIN_PAGE) {
+  if (currentRoute !== targetLoginPage) {
     uni.reLaunch({
-      url: LOGIN_PAGE
+      url: targetLoginPage
     })
   }
 

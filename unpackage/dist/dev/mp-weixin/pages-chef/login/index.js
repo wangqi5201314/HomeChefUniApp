@@ -63,12 +63,6 @@ const _sfc_main = {
         });
       } catch (error) {
         utils_auth.clearAuth();
-        if (error && error.message) {
-          common_vendor.index.showToast({
-            title: error.message,
-            icon: "none"
-          });
-        }
       } finally {
         this.loading = false;
       }

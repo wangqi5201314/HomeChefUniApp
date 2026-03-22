@@ -1,5 +1,7 @@
-import { BASE_URL } from '../utils/config'
+import { BASE_URL, LOGIN_PAGE } from '../utils/config'
 import { clearAuth, getToken } from '../utils/auth'
+
+const CHEF_LOGIN_PAGE = '/pages-chef/login/index'
 
 let redirectingToLogin = false
 
@@ -20,8 +22,13 @@ function redirectToLogin(message) {
 
   redirectingToLogin = true
 
+  const pages = getCurrentPages()
+  const currentPage = pages[pages.length - 1]
+  const currentRoute = currentPage ? `/${currentPage.route}` : ''
+  const targetLoginPage = currentRoute.indexOf('/pages-chef/') === 0 ? CHEF_LOGIN_PAGE : LOGIN_PAGE
+
   uni.reLaunch({
-    url: '/pages/login/index'
+    url: targetLoginPage
   })
 
   setTimeout(() => {

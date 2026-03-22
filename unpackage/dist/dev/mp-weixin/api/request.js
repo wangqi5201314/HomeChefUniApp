@@ -2,6 +2,7 @@
 const common_vendor = require("../common/vendor.js");
 const utils_config = require("../utils/config.js");
 const utils_auth = require("../utils/auth.js");
+const CHEF_LOGIN_PAGE = "/pages-chef/login/index";
 let redirectingToLogin = false;
 function buildUrl(url) {
   if (/^https?:\/\//.test(url)) {
@@ -36,9 +37,10 @@ function redirectToLogin(message) {
   const pages = getCurrentPages();
   const currentPage = pages[pages.length - 1];
   const currentRoute = currentPage ? `/${currentPage.route}` : "";
-  if (currentRoute !== utils_config.LOGIN_PAGE) {
+  const targetLoginPage = currentRoute.indexOf("/pages-chef/") === 0 ? CHEF_LOGIN_PAGE : utils_config.LOGIN_PAGE;
+  if (currentRoute !== targetLoginPage) {
     common_vendor.index.reLaunch({
-      url: utils_config.LOGIN_PAGE
+      url: targetLoginPage
     });
   }
   setTimeout(() => {

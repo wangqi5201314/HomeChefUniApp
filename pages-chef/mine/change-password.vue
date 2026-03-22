@@ -1,43 +1,176 @@
 <template>
   <view class="page">
-    <view class="card">
-      <text class="title">修改密码</text>
-      <text class="desc">厨师端修改密码页待开发</text>
+    <view class="form-card">
+      <view class="form-item">
+        <text class="label">旧密码</text>
+        <input
+          v-model="form.oldPassword"
+          class="input"
+          password
+          placeholder="请输入旧密码"
+          :disabled="loading"
+        />
+      </view>
+
+      <view class="form-item">
+        <text class="label">新密码</text>
+        <input
+          v-model="form.newPassword"
+          class="input"
+          password
+          placeholder="请输入至少 6 位新密码"
+          :disabled="loading"
+        />
+      </view>
+
+      <view class="form-item">
+        <text class="label">确认新密码</text>
+        <input
+          v-model="form.confirmPassword"
+          class="input"
+          password
+          placeholder="请再次输入新密码"
+          :disabled="loading"
+        />
+      </view>
+
+      <button class="submit-btn" :loading="loading" :disabled="loading" @click="handleSubmit">
+        确认修改
+      </button>
     </view>
   </view>
 </template>
 
 <script>
+import { changeChefPassword } from '../../api/chef-profile'
+import { clearAuth } from '../../utils/auth'
+
 export default {
-  name: 'ChefChangePasswordPage'
+  name: 'ChefChangePasswordPage',
+  data() {
+    return {
+      loading: false,
+      form: {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    }
+  },
+  methods: {
+    validateForm() {
+      const { oldPassword, newPassword, confirmPassword } = this.form
+
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        uni.showToast({
+          title: '请完整填写密码信息',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (newPassword.length < 6) {
+        uni.showToast({
+          title: '新密码至少 6 位',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (newPassword !== confirmPassword) {
+        uni.showToast({
+          title: '两次密码输入不一致',
+          icon: 'none'
+        })
+        return false
+      }
+
+      return true
+    },
+    async handleSubmit() {
+      if (this.loading || !this.validateForm()) {
+        return
+      }
+
+      this.loading = true
+
+      try {
+        await changeChefPassword({
+          oldPassword: this.form.oldPassword,
+          newPassword: this.form.newPassword,
+          confirmPassword: this.form.confirmPassword
+        })
+
+        uni.showToast({
+          title: '修改成功，请重新登录',
+          icon: 'success'
+        })
+
+        clearAuth()
+
+        setTimeout(() => {
+          uni.reLaunch({
+            url: '/pages-chef/login/index'
+          })
+        }, 300)
+      } catch (error) {
+      } finally {
+        this.loading = false
+      }
+    }
+  }
 }
 </script>
 
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 24rpx;
-  background: #f6f7fb;
+  padding: 40rpx 24rpx;
+  background: linear-gradient(180deg, #edf7f0 0%, #f6f7fb 36%, #f6f7fb 100%);
   box-sizing: border-box;
 }
 
-.card {
-  padding: 40rpx 32rpx;
+.form-card {
+  padding: 32rpx 28rpx;
   border-radius: 24rpx;
   background: #ffffff;
+  box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
 }
 
-.title {
+.form-item {
+  margin-bottom: 28rpx;
+}
+
+.label {
   display: block;
-  font-size: 36rpx;
-  font-weight: 600;
+  margin-bottom: 18rpx;
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.input {
+  width: 100%;
+  min-height: 88rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background: #f5f7f6;
+  box-sizing: border-box;
+  font-size: 30rpx;
   color: #222222;
 }
 
-.desc {
-  display: block;
-  margin-top: 16rpx;
-  font-size: 28rpx;
-  color: #8a8f99;
+.submit-btn {
+  height: 88rpx;
+  line-height: 88rpx;
+  margin-top: 12rpx;
+  border: none;
+  border-radius: 16rpx;
+  background: #2f8f55;
+  font-size: 32rpx;
+  color: #ffffff;
+}
+
+.submit-btn::after {
+  border: none;
 }
 </style>

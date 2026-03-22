@@ -117,13 +117,6 @@ export default {
         })
       } catch (error) {
         clearAuth()
-
-        if (error && error.message) {
-          uni.showToast({
-            title: error.message,
-            icon: 'none'
-          })
-        }
       } finally {
         this.loading = false
       }
