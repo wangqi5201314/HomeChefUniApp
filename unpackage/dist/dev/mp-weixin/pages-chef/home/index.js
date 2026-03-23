@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chefAuth = require("../../api/chef-auth.js");
 const utils_auth = require("../../utils/auth.js");
+const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const _sfc_main = {
   name: "ChefHomePage",
   data() {
@@ -14,14 +15,13 @@ const _sfc_main = {
       return this.chefInfo.name ? String(this.chefInfo.name).slice(0, 1) : "厨";
     },
     certStatusText() {
-      const certStatus = this.chefInfo.certStatus;
-      if (certStatus === 1) {
-        return "已认证";
+      if (this.chefInfo.certStatusDesc) {
+        return this.chefInfo.certStatusDesc;
       }
-      if (certStatus === 0) {
-        return "未认证";
+      if (this.chefInfo.certStatus === 0 || this.chefInfo.certStatus) {
+        return utils_chefCertStatus.getChefCertStatusText(this.chefInfo.certStatus);
       }
-      return String(certStatus || "状态未知");
+      return "未知状态";
     }
   },
   onShow() {
@@ -84,9 +84,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: common_vendor.o(($event) => $options.goPage("/pages-chef/order/list")),
     j: common_vendor.o(($event) => $options.goPage("/pages-chef/review/list")),
     k: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
-    l: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
-    m: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
-    n: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    l: common_vendor.t($options.certStatusText),
+    m: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
+    n: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
+    o: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-74d96ff2"]]);

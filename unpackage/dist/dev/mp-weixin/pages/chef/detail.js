@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_chef = require("../../api/chef.js");
 const api_review = require("../../api/review.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
+const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const _sfc_main = {
   name: "ChefDetailPage",
   data() {
@@ -40,6 +41,15 @@ const _sfc_main = {
         return utils_chefServiceMode.getChefServiceModeText(this.chef.serviceMode);
       }
       return "-";
+    },
+    certStatusText() {
+      if (this.chef.certStatusDesc) {
+        return this.chef.certStatusDesc;
+      }
+      if (this.chef.certStatus === 0 || this.chef.certStatus) {
+        return utils_chefCertStatus.getChefCertStatusText(this.chef.certStatus);
+      }
+      return "未知状态";
     }
   },
   onLoad(options) {
@@ -142,25 +152,26 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: common_vendor.t($options.getNameInitial($data.chef.name))
   }, {
     e: common_vendor.t($data.chef.name || "未命名厨师"),
-    f: common_vendor.t($data.chef.specialtyCuisine || "-"),
-    g: common_vendor.t($options.serviceModeText),
-    h: common_vendor.t($data.chef.introduction || "暂无介绍"),
-    i: common_vendor.t($options.formatValue($data.chef.yearsOfExperience, "年")),
-    j: common_vendor.t($options.formatPlain($data.chef.ratingAvg)),
-    k: common_vendor.t($options.formatPlain($data.chef.orderCount)),
-    l: common_vendor.t($options.formatValue($data.chef.serviceRadiusKm, "km")),
-    m: $options.tagList.length
+    f: common_vendor.t($options.certStatusText),
+    g: common_vendor.t($data.chef.specialtyCuisine || "-"),
+    h: common_vendor.t($options.serviceModeText),
+    i: common_vendor.t($data.chef.introduction || "暂无介绍"),
+    j: common_vendor.t($options.formatValue($data.chef.yearsOfExperience, "年")),
+    k: common_vendor.t($options.formatPlain($data.chef.ratingAvg)),
+    l: common_vendor.t($options.formatPlain($data.chef.orderCount)),
+    m: common_vendor.t($options.certStatusText),
+    n: $options.tagList.length
   }, $options.tagList.length ? {
-    n: common_vendor.f($options.tagList, (tag, index, i0) => {
+    o: common_vendor.f($options.tagList, (tag, index, i0) => {
       return {
         a: common_vendor.t(tag),
         b: index
       };
     })
   } : {}, {
-    o: $data.availableScheduleList.length
+    p: $data.availableScheduleList.length
   }, $data.availableScheduleList.length ? {
-    p: common_vendor.f($data.availableScheduleList, (item, k0, i0) => {
+    q: common_vendor.f($data.availableScheduleList, (item, k0, i0) => {
       return {
         a: common_vendor.t(item.serviceDate),
         b: common_vendor.t(item.timeSlot),
@@ -172,13 +183,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    q: $data.reviewList.length > $options.displayReviewList.length
+    r: $data.reviewList.length > $options.displayReviewList.length
   }, $data.reviewList.length > $options.displayReviewList.length ? {
-    r: common_vendor.o((...args) => $options.goAllReviews && $options.goAllReviews(...args))
+    s: common_vendor.o((...args) => $options.goAllReviews && $options.goAllReviews(...args))
   } : {}, {
-    s: $options.displayReviewList.length
+    t: $options.displayReviewList.length
   }, $options.displayReviewList.length ? {
-    t: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
+    v: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : `用户${item.userId}`),
         b: common_vendor.t($options.formatPlain(item.overallScore)),
@@ -192,8 +203,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}), {
-    v: common_vendor.t($options.selectedScheduleText),
-    w: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
+    w: common_vendor.t($options.selectedScheduleText),
+    x: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b9a9a594"]]);

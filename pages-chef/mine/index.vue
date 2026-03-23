@@ -17,7 +17,7 @@
         <text class="name">{{ chefInfo.name || '未命名厨师' }}</text>
         <text class="phone">{{ chefInfo.phone || '-' }}</text>
         <text class="summary">
-          认证状态：{{ certStatusText }} ｜ 评分：{{ formatValue(chefInfo.ratingAvg) }} ｜ 完成订单：{{ formatValue(chefInfo.orderCount) }}
+          认证状态：{{ certStatusText }} · 评分：{{ formatValue(chefInfo.ratingAvg) }} · 完成订单：{{ formatValue(chefInfo.orderCount) }}
         </text>
       </view>
     </view>
@@ -32,7 +32,10 @@
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" @click="goPage('/pages-chef/certification/index')">
-        <text class="menu-text">认证资料</text>
+        <view class="menu-main">
+          <text class="menu-text">认证资料</text>
+          <text class="menu-sub">{{ certStatusText }}</text>
+        </view>
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item last" @click="goPage('/pages-chef/schedule/index')">
@@ -48,6 +51,7 @@
 <script>
 import { getCurrentChefProfile } from '../../api/chef-profile'
 import { clearAuth, getChefInfo, setChefInfo } from '../../utils/auth'
+import { getChefCertStatusText } from '../../utils/chef-cert-status'
 
 export default {
   name: 'ChefMinePage',
@@ -61,15 +65,15 @@ export default {
       return this.chefInfo.name ? String(this.chefInfo.name).slice(0, 1) : '厨'
     },
     certStatusText() {
-      if (this.chefInfo.certStatus === 1) {
-        return '已认证'
+      if (this.chefInfo.certStatusDesc) {
+        return this.chefInfo.certStatusDesc
       }
 
-      if (this.chefInfo.certStatus === 0) {
-        return '未认证'
+      if (this.chefInfo.certStatus === 0 || this.chefInfo.certStatus) {
+        return getChefCertStatusText(this.chefInfo.certStatus)
       }
 
-      return String(this.chefInfo.certStatus || '未知')
+      return '未知状态'
     }
   },
   onShow() {
@@ -93,6 +97,7 @@ export default {
       if (value === 0) {
         return '0'
       }
+
       return value || '-'
     },
     goPage(url) {
@@ -203,9 +208,20 @@ export default {
   border-bottom: none;
 }
 
+.menu-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
 .menu-text {
   font-size: 30rpx;
   color: #1f2329;
+}
+
+.menu-sub {
+  font-size: 24rpx;
+  color: #738078;
 }
 
 .menu-arrow {

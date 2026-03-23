@@ -4,10 +4,12 @@ const api_chefProfile = require("../../api/chef-profile.js");
 const api_upload = require("../../api/upload.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
+const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 function createDefaultForm() {
   return {
     phone: "",
     certStatus: "",
+    certStatusDesc: "",
     name: "",
     avatar: "",
     gender: "0",
@@ -40,13 +42,13 @@ const _sfc_main = {
       return this.form.phone || "-";
     },
     certStatusText() {
-      if (Number(this.form.certStatus) === 1) {
-        return "已认证";
+      if (this.form.certStatusDesc) {
+        return this.form.certStatusDesc;
       }
-      if (Number(this.form.certStatus) === 0) {
-        return "未认证";
+      if (this.form.certStatus === "0" || this.form.certStatus) {
+        return utils_chefCertStatus.getChefCertStatusText(this.form.certStatus);
       }
-      return this.form.certStatus || "-";
+      return "未知状态";
     },
     serviceModeRange() {
       return this.serviceModeOptions.map((item) => item.label);
@@ -75,6 +77,7 @@ const _sfc_main = {
       this.form = {
         phone: data.phone || "",
         certStatus: data.certStatus === 0 || data.certStatus ? String(data.certStatus) : "",
+        certStatusDesc: data.certStatusDesc || "",
         name: data.name || "",
         avatar: data.avatar || "",
         gender: data.gender === 0 || data.gender ? String(data.gender) : "0",

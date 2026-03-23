@@ -1,5 +1,13 @@
 <template>
   <view class="page">
+    <view class="status-card">
+      <view class="status-head">
+        <text class="status-title">当前认证状态</text>
+        <text class="status-tag">{{ certStatusText }}</text>
+      </view>
+      <text class="status-tip">{{ certStatusTip }}</text>
+    </view>
+
     <view class="section-card">
       <view class="form-item">
         <text class="label">真实姓名</text>
@@ -29,7 +37,7 @@
       </view>
     </view>
 
-    <button class="submit-btn" :loading="saving" :disabled="saving || uploadingKey" @click="submitCertification">
+    <button class="submit-btn" :loading="saving" :disabled="saving || !!uploadingKey" @click="submitCertification">
       提交认证资料
     </button>
   </view>
@@ -37,7 +45,10 @@
 
 <script>
 import { getChefCertification, submitChefCertification } from '../../api/chef-certification'
+import { getCurrentChefProfile } from '../../api/chef-profile'
 import { uploadImage } from '../../api/upload'
+import { getChefInfo, setChefInfo } from '../../utils/auth'
+import { getChefCertStatusText } from '../../utils/chef-cert-status'
 
 function createDefaultForm() {
   return {
@@ -57,6 +68,7 @@ export default {
       saving: false,
       uploadingKey: '',
       form: createDefaultForm(),
+      chefInfo: {},
       uploadFields: [
         { key: 'healthCertUrl', label: '健康证' },
         { key: 'skillCertUrl', label: '技能证书' },
@@ -65,17 +77,58 @@ export default {
       ]
     }
   },
+  computed: {
+    certStatusText() {
+      if (this.chefInfo.certStatusDesc) {
+        return this.chefInfo.certStatusDesc
+      }
+
+      if (this.chefInfo.certStatus === 0 || this.chefInfo.certStatus) {
+        return getChefCertStatusText(this.chefInfo.certStatus)
+      }
+
+      return '未知状态'
+    },
+    certStatusTip() {
+      const status = Number(this.chefInfo.certStatus)
+
+      if (status === 2) {
+        return '认证已被拒绝，请检查资料后重新提交。'
+      }
+
+      if (status === 1) {
+        return '认证已通过。'
+      }
+
+      if (status === 0) {
+        return '审核中，请耐心等待。'
+      }
+
+      return '请完善并提交认证资料。'
+    }
+  },
   onShow() {
-    this.loadCertification()
+    const cachedInfo = getChefInfo()
+    if (cachedInfo) {
+      this.chefInfo = cachedInfo
+    }
+
+    this.loadPageData()
   },
   methods: {
-    async loadCertification() {
+    async loadPageData() {
       try {
-        const data = await getChefCertification()
+        const [certificationData, chefData] = await Promise.all([
+          getChefCertification(),
+          getCurrentChefProfile()
+        ])
+
         this.form = {
           ...createDefaultForm(),
-          ...(data || {})
+          ...(certificationData || {})
         }
+        this.chefInfo = chefData || {}
+        setChefInfo(this.chefInfo)
       } catch (error) {
         this.form = createDefaultForm()
       }
@@ -129,7 +182,7 @@ export default {
           icon: 'success'
         })
 
-        await this.loadCertification()
+        await this.loadPageData()
       } catch (error) {
       } finally {
         this.saving = false
@@ -147,12 +200,42 @@ export default {
   box-sizing: border-box;
 }
 
+.status-card,
 .section-card {
   margin-bottom: 24rpx;
   padding: 28rpx;
   border-radius: 28rpx;
   background: #ffffff;
   box-shadow: 0 14rpx 36rpx rgba(28, 39, 31, 0.06);
+}
+
+.status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.status-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.status-tag {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: #edf8f1;
+  font-size: 24rpx;
+  color: #2f8f55;
+}
+
+.status-tip {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #5d6873;
 }
 
 .form-item {

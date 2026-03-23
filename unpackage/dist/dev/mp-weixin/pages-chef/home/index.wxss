@@ -44,6 +44,7 @@
   display: flex;
   align-items: center;
   gap: 14rpx;
+  flex-wrap: wrap;
 }
 .name.data-v-74d96ff2 {
   font-size: 38rpx;
@@ -83,9 +84,18 @@
 .menu-item.last.data-v-74d96ff2 {
   border-bottom: none;
 }
+.menu-main.data-v-74d96ff2 {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
 .menu-text.data-v-74d96ff2 {
   font-size: 30rpx;
   color: #1f2329;
+}
+.menu-sub.data-v-74d96ff2 {
+  font-size: 24rpx;
+  color: #7d8794;
 }
 .menu-arrow.data-v-74d96ff2 {
   font-size: 34rpx;

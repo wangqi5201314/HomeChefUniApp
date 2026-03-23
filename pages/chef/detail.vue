@@ -18,7 +18,10 @@
           </view>
 
           <view class="hero-info">
-            <text class="name">{{ chef.name || '未命名厨师' }}</text>
+            <view class="name-row">
+              <text class="name">{{ chef.name || '未命名厨师' }}</text>
+              <text class="cert-tag">{{ certStatusText }}</text>
+            </view>
             <text class="summary">擅长菜系：{{ chef.specialtyCuisine || '-' }}</text>
             <text class="summary">服务模式：{{ serviceModeText }}</text>
           </view>
@@ -40,8 +43,8 @@
             <text class="stat-label">订单数</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">{{ formatValue(chef.serviceRadiusKm, 'km') }}</text>
-            <text class="stat-label">服务半径</text>
+            <text class="stat-value">{{ certStatusText }}</text>
+            <text class="stat-label">认证状态</text>
           </view>
         </view>
 
@@ -115,6 +118,7 @@
 import { getChefDetail, getChefSchedule } from '../../api/chef'
 import { getChefReviewList } from '../../api/review'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
+import { getChefCertStatusText } from '../../utils/chef-cert-status'
 
 export default {
   name: 'ChefDetailPage',
@@ -160,6 +164,17 @@ export default {
       }
 
       return '-'
+    },
+    certStatusText() {
+      if (this.chef.certStatusDesc) {
+        return this.chef.certStatusDesc
+      }
+
+      if (this.chef.certStatus === 0 || this.chef.certStatus) {
+        return getChefCertStatusText(this.chef.certStatus)
+      }
+
+      return '未知状态'
     }
   },
   onLoad(options) {
@@ -329,11 +344,26 @@ export default {
   margin-left: 24rpx;
 }
 
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
 .name {
   display: block;
   font-size: 40rpx;
   font-weight: 600;
   color: #1f2329;
+}
+
+.cert-tag {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: #edf8f1;
+  font-size: 24rpx;
+  color: #2f8f55;
 }
 
 .summary {

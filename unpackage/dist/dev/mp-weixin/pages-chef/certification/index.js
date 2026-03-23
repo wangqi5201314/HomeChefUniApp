@@ -1,7 +1,10 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_chefCertification = require("../../api/chef-certification.js");
+const api_chefProfile = require("../../api/chef-profile.js");
 const api_upload = require("../../api/upload.js");
+const utils_auth = require("../../utils/auth.js");
+const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 function createDefaultForm() {
   return {
     realName: "",
@@ -19,6 +22,7 @@ const _sfc_main = {
       saving: false,
       uploadingKey: "",
       form: createDefaultForm(),
+      chefInfo: {},
       uploadFields: [
         { key: "healthCertUrl", label: "健康证" },
         { key: "skillCertUrl", label: "技能证书" },
@@ -27,17 +31,50 @@ const _sfc_main = {
       ]
     };
   },
+  computed: {
+    certStatusText() {
+      if (this.chefInfo.certStatusDesc) {
+        return this.chefInfo.certStatusDesc;
+      }
+      if (this.chefInfo.certStatus === 0 || this.chefInfo.certStatus) {
+        return utils_chefCertStatus.getChefCertStatusText(this.chefInfo.certStatus);
+      }
+      return "未知状态";
+    },
+    certStatusTip() {
+      const status = Number(this.chefInfo.certStatus);
+      if (status === 2) {
+        return "认证已被拒绝，请检查资料后重新提交。";
+      }
+      if (status === 1) {
+        return "认证已通过。";
+      }
+      if (status === 0) {
+        return "审核中，请耐心等待。";
+      }
+      return "请完善并提交认证资料。";
+    }
+  },
   onShow() {
-    this.loadCertification();
+    const cachedInfo = utils_auth.getChefInfo();
+    if (cachedInfo) {
+      this.chefInfo = cachedInfo;
+    }
+    this.loadPageData();
   },
   methods: {
-    async loadCertification() {
+    async loadPageData() {
       try {
-        const data = await api_chefCertification.getChefCertification();
+        const [certificationData, chefData] = await Promise.all([
+          api_chefCertification.getChefCertification(),
+          api_chefProfile.getCurrentChefProfile()
+        ]);
         this.form = {
           ...createDefaultForm(),
-          ...data || {}
+          ...certificationData || {}
         };
+        this.chefInfo = chefData || {};
+        utils_auth.setChefInfo(this.chefInfo);
       } catch (error) {
         this.form = createDefaultForm();
       }
@@ -84,7 +121,7 @@ const _sfc_main = {
           title: "提交成功",
           icon: "success"
         });
-        await this.loadCertification();
+        await this.loadPageData();
       } catch (error) {
       } finally {
         this.saving = false;
@@ -94,11 +131,13 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: $data.form.realName,
-    b: common_vendor.o(($event) => $data.form.realName = $event.detail.value),
-    c: $data.form.idCardNo,
-    d: common_vendor.o(($event) => $data.form.idCardNo = $event.detail.value),
-    e: common_vendor.f($data.uploadFields, (item, k0, i0) => {
+    a: common_vendor.t($options.certStatusText),
+    b: common_vendor.t($options.certStatusTip),
+    c: $data.form.realName,
+    d: common_vendor.o(($event) => $data.form.realName = $event.detail.value),
+    e: $data.form.idCardNo,
+    f: common_vendor.o(($event) => $data.form.idCardNo = $event.detail.value),
+    g: common_vendor.f($data.uploadFields, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.label),
         b: $data.form[item.key]
@@ -109,9 +148,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: item.key
       });
     }),
-    f: $data.saving,
-    g: $data.saving || $data.uploadingKey,
-    h: common_vendor.o((...args) => $options.submitCertification && $options.submitCertification(...args))
+    h: $data.saving,
+    i: $data.saving || !!$data.uploadingKey,
+    j: common_vendor.o((...args) => $options.submitCertification && $options.submitCertification(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-2e97051e"]]);

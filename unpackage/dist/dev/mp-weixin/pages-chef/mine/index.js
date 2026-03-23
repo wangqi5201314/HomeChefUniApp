@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chefProfile = require("../../api/chef-profile.js");
 const utils_auth = require("../../utils/auth.js");
+const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const _sfc_main = {
   name: "ChefMinePage",
   data() {
@@ -14,13 +15,13 @@ const _sfc_main = {
       return this.chefInfo.name ? String(this.chefInfo.name).slice(0, 1) : "厨";
     },
     certStatusText() {
-      if (this.chefInfo.certStatus === 1) {
-        return "已认证";
+      if (this.chefInfo.certStatusDesc) {
+        return this.chefInfo.certStatusDesc;
       }
-      if (this.chefInfo.certStatus === 0) {
-        return "未认证";
+      if (this.chefInfo.certStatus === 0 || this.chefInfo.certStatus) {
+        return utils_chefCertStatus.getChefCertStatusText(this.chefInfo.certStatus);
       }
-      return String(this.chefInfo.certStatus || "未知");
+      return "未知状态";
     }
   },
   onShow() {
@@ -82,9 +83,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     h: common_vendor.t($options.formatValue($data.chefInfo.orderCount)),
     i: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
     j: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/change-password")),
-    k: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
-    l: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
-    m: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    k: common_vendor.t($options.certStatusText),
+    l: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
+    m: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
+    n: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-1ec0422a"]]);

@@ -68,9 +68,18 @@
 .menu-item.last.data-v-1ec0422a {
   border-bottom: none;
 }
+.menu-main.data-v-1ec0422a {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
 .menu-text.data-v-1ec0422a {
   font-size: 30rpx;
   color: #1f2329;
+}
+.menu-sub.data-v-1ec0422a {
+  font-size: 24rpx;
+  color: #738078;
 }
 .menu-arrow.data-v-1ec0422a {
   font-size: 30rpx;

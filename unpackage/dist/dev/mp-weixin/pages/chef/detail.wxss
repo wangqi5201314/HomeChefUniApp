@@ -53,11 +53,24 @@
   min-width: 0;
   margin-left: 24rpx;
 }
+.name-row.data-v-b9a9a594 {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
 .name.data-v-b9a9a594 {
   display: block;
   font-size: 40rpx;
   font-weight: 600;
   color: #1f2329;
+}
+.cert-tag.data-v-b9a9a594 {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: #edf8f1;
+  font-size: 24rpx;
+  color: #2f8f55;
 }
 .summary.data-v-b9a9a594 {
   display: block;
