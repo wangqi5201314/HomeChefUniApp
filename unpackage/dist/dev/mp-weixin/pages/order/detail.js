@@ -16,6 +16,9 @@ const _sfc_main = {
     };
   },
   computed: {
+    isReviewed() {
+      return this.orderDetail.reviewed === true || this.orderDetail.reviewed === 1;
+    },
     showCancelButton() {
       return this.orderDetail.orderStatus === "PENDING_CONFIRM" || this.orderDetail.orderStatus === "WAIT_PAY" || this.orderDetail.orderStatus === "PAID";
     },
@@ -23,10 +26,16 @@ const _sfc_main = {
       return this.orderDetail.orderStatus === "WAIT_PAY";
     },
     showReviewButton() {
-      return this.orderDetail.orderStatus === "COMPLETED";
+      return this.orderDetail.orderStatus === "COMPLETED" && !this.isReviewed;
+    },
+    showReviewedTag() {
+      return this.orderDetail.orderStatus === "COMPLETED" && this.isReviewed;
+    },
+    showBackHomeButton() {
+      return this.showCancelButton;
     },
     showActionBar() {
-      return this.showCancelButton || this.showPayButton || this.showReviewButton;
+      return this.showCancelButton || this.showPayButton || this.showReviewButton || this.showReviewedTag || this.showBackHomeButton;
     },
     statusClass() {
       const status = this.orderDetail.orderStatus;
@@ -52,6 +61,11 @@ const _sfc_main = {
       return;
     }
     this.loadOrderDetail();
+  },
+  onShow() {
+    if (this.id) {
+      this.loadOrderDetail();
+    }
   },
   methods: {
     async loadOrderDetail() {
@@ -139,8 +153,16 @@ const _sfc_main = {
       }
     },
     goReview() {
+      if (this.isReviewed) {
+        return;
+      }
       common_vendor.index.navigateTo({
         url: `/pages/review/create?orderId=${this.orderDetail.id}&chefId=${this.orderDetail.chefId}&userId=${this.orderDetail.userId}`
+      });
+    },
+    goHome() {
+      common_vendor.index.switchTab({
+        url: "/pages/home/index"
       });
     }
   }
@@ -174,46 +196,53 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     z: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
     A: common_vendor.t($options.formatAmount($data.orderDetail.discountAmount)),
     B: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
-    C: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
+    C: common_vendor.t($options.isReviewed ? "已评价" : "未评价"),
+    D: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
   }, $data.orderDetail.cancelReason || $data.orderDetail.refundReason ? common_vendor.e({
-    D: $data.orderDetail.cancelReason
+    E: $data.orderDetail.cancelReason
   }, $data.orderDetail.cancelReason ? {
-    E: common_vendor.t($data.orderDetail.cancelReason)
+    F: common_vendor.t($data.orderDetail.cancelReason)
   } : {}, {
-    F: $data.orderDetail.refundReason
+    G: $data.orderDetail.refundReason
   }, $data.orderDetail.refundReason ? {
-    G: common_vendor.t($data.orderDetail.refundReason)
+    H: common_vendor.t($data.orderDetail.refundReason)
   } : {}) : {}), {
     b: !$data.orderDetail.id,
-    H: $options.showActionBar
+    I: $options.showActionBar
   }, $options.showActionBar ? common_vendor.e({
-    I: $options.showCancelButton
+    J: $options.showCancelButton
   }, $options.showCancelButton ? {
-    J: $data.cancelSubmitting,
-    K: $data.cancelSubmitting || $data.paying,
-    L: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
+    K: $data.cancelSubmitting,
+    L: $data.cancelSubmitting || $data.paying,
+    M: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
   } : {}, {
-    M: $options.showPayButton
+    N: $options.showPayButton
   }, $options.showPayButton ? {
-    N: $data.paying,
-    O: $data.paying || $data.cancelSubmitting,
-    P: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
+    O: $data.paying,
+    P: $data.paying || $data.cancelSubmitting,
+    Q: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
   } : {}, {
-    Q: $options.showReviewButton
+    R: $options.showReviewButton
   }, $options.showReviewButton ? {
-    R: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
+    S: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
+  } : {}, {
+    T: $options.showReviewedTag
+  }, $options.showReviewedTag ? {} : {}, {
+    U: $options.showBackHomeButton
+  }, $options.showBackHomeButton ? {
+    V: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
   } : {}) : {}, {
-    S: $data.showCancelModal
+    W: $data.showCancelModal
   }, $data.showCancelModal ? {
-    T: $data.cancelReason,
-    U: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
-    V: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
-    W: $data.cancelSubmitting,
-    X: $data.cancelSubmitting,
-    Y: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
-    Z: common_vendor.o(() => {
+    X: $data.cancelReason,
+    Y: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
+    Z: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
+    aa: $data.cancelSubmitting,
+    ab: $data.cancelSubmitting,
+    ac: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
+    ad: common_vendor.o(() => {
     }),
-    aa: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+    ae: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-6b23c96c"]]);

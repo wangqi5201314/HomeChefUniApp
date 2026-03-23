@@ -20,6 +20,7 @@ if (!Math) {
   "./pages-chef/login/index.js";
   "./pages-chef/register/index.js";
   "./pages-chef/home/index.js";
+  "./pages-chef/review/list.js";
   "./pages-chef/order/list.js";
   "./pages-chef/order/detail.js";
   "./pages-chef/schedule/index.js";

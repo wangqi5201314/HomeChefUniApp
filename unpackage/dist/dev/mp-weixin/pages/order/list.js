@@ -78,6 +78,14 @@ const _sfc_main = {
         url: `/pages/order/detail?id=${id}`
       });
     },
+    goReview(item) {
+      if (!item || !item.id) {
+        return;
+      }
+      common_vendor.index.navigateTo({
+        url: `/pages/review/create?orderId=${item.id}&chefId=${item.chefId}&userId=${item.userId}`
+      });
+    },
     formatAmount(value) {
       if (value === 0) {
         return "0";
@@ -99,7 +107,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: $data.loading
   }, $data.loading ? {} : $data.orderList.length === 0 ? {} : {
     d: common_vendor.f($data.orderList, (item, k0, i0) => {
-      return {
+      return common_vendor.e({
         a: common_vendor.t(item.orderNo || "-"),
         b: common_vendor.t(item.orderStatus || "-"),
         c: common_vendor.t(item.serviceDate || "-"),
@@ -109,9 +117,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         g: common_vendor.t(item.contactPhone || "-"),
         h: common_vendor.t(item.fullAddress || "-"),
         i: common_vendor.t(item.createdAt || "-"),
-        j: item.id,
-        k: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
-      };
+        j: item.orderStatus === "COMPLETED"
+      }, item.orderStatus === "COMPLETED" ? common_vendor.e({
+        k: item.reviewed === false
+      }, item.reviewed === false ? {
+        l: common_vendor.o(($event) => $options.goReview(item), item.id)
+      } : item.reviewed === true ? {} : {}, {
+        m: item.reviewed === true,
+        n: common_vendor.o(() => {
+        }, item.id)
+      }) : {}, {
+        o: item.id,
+        p: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
+      });
     })
   }, {
     c: $data.orderList.length === 0

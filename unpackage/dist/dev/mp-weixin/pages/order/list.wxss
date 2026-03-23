@@ -108,3 +108,30 @@
   color: #d96c3a;
   font-weight: 600;
 }
+.review-row.data-v-456ecf67 {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid #f1f3f6;
+}
+.review-btn.data-v-456ecf67 {
+  min-width: 160rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  margin: 0;
+  border: none;
+  border-radius: 999rpx;
+  background: #d96c3a;
+  font-size: 26rpx;
+  color: #ffffff;
+}
+.review-btn.data-v-456ecf67::after {
+  border: none;
+}
+.reviewed-text.data-v-456ecf67 {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #8a8f99;
+}

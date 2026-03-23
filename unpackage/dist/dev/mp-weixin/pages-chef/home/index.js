@@ -82,10 +82,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.t($options.formatValue($data.chefInfo.ratingAvg)),
     h: common_vendor.t($options.formatValue($data.chefInfo.orderCount)),
     i: common_vendor.o(($event) => $options.goPage("/pages-chef/order/list")),
-    j: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
-    k: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
-    l: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
-    m: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    j: common_vendor.o(($event) => $options.goPage("/pages-chef/review/list")),
+    k: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
+    l: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
+    m: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
+    n: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-74d96ff2"]]);

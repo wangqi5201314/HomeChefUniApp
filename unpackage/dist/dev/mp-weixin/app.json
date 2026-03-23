@@ -23,6 +23,7 @@
         "login/index",
         "register/index",
         "home/index",
+        "review/list",
         "order/list",
         "order/detail",
         "schedule/index",

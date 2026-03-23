@@ -62,6 +62,17 @@
           <text class="info-label">创建时间</text>
           <text class="info-value">{{ item.createdAt || '-' }}</text>
         </view>
+
+        <view v-if="item.orderStatus === 'COMPLETED'" class="review-row" @click.stop>
+          <button
+            v-if="item.reviewed === false"
+            class="review-btn"
+            @click="goReview(item)"
+          >
+            去评价
+          </button>
+          <text v-else-if="item.reviewed === true" class="reviewed-text">已评价</text>
+        </view>
       </view>
     </view>
   </view>
@@ -153,6 +164,15 @@ export default {
 
       uni.navigateTo({
         url: `/pages/order/detail?id=${id}`
+      })
+    },
+    goReview(item) {
+      if (!item || !item.id) {
+        return
+      }
+
+      uni.navigateTo({
+        url: `/pages/review/create?orderId=${item.id}&chefId=${item.chefId}&userId=${item.userId}`
       })
     },
     formatAmount(value) {
@@ -295,5 +315,36 @@ export default {
 .amount {
   color: #d96c3a;
   font-weight: 600;
+}
+
+.review-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid #f1f3f6;
+}
+
+.review-btn {
+  min-width: 160rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  margin: 0;
+  border: none;
+  border-radius: 999rpx;
+  background: #d96c3a;
+  font-size: 26rpx;
+  color: #ffffff;
+}
+
+.review-btn::after {
+  border: none;
+}
+
+.reviewed-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #8a8f99;
 }
 </style>

@@ -42,6 +42,9 @@ function setAdminId(adminId) {
 function removeAdminId() {
   common_vendor.index.removeStorageSync(ADMIN_ID_KEY);
 }
+function getChefId() {
+  return common_vendor.index.getStorageSync(CHEF_ID_KEY) || "";
+}
 function setChefId(chefId) {
   common_vendor.index.setStorageSync(CHEF_ID_KEY, chefId || "");
 }
@@ -67,6 +70,7 @@ function clearAuth() {
   removeChefInfo();
 }
 exports.clearAuth = clearAuth;
+exports.getChefId = getChefId;
 exports.getChefInfo = getChefInfo;
 exports.getToken = getToken;
 exports.getUserInfo = getUserInfo;

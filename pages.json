@@ -150,6 +150,12 @@
           }
         },
         {
+          "path": "review/list",
+          "style": {
+            "navigationBarTitleText": "用户评价"
+          }
+        },
+        {
           "path": "order/list",
           "style": {
             "navigationBarTitleText": "我的订单"

@@ -12,7 +12,11 @@ function getMyReviewList(userId) {
 function getChefReviewList(chefId) {
   return api_request.request.get(`/api/review/chef/${chefId}`);
 }
+function replyReview(id, data) {
+  return api_request.request.post(`/api/review/${id}/reply`, data);
+}
 exports.createReview = createReview;
 exports.getChefReviewList = getChefReviewList;
 exports.getMyReviewList = getMyReviewList;
+exports.replyReview = replyReview;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/api/review.js.map

@@ -30,6 +30,10 @@
         <text class="menu-text">我的订单</text>
         <text class="menu-arrow">›</text>
       </view>
+      <view class="menu-item" @click="goPage('/pages-chef/review/list')">
+        <text class="menu-text">用户评价</text>
+        <text class="menu-arrow">›</text>
+      </view>
       <view class="menu-item" @click="goPage('/pages-chef/schedule/index')">
         <text class="menu-text">我的档期</text>
         <text class="menu-arrow">›</text>
