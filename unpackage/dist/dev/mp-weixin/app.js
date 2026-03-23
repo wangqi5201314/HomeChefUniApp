@@ -17,6 +17,7 @@ if (!Math) {
   "./pages/mine/profile.js";
   "./pages/mine/change-password.js";
   "./pages-chef/login/index.js";
+  "./pages-chef/register/index.js";
   "./pages-chef/home/index.js";
   "./pages-chef/order/list.js";
   "./pages-chef/order/detail.js";

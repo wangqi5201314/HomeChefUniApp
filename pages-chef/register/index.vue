@@ -1,8 +1,8 @@
 <template>
   <view class="page">
     <view class="header">
-      <text class="title">厨师端登录</text>
-      <text class="subtitle">手机号和密码登录</text>
+      <text class="title">厨师注册</text>
+      <text class="subtitle">创建厨师端账号</text>
     </view>
 
     <view class="form-card">
@@ -19,72 +19,90 @@
       </view>
 
       <view class="form-item">
+        <text class="label">姓名</text>
+        <input
+          v-model="form.name"
+          class="input"
+          placeholder="请输入厨师姓名"
+          :disabled="loading"
+        />
+      </view>
+
+      <view class="form-item">
         <text class="label">密码</text>
         <input
           v-model="form.password"
           class="input"
           password
-          placeholder="请输入密码"
+          placeholder="请输入至少 6 位密码"
           :disabled="loading"
         />
       </view>
 
-      <button
-        class="login-btn"
-        type="primary"
-        :loading="loading"
-        :disabled="loading"
-        @click="handleLogin"
-      >
-        {{ loading ? '登录中...' : '登录' }}
-      </button>
-
-      <view class="footer">
-        <text class="footer-text">还没有账号？</text>
-        <text class="footer-link" @click="goRegister">去注册</text>
+      <view class="form-item">
+        <text class="label">确认密码</text>
+        <input
+          v-model="form.confirmPassword"
+          class="input"
+          password
+          placeholder="请再次输入密码"
+          :disabled="loading"
+        />
       </view>
+
+      <button class="register-btn" type="primary" :loading="loading" :disabled="loading" @click="handleRegister">
+        {{ loading ? '注册中...' : '注册' }}
+      </button>
     </view>
   </view>
 </template>
 
 <script>
-import { chefLogin, getCurrentChefInfo } from '../../api/chef-auth'
-import { clearAuth, setChefId, setChefInfo, setToken, setUserType } from '../../utils/auth'
+import { chefRegister } from '../../api/chef-auth'
 
 export default {
-  name: 'ChefLoginPage',
+  name: 'ChefRegisterPage',
   data() {
     return {
       loading: false,
       form: {
         phone: '',
-        password: ''
+        password: '',
+        confirmPassword: '',
+        name: ''
       }
     }
   },
   methods: {
     validateForm() {
-      const phone = this.form.phone.trim()
-      const password = this.form.password.trim()
-
-      if (!phone) {
+      if (!this.form.phone.trim()) {
         uni.showToast({ title: '请输入手机号', icon: 'none' })
         return false
       }
 
-      if (!/^1\d{10}$/.test(phone)) {
+      if (!/^1\d{10}$/.test(this.form.phone.trim())) {
         uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
         return false
       }
 
-      if (!password) {
-        uni.showToast({ title: '请输入密码', icon: 'none' })
+      if (!this.form.name.trim()) {
+        uni.showToast({ title: '请输入姓名', icon: 'none' })
+        return false
+      }
+
+      if (!this.form.password || this.form.password.length < 6) {
+        uni.showToast({ title: '密码至少 6 位', icon: 'none' })
+        return false
+      }
+
+      if (this.form.password !== this.form.confirmPassword) {
+        uni.showToast({ title: '两次密码输入不一致', icon: 'none' })
         return false
       }
 
       return true
     },
-    async handleLogin() {
+    async handleRegister() {
       if (this.loading || !this.validateForm()) {
         return
       }
@@ -92,35 +110,27 @@ export default {
       this.loading = true
 
       try {
-        const loginData = await chefLogin({
+        await chefRegister({
           phone: this.form.phone.trim(),
-          password: this.form.password
+          password: this.form.password,
+          confirmPassword: this.form.confirmPassword,
+          name: this.form.name.trim()
         })
 
-        if (!loginData || !loginData.token) {
-          throw new Error('登录返回缺少 token')
-        }
-
-        setToken(loginData.token)
-        setUserType(loginData.userType || 'CHEF')
-        setChefId(loginData.chefId || '')
-
-        const chefInfo = await getCurrentChefInfo()
-        setChefInfo(chefInfo || {})
-
-        uni.reLaunch({
-          url: '/pages-chef/home/index'
+        uni.showToast({
+          title: '注册成功',
+          icon: 'success'
         })
+
+        setTimeout(() => {
+          uni.navigateBack({
+            delta: 1
+          })
+        }, 300)
       } catch (error) {
-        clearAuth()
       } finally {
         this.loading = false
       }
-    },
-    goRegister() {
-      uni.navigateTo({
-        url: '/pages-chef/register/index'
-      })
     }
   }
 }
@@ -181,7 +191,7 @@ export default {
   box-sizing: border-box;
 }
 
-.login-btn {
+.register-btn {
   height: 88rpx;
   line-height: 88rpx;
   margin-top: 16rpx;
@@ -192,24 +202,7 @@ export default {
   font-weight: 500;
 }
 
-.login-btn::after {
+.register-btn::after {
   border: none;
-}
-
-.footer {
-  display: flex;
-  justify-content: center;
-  gap: 12rpx;
-  margin-top: 28rpx;
-}
-
-.footer-text {
-  font-size: 26rpx;
-  color: #8a8f99;
-}
-
-.footer-link {
-  font-size: 26rpx;
-  color: #2f8f55;
 }
 </style>

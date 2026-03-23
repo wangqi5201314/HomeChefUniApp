@@ -18,24 +18,15 @@ const _sfc_main = {
       const phone = this.form.phone.trim();
       const password = this.form.password.trim();
       if (!phone) {
-        common_vendor.index.showToast({
-          title: "请输入手机号",
-          icon: "none"
-        });
+        common_vendor.index.showToast({ title: "请输入手机号", icon: "none" });
         return false;
       }
       if (!/^1\d{10}$/.test(phone)) {
-        common_vendor.index.showToast({
-          title: "请输入正确的手机号",
-          icon: "none"
-        });
+        common_vendor.index.showToast({ title: "请输入正确的手机号", icon: "none" });
         return false;
       }
       if (!password) {
-        common_vendor.index.showToast({
-          title: "请输入密码",
-          icon: "none"
-        });
+        common_vendor.index.showToast({ title: "请输入密码", icon: "none" });
         return false;
       }
       return true;
@@ -58,7 +49,7 @@ const _sfc_main = {
         utils_auth.setChefId(loginData.chefId || "");
         const chefInfo = await api_chefAuth.getCurrentChefInfo();
         utils_auth.setChefInfo(chefInfo || {});
-        common_vendor.index.redirectTo({
+        common_vendor.index.reLaunch({
           url: "/pages-chef/home/index"
         });
       } catch (error) {
@@ -66,6 +57,11 @@ const _sfc_main = {
       } finally {
         this.loading = false;
       }
+    },
+    goRegister() {
+      common_vendor.index.navigateTo({
+        url: "/pages-chef/register/index"
+      });
     }
   }
 };
@@ -80,7 +76,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.t($data.loading ? "登录中..." : "登录"),
     h: $data.loading,
     i: $data.loading,
-    j: common_vendor.o((...args) => $options.handleLogin && $options.handleLogin(...args))
+    j: common_vendor.o((...args) => $options.handleLogin && $options.handleLogin(...args)),
+    k: common_vendor.o((...args) => $options.goRegister && $options.goRegister(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-85a779a0"]]);

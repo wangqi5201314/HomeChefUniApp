@@ -1,31 +1,65 @@
 
 .page.data-v-d08ef7d4 {
   min-height: 100vh;
-  padding: 120rpx 40rpx 40rpx;
+  padding: 72rpx 40rpx 40rpx;
   background: linear-gradient(180deg, #fff7f0 0%, #f7f8fa 45%, #f7f8fa 100%);
   box-sizing: border-box;
 }
+.role-card.data-v-d08ef7d4,
+.form-card.data-v-d08ef7d4 {
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background-color: #ffffff;
+  box-shadow: 0 12rpx 36rpx rgba(25, 31, 37, 0.06);
+}
+.role-card.data-v-d08ef7d4 {
+  margin-bottom: 40rpx;
+}
+.role-title.data-v-d08ef7d4 {
+  display: block;
+  font-size: 28rpx;
+  color: #4d5562;
+}
+.role-actions.data-v-d08ef7d4 {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 24rpx;
+}
+.role-btn.data-v-d08ef7d4 {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  border: none;
+  border-radius: 18rpx;
+  background: #f6f7fb;
+  color: #3b4250;
+  font-size: 28rpx;
+}
+.role-btn.active.data-v-d08ef7d4 {
+  background: #d96c3a;
+  color: #ffffff;
+}
+.role-btn.chef.data-v-d08ef7d4 {
+  background: #edf8f1;
+  color: #2f8f55;
+}
+.role-btn.data-v-d08ef7d4::after {
+  border: none;
+}
 .header.data-v-d08ef7d4 {
-  margin-bottom: 60rpx;
+  margin-bottom: 40rpx;
 }
 .title.data-v-d08ef7d4 {
   display: block;
   font-size: 48rpx;
   font-weight: 600;
   color: #2f2f2f;
-  line-height: 1.4;
 }
 .subtitle.data-v-d08ef7d4 {
   display: block;
   margin-top: 16rpx;
   font-size: 28rpx;
   color: #8a8f99;
-}
-.form-card.data-v-d08ef7d4 {
-  padding: 40rpx 32rpx;
-  border-radius: 24rpx;
-  background-color: #ffffff;
-  box-shadow: 0 12rpx 36rpx rgba(25, 31, 37, 0.06);
 }
 .form-item.data-v-d08ef7d4 {
   margin-bottom: 32rpx;
@@ -56,9 +90,6 @@
   font-size: 32rpx;
   font-weight: 500;
 }
-.login-btn.data-v-d08ef7d4::after {
-  border: none;
-}
 .wechat-btn.data-v-d08ef7d4 {
   height: 88rpx;
   line-height: 88rpx;
@@ -70,6 +101,7 @@
   font-weight: 500;
   color: #2f8f55;
 }
+.login-btn.data-v-d08ef7d4::after,
 .wechat-btn.data-v-d08ef7d4::after {
   border: none;
 }

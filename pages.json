@@ -128,13 +128,19 @@
         {
           "path": "login/index",
           "style": {
-            "navigationBarTitleText": "厨师端登录"
+            "navigationBarTitleText": "厨师登录"
+          }
+        },
+        {
+          "path": "register/index",
+          "style": {
+            "navigationBarTitleText": "厨师注册"
           }
         },
         {
           "path": "home/index",
           "style": {
-            "navigationBarTitleText": "厨师端首页"
+            "navigationBarTitleText": "厨师首页"
           }
         },
         {

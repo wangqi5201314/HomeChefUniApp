@@ -325,7 +325,6 @@ export default {
           title: '保存成功',
           icon: 'success'
         })
-
         this.closePopup()
         await this.fetchScheduleList()
       } catch (error) {

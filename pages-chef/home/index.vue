@@ -43,12 +43,14 @@
         <text class="menu-arrow">›</text>
       </view>
     </view>
+
+    <button class="logout-btn" @click="handleLogout">退出登录</button>
   </view>
 </template>
 
 <script>
 import { getCurrentChefInfo } from '../../api/chef-auth'
-import { getChefInfo, setChefInfo } from '../../utils/auth'
+import { clearAuth, getChefInfo, setChefInfo } from '../../utils/auth'
 
 export default {
   name: 'ChefHomePage',
@@ -72,7 +74,7 @@ export default {
         return '未认证'
       }
 
-      return String(certStatus || '认证状态未知')
+      return String(certStatus || '状态未知')
     }
   },
   onShow() {
@@ -96,11 +98,29 @@ export default {
       if (value === 0) {
         return '0'
       }
+
       return value || '-'
     },
     goPage(url) {
       uni.navigateTo({
         url
+      })
+    },
+    handleLogout() {
+      uni.showModal({
+        title: '提示',
+        content: '确认退出当前厨师账号吗？',
+        success: (res) => {
+          if (!res.confirm) {
+            return
+          }
+
+          clearAuth()
+
+          uni.reLaunch({
+            url: '/pages-chef/login/index'
+          })
+        }
       })
     }
   }
@@ -214,7 +234,24 @@ export default {
 }
 
 .menu-arrow {
-  font-size: 30rpx;
+  font-size: 34rpx;
   color: #b0b7c3;
+}
+
+.logout-btn {
+  width: 100%;
+  height: 88rpx;
+  margin-top: 28rpx;
+  line-height: 88rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.06);
+  font-size: 30rpx;
+  color: #d14a4a;
+}
+
+.logout-btn::after {
+  border: none;
 }
 </style>

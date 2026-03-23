@@ -88,6 +88,21 @@
   color: #1f2329;
 }
 .menu-arrow.data-v-74d96ff2 {
-  font-size: 30rpx;
+  font-size: 34rpx;
   color: #b0b7c3;
+}
+.logout-btn.data-v-74d96ff2 {
+  width: 100%;
+  height: 88rpx;
+  margin-top: 28rpx;
+  line-height: 88rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.06);
+  font-size: 30rpx;
+  color: #d14a4a;
+}
+.logout-btn.data-v-74d96ff2::after {
+  border: none;
 }

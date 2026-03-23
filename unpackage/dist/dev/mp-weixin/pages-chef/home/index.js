@@ -21,7 +21,7 @@ const _sfc_main = {
       if (certStatus === 0) {
         return "未认证";
       }
-      return String(certStatus || "认证状态未知");
+      return String(certStatus || "状态未知");
     }
   },
   onShow() {
@@ -50,6 +50,21 @@ const _sfc_main = {
       common_vendor.index.navigateTo({
         url
       });
+    },
+    handleLogout() {
+      common_vendor.index.showModal({
+        title: "提示",
+        content: "确认退出当前厨师账号吗？",
+        success: (res) => {
+          if (!res.confirm) {
+            return;
+          }
+          utils_auth.clearAuth();
+          common_vendor.index.reLaunch({
+            url: "/pages-chef/login/index"
+          });
+        }
+      });
     }
   }
 };
@@ -69,7 +84,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: common_vendor.o(($event) => $options.goPage("/pages-chef/order/list")),
     j: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
     k: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
-    l: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile"))
+    l: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
+    m: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-74d96ff2"]]);

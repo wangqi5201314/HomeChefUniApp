@@ -62,7 +62,7 @@ function handleResponse(response, resolve, reject) {
     return;
   }
   if (!data || typeof code === "undefined") {
-    showToast("返回数据格式错误");
+    showToast("响应数据异常");
     reject(data || response);
     return;
   }
@@ -90,7 +90,7 @@ function request(options = {}) {
         handleResponse(response, resolve, reject);
       },
       fail: (error) => {
-        showToast("网络异常，请稍后重试");
+        showToast("网络异常");
         reject(error);
       }
     });

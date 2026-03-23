@@ -1,8 +1,16 @@
 <template>
   <view class="page">
+    <view class="role-card">
+      <text class="role-title">请选择登录身份</text>
+      <view class="role-actions">
+        <button class="role-btn active" @click="stayOnUserLogin">用户登录</button>
+        <button class="role-btn chef" @click="goChefLogin">厨师登录</button>
+      </view>
+    </view>
+
     <view class="header">
       <text class="title">私房菜上门服务</text>
-      <text class="subtitle">手机号 + 密码登录</text>
+      <text class="subtitle">用户端登录</text>
     </view>
 
     <view class="form-card">
@@ -14,7 +22,7 @@
           type="number"
           maxlength="11"
           placeholder="请输入手机号"
-          :disabled="loading"
+          :disabled="loading || wechatLoading"
         />
       </view>
 
@@ -25,14 +33,14 @@
           class="input"
           password
           placeholder="请输入密码"
-          :disabled="loading"
+          :disabled="loading || wechatLoading"
         />
       </view>
 
       <button
         class="login-btn"
         type="primary"
-        :loading="loading || wechatLoading"
+        :loading="loading"
         :disabled="loading || wechatLoading"
         @click="handleLogin"
       >
@@ -45,7 +53,7 @@
         :disabled="loading || wechatLoading"
         @click="handleWechatLogin"
       >
-        {{ wechatLoading ? '微信登录中...' : '微信快捷登录' }}
+        {{ wechatLoading ? '登录中...' : '微信快捷登录' }}
       </button>
 
       <view class="footer">
@@ -66,7 +74,6 @@ export default {
     return {
       loading: false,
       wechatLoading: false,
-      redirecting: false,
       form: {
         phone: '',
         password: ''
@@ -79,7 +86,6 @@ export default {
         throw new Error('登录返回缺少 token')
       }
 
-      this.redirecting = true
       setToken(loginData.token)
       setUserId(loginData.userId || '')
       setUserType(loginData.userType || '')
@@ -87,6 +93,7 @@ export default {
 
       const profile = await getUserInfo()
       setUserInfo(profile || {})
+
       uni.switchTab({
         url: '/pages/home/index'
       })
@@ -96,26 +103,17 @@ export default {
       const password = this.form.password.trim()
 
       if (!phone) {
-        uni.showToast({
-          title: '请输入手机号',
-          icon: 'none'
-        })
+        uni.showToast({ title: '请输入手机号', icon: 'none' })
         return false
       }
 
       if (!/^1\d{10}$/.test(phone)) {
-        uni.showToast({
-          title: '请输入正确的手机号',
-          icon: 'none'
-        })
+        uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
         return false
       }
 
       if (!password) {
-        uni.showToast({
-          title: '请输入密码',
-          icon: 'none'
-        })
+        uni.showToast({ title: '请输入密码', icon: 'none' })
         return false
       }
 
@@ -136,14 +134,6 @@ export default {
         await this.handleLoginSuccess(loginData)
       } catch (error) {
         clearAuth()
-        this.redirecting = false
-
-        if (error && error.message) {
-          uni.showToast({
-            title: error.message,
-            icon: 'none'
-          })
-        }
       } finally {
         this.loading = false
       }
@@ -158,10 +148,7 @@ export default {
       wx.login({
         success: async (res) => {
           if (!res.code) {
-            uni.showToast({
-              title: '微信登录未获取到 code',
-              icon: 'none'
-            })
+            uni.showToast({ title: '微信登录失败', icon: 'none' })
             this.wechatLoading = false
             return
           }
@@ -173,36 +160,27 @@ export default {
             await this.handleLoginSuccess(loginData)
           } catch (error) {
             clearAuth()
-            this.redirecting = false
-
-            if (error && error.message) {
-              uni.showToast({
-                title: error.message,
-                icon: 'none'
-              })
-            }
           } finally {
             this.wechatLoading = false
           }
         },
         fail: () => {
-          uni.showToast({
-            title: '微信登录失败，请稍后重试',
-            icon: 'none'
-          })
-          this.redirecting = false
+          uni.showToast({ title: '微信登录失败', icon: 'none' })
           this.wechatLoading = false
         }
       })
     },
     goRegister() {
-      if (this.loading || this.wechatLoading) {
-        return
-      }
-
       uni.navigateTo({
         url: '/pages/register/index'
       })
+    },
+    goChefLogin() {
+      uni.navigateTo({
+        url: '/pages-chef/login/index'
+      })
+    },
+    stayOnUserLogin() {
     }
   }
 }
@@ -211,13 +189,62 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 120rpx 40rpx 40rpx;
+  padding: 72rpx 40rpx 40rpx;
   background: linear-gradient(180deg, #fff7f0 0%, #f7f8fa 45%, #f7f8fa 100%);
   box-sizing: border-box;
 }
 
+.role-card,
+.form-card {
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background-color: #ffffff;
+  box-shadow: 0 12rpx 36rpx rgba(25, 31, 37, 0.06);
+}
+
+.role-card {
+  margin-bottom: 40rpx;
+}
+
+.role-title {
+  display: block;
+  font-size: 28rpx;
+  color: #4d5562;
+}
+
+.role-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 24rpx;
+}
+
+.role-btn {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  border: none;
+  border-radius: 18rpx;
+  background: #f6f7fb;
+  color: #3b4250;
+  font-size: 28rpx;
+}
+
+.role-btn.active {
+  background: #d96c3a;
+  color: #ffffff;
+}
+
+.role-btn.chef {
+  background: #edf8f1;
+  color: #2f8f55;
+}
+
+.role-btn::after {
+  border: none;
+}
+
 .header {
-  margin-bottom: 60rpx;
+  margin-bottom: 40rpx;
 }
 
 .title {
@@ -225,7 +252,6 @@ export default {
   font-size: 48rpx;
   font-weight: 600;
   color: #2f2f2f;
-  line-height: 1.4;
 }
 
 .subtitle {
@@ -233,13 +259,6 @@ export default {
   margin-top: 16rpx;
   font-size: 28rpx;
   color: #8a8f99;
-}
-
-.form-card {
-  padding: 40rpx 32rpx;
-  border-radius: 24rpx;
-  background-color: #ffffff;
-  box-shadow: 0 12rpx 36rpx rgba(25, 31, 37, 0.06);
 }
 
 .form-item {
@@ -275,10 +294,6 @@ export default {
   font-weight: 500;
 }
 
-.login-btn::after {
-  border: none;
-}
-
 .wechat-btn {
   height: 88rpx;
   line-height: 88rpx;
@@ -291,6 +306,7 @@ export default {
   color: #2f8f55;
 }
 
+.login-btn::after,
 .wechat-btn::after {
   border: none;
 }
