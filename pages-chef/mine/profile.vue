@@ -37,12 +37,32 @@
 
       <view class="form-item">
         <text class="label">性别</text>
-        <input v-model="form.gender" class="input" type="number" placeholder="请输入性别数值" />
+        <picker
+          class="picker-wrap"
+          mode="selector"
+          :range="genderRange"
+          :value="genderIndex"
+          @change="handleGenderChange"
+        >
+          <view class="picker-value">
+            <text>{{ currentGenderText }}</text>
+          </view>
+        </picker>
       </view>
 
       <view class="form-item">
         <text class="label">年龄</text>
-        <input v-model="form.age" class="input" type="number" placeholder="请输入年龄" />
+        <picker
+          class="picker-wrap"
+          mode="selector"
+          :range="ageRange"
+          :value="ageIndex"
+          @change="handleAgeChange"
+        >
+          <view class="picker-value">
+            <text>{{ currentAgeText }}</text>
+          </view>
+        </picker>
       </view>
 
       <view class="form-item">
@@ -62,12 +82,32 @@
 
       <view class="form-item">
         <text class="label">从业年限</text>
-        <input v-model="form.yearsOfExperience" class="input" type="number" placeholder="请输入从业年限" />
+        <picker
+          class="picker-wrap"
+          mode="selector"
+          :range="experienceRange"
+          :value="experienceIndex"
+          @change="handleExperienceChange"
+        >
+          <view class="picker-value">
+            <text>{{ currentExperienceText }}</text>
+          </view>
+        </picker>
       </view>
 
       <view class="form-item">
         <text class="label">服务半径</text>
-        <input v-model="form.serviceRadiusKm" class="input" type="number" placeholder="请输入服务半径（公里）" />
+        <picker
+          class="picker-wrap"
+          mode="selector"
+          :range="serviceRadiusRange"
+          :value="serviceRadiusIndex"
+          @change="handleServiceRadiusChange"
+        >
+          <view class="picker-value">
+            <text>{{ currentServiceRadiusText }}</text>
+          </view>
+        </picker>
       </view>
 
       <view class="form-item no-border">
@@ -101,6 +141,29 @@ import { getChefInfo, setChefInfo } from '../../utils/auth'
 import { chefServiceModeOptions, getChefServiceModeText } from '../../utils/chef-service-mode'
 import { getChefCertStatusText } from '../../utils/chef-cert-status'
 
+const GENDER_OPTIONS = [
+  { label: '女', value: 0 },
+  { label: '男', value: 1 }
+]
+
+const AGE_OPTIONS = Array.from({ length: 56 }, (_, index) => {
+  const value = index + 15
+  return {
+    label: `${value}岁`,
+    value
+  }
+})
+
+const EXPERIENCE_OPTIONS = Array.from({ length: 56 }, (_, index) => ({
+  label: `${index}年`,
+  value: index
+}))
+
+const SERVICE_RADIUS_OPTIONS = Array.from({ length: 51 }, (_, index) => ({
+  label: `${index}km`,
+  value: index
+}))
+
 function createDefaultForm() {
   return {
     phone: '',
@@ -109,11 +172,11 @@ function createDefaultForm() {
     name: '',
     avatar: '',
     gender: '0',
-    age: '',
+    age: '15',
     introduction: '',
     specialtyCuisine: '',
     specialtyTags: '',
-    yearsOfExperience: '',
+    yearsOfExperience: '0',
     serviceRadiusKm: '',
     serviceMode: '1',
     serviceModeDesc: ''
@@ -127,6 +190,10 @@ export default {
       saving: false,
       avatarUploading: false,
       form: createDefaultForm(),
+      genderOptions: GENDER_OPTIONS,
+      ageOptions: AGE_OPTIONS,
+      experienceOptions: EXPERIENCE_OPTIONS,
+      serviceRadiusOptions: SERVICE_RADIUS_OPTIONS,
       serviceModeOptions: chefServiceModeOptions
     }
   },
@@ -148,6 +215,50 @@ export default {
       }
 
       return '未知状态'
+    },
+    genderRange() {
+      return this.genderOptions.map((item) => item.label)
+    },
+    genderIndex() {
+      const index = this.genderOptions.findIndex((item) => item.value === Number(this.form.gender))
+      return index < 0 ? 0 : index
+    },
+    currentGenderText() {
+      const current = this.genderOptions.find((item) => item.value === Number(this.form.gender))
+      return current ? current.label : '请选择性别'
+    },
+    ageRange() {
+      return this.ageOptions.map((item) => item.label)
+    },
+    ageIndex() {
+      const index = this.ageOptions.findIndex((item) => item.value === Number(this.form.age))
+      return index < 0 ? 0 : index
+    },
+    currentAgeText() {
+      const current = this.ageOptions.find((item) => item.value === Number(this.form.age))
+      return current ? current.label : '请选择年龄'
+    },
+    experienceRange() {
+      return this.experienceOptions.map((item) => item.label)
+    },
+    experienceIndex() {
+      const index = this.experienceOptions.findIndex((item) => item.value === Number(this.form.yearsOfExperience))
+      return index < 0 ? 0 : index
+    },
+    currentExperienceText() {
+      const current = this.experienceOptions.find((item) => item.value === Number(this.form.yearsOfExperience))
+      return current ? current.label : '请选择从业年限'
+    },
+    serviceRadiusRange() {
+      return this.serviceRadiusOptions.map((item) => item.label)
+    },
+    serviceRadiusIndex() {
+      const index = this.serviceRadiusOptions.findIndex((item) => item.value === Number(this.form.serviceRadiusKm))
+      return index < 0 ? 0 : index
+    },
+    currentServiceRadiusText() {
+      const current = this.serviceRadiusOptions.find((item) => item.value === Number(this.form.serviceRadiusKm))
+      return current ? current.label : '请选择服务半径'
     },
     serviceModeRange() {
       return this.serviceModeOptions.map((item) => item.label)
@@ -175,6 +286,9 @@ export default {
   methods: {
     fillForm(data) {
       const normalizedServiceMode = [1, 2, 3].includes(Number(data.serviceMode)) ? String(Number(data.serviceMode)) : '1'
+      const normalizedGender = [0, 1].includes(Number(data.gender)) ? String(Number(data.gender)) : '0'
+      const normalizedAge = Number(data.age)
+      const normalizedExperience = Number(data.yearsOfExperience)
 
       this.form = {
         phone: data.phone || '',
@@ -182,13 +296,15 @@ export default {
         certStatusDesc: data.certStatusDesc || '',
         name: data.name || '',
         avatar: data.avatar || '',
-        gender: data.gender === 0 || data.gender ? String(data.gender) : '0',
-        age: data.age === 0 || data.age ? String(data.age) : '',
+        gender: normalizedGender,
+        age: normalizedAge >= 15 && normalizedAge <= 70 ? String(normalizedAge) : '15',
         introduction: data.introduction || '',
         specialtyCuisine: data.specialtyCuisine || '',
         specialtyTags: data.specialtyTags || '',
-        yearsOfExperience: data.yearsOfExperience === 0 || data.yearsOfExperience ? String(data.yearsOfExperience) : '',
-        serviceRadiusKm: data.serviceRadiusKm === 0 || data.serviceRadiusKm ? String(data.serviceRadiusKm) : '',
+        yearsOfExperience: normalizedExperience >= 0 && normalizedExperience <= 55 ? String(normalizedExperience) : '0',
+        serviceRadiusKm: Number(data.serviceRadiusKm) >= 0 && Number(data.serviceRadiusKm) <= 50
+          ? String(Number(data.serviceRadiusKm))
+          : '0',
         serviceMode: normalizedServiceMode,
         serviceModeDesc: data.serviceModeDesc || ''
       }
@@ -206,13 +322,45 @@ export default {
         name: this.form.name.trim(),
         avatar: this.form.avatar || '',
         gender: Number(this.form.gender || 0),
-        age: Number(this.form.age || 0),
+        age: Number(this.form.age || 15),
         introduction: this.form.introduction.trim(),
         specialtyCuisine: this.form.specialtyCuisine.trim(),
         specialtyTags: this.form.specialtyTags.trim(),
         yearsOfExperience: Number(this.form.yearsOfExperience || 0),
         serviceRadiusKm: Number(this.form.serviceRadiusKm || 0),
         serviceMode: Number(this.form.serviceMode || 1)
+      }
+    },
+    handleGenderChange(event) {
+      const index = Number(event.detail.value)
+      const selected = this.genderOptions[index]
+
+      if (selected) {
+        this.form.gender = String(selected.value)
+      }
+    },
+    handleAgeChange(event) {
+      const index = Number(event.detail.value)
+      const selected = this.ageOptions[index]
+
+      if (selected) {
+        this.form.age = String(selected.value)
+      }
+    },
+    handleExperienceChange(event) {
+      const index = Number(event.detail.value)
+      const selected = this.experienceOptions[index]
+
+      if (selected) {
+        this.form.yearsOfExperience = String(selected.value)
+      }
+    },
+    handleServiceRadiusChange(event) {
+      const index = Number(event.detail.value)
+      const selected = this.serviceRadiusOptions[index]
+
+      if (selected) {
+        this.form.serviceRadiusKm = String(selected.value)
       }
     },
     handleServiceModeChange(event) {

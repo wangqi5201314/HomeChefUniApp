@@ -5,6 +5,25 @@ const api_upload = require("../../api/upload.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
+const GENDER_OPTIONS = [
+  { label: "女", value: 0 },
+  { label: "男", value: 1 }
+];
+const AGE_OPTIONS = Array.from({ length: 56 }, (_, index) => {
+  const value = index + 15;
+  return {
+    label: `${value}岁`,
+    value
+  };
+});
+const EXPERIENCE_OPTIONS = Array.from({ length: 56 }, (_, index) => ({
+  label: `${index}年`,
+  value: index
+}));
+const SERVICE_RADIUS_OPTIONS = Array.from({ length: 51 }, (_, index) => ({
+  label: `${index}km`,
+  value: index
+}));
 function createDefaultForm() {
   return {
     phone: "",
@@ -13,11 +32,11 @@ function createDefaultForm() {
     name: "",
     avatar: "",
     gender: "0",
-    age: "",
+    age: "15",
     introduction: "",
     specialtyCuisine: "",
     specialtyTags: "",
-    yearsOfExperience: "",
+    yearsOfExperience: "0",
     serviceRadiusKm: "",
     serviceMode: "1",
     serviceModeDesc: ""
@@ -30,6 +49,10 @@ const _sfc_main = {
       saving: false,
       avatarUploading: false,
       form: createDefaultForm(),
+      genderOptions: GENDER_OPTIONS,
+      ageOptions: AGE_OPTIONS,
+      experienceOptions: EXPERIENCE_OPTIONS,
+      serviceRadiusOptions: SERVICE_RADIUS_OPTIONS,
       serviceModeOptions: utils_chefServiceMode.chefServiceModeOptions
     };
   },
@@ -49,6 +72,50 @@ const _sfc_main = {
         return utils_chefCertStatus.getChefCertStatusText(this.form.certStatus);
       }
       return "未知状态";
+    },
+    genderRange() {
+      return this.genderOptions.map((item) => item.label);
+    },
+    genderIndex() {
+      const index = this.genderOptions.findIndex((item) => item.value === Number(this.form.gender));
+      return index < 0 ? 0 : index;
+    },
+    currentGenderText() {
+      const current = this.genderOptions.find((item) => item.value === Number(this.form.gender));
+      return current ? current.label : "请选择性别";
+    },
+    ageRange() {
+      return this.ageOptions.map((item) => item.label);
+    },
+    ageIndex() {
+      const index = this.ageOptions.findIndex((item) => item.value === Number(this.form.age));
+      return index < 0 ? 0 : index;
+    },
+    currentAgeText() {
+      const current = this.ageOptions.find((item) => item.value === Number(this.form.age));
+      return current ? current.label : "请选择年龄";
+    },
+    experienceRange() {
+      return this.experienceOptions.map((item) => item.label);
+    },
+    experienceIndex() {
+      const index = this.experienceOptions.findIndex((item) => item.value === Number(this.form.yearsOfExperience));
+      return index < 0 ? 0 : index;
+    },
+    currentExperienceText() {
+      const current = this.experienceOptions.find((item) => item.value === Number(this.form.yearsOfExperience));
+      return current ? current.label : "请选择从业年限";
+    },
+    serviceRadiusRange() {
+      return this.serviceRadiusOptions.map((item) => item.label);
+    },
+    serviceRadiusIndex() {
+      const index = this.serviceRadiusOptions.findIndex((item) => item.value === Number(this.form.serviceRadiusKm));
+      return index < 0 ? 0 : index;
+    },
+    currentServiceRadiusText() {
+      const current = this.serviceRadiusOptions.find((item) => item.value === Number(this.form.serviceRadiusKm));
+      return current ? current.label : "请选择服务半径";
     },
     serviceModeRange() {
       return this.serviceModeOptions.map((item) => item.label);
@@ -74,19 +141,22 @@ const _sfc_main = {
   methods: {
     fillForm(data) {
       const normalizedServiceMode = [1, 2, 3].includes(Number(data.serviceMode)) ? String(Number(data.serviceMode)) : "1";
+      const normalizedGender = [0, 1].includes(Number(data.gender)) ? String(Number(data.gender)) : "0";
+      const normalizedAge = Number(data.age);
+      const normalizedExperience = Number(data.yearsOfExperience);
       this.form = {
         phone: data.phone || "",
         certStatus: data.certStatus === 0 || data.certStatus ? String(data.certStatus) : "",
         certStatusDesc: data.certStatusDesc || "",
         name: data.name || "",
         avatar: data.avatar || "",
-        gender: data.gender === 0 || data.gender ? String(data.gender) : "0",
-        age: data.age === 0 || data.age ? String(data.age) : "",
+        gender: normalizedGender,
+        age: normalizedAge >= 15 && normalizedAge <= 70 ? String(normalizedAge) : "15",
         introduction: data.introduction || "",
         specialtyCuisine: data.specialtyCuisine || "",
         specialtyTags: data.specialtyTags || "",
-        yearsOfExperience: data.yearsOfExperience === 0 || data.yearsOfExperience ? String(data.yearsOfExperience) : "",
-        serviceRadiusKm: data.serviceRadiusKm === 0 || data.serviceRadiusKm ? String(data.serviceRadiusKm) : "",
+        yearsOfExperience: normalizedExperience >= 0 && normalizedExperience <= 55 ? String(normalizedExperience) : "0",
+        serviceRadiusKm: Number(data.serviceRadiusKm) >= 0 && Number(data.serviceRadiusKm) <= 50 ? String(Number(data.serviceRadiusKm)) : "0",
         serviceMode: normalizedServiceMode,
         serviceModeDesc: data.serviceModeDesc || ""
       };
@@ -104,7 +174,7 @@ const _sfc_main = {
         name: this.form.name.trim(),
         avatar: this.form.avatar || "",
         gender: Number(this.form.gender || 0),
-        age: Number(this.form.age || 0),
+        age: Number(this.form.age || 15),
         introduction: this.form.introduction.trim(),
         specialtyCuisine: this.form.specialtyCuisine.trim(),
         specialtyTags: this.form.specialtyTags.trim(),
@@ -112,6 +182,34 @@ const _sfc_main = {
         serviceRadiusKm: Number(this.form.serviceRadiusKm || 0),
         serviceMode: Number(this.form.serviceMode || 1)
       };
+    },
+    handleGenderChange(event) {
+      const index = Number(event.detail.value);
+      const selected = this.genderOptions[index];
+      if (selected) {
+        this.form.gender = String(selected.value);
+      }
+    },
+    handleAgeChange(event) {
+      const index = Number(event.detail.value);
+      const selected = this.ageOptions[index];
+      if (selected) {
+        this.form.age = String(selected.value);
+      }
+    },
+    handleExperienceChange(event) {
+      const index = Number(event.detail.value);
+      const selected = this.experienceOptions[index];
+      if (selected) {
+        this.form.yearsOfExperience = String(selected.value);
+      }
+    },
+    handleServiceRadiusChange(event) {
+      const index = Number(event.detail.value);
+      const selected = this.serviceRadiusOptions[index];
+      if (selected) {
+        this.form.serviceRadiusKm = String(selected.value);
+      }
     },
     handleServiceModeChange(event) {
       const index = Number(event.detail.value);
@@ -186,27 +284,35 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.t($options.certStatusText),
     h: $data.form.name,
     i: common_vendor.o(($event) => $data.form.name = $event.detail.value),
-    j: $data.form.gender,
-    k: common_vendor.o(($event) => $data.form.gender = $event.detail.value),
-    l: $data.form.age,
-    m: common_vendor.o(($event) => $data.form.age = $event.detail.value),
-    n: $data.form.introduction,
-    o: common_vendor.o(($event) => $data.form.introduction = $event.detail.value),
-    p: $data.form.specialtyCuisine,
-    q: common_vendor.o(($event) => $data.form.specialtyCuisine = $event.detail.value),
-    r: $data.form.specialtyTags,
-    s: common_vendor.o(($event) => $data.form.specialtyTags = $event.detail.value),
-    t: $data.form.yearsOfExperience,
-    v: common_vendor.o(($event) => $data.form.yearsOfExperience = $event.detail.value),
-    w: $data.form.serviceRadiusKm,
-    x: common_vendor.o(($event) => $data.form.serviceRadiusKm = $event.detail.value),
-    y: common_vendor.t($options.currentServiceModeText),
-    z: $options.serviceModeRange,
-    A: $options.serviceModeIndex,
-    B: common_vendor.o((...args) => $options.handleServiceModeChange && $options.handleServiceModeChange(...args)),
-    C: $data.saving,
-    D: $data.saving || $data.avatarUploading,
-    E: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
+    j: common_vendor.t($options.currentGenderText),
+    k: $options.genderRange,
+    l: $options.genderIndex,
+    m: common_vendor.o((...args) => $options.handleGenderChange && $options.handleGenderChange(...args)),
+    n: common_vendor.t($options.currentAgeText),
+    o: $options.ageRange,
+    p: $options.ageIndex,
+    q: common_vendor.o((...args) => $options.handleAgeChange && $options.handleAgeChange(...args)),
+    r: $data.form.introduction,
+    s: common_vendor.o(($event) => $data.form.introduction = $event.detail.value),
+    t: $data.form.specialtyCuisine,
+    v: common_vendor.o(($event) => $data.form.specialtyCuisine = $event.detail.value),
+    w: $data.form.specialtyTags,
+    x: common_vendor.o(($event) => $data.form.specialtyTags = $event.detail.value),
+    y: common_vendor.t($options.currentExperienceText),
+    z: $options.experienceRange,
+    A: $options.experienceIndex,
+    B: common_vendor.o((...args) => $options.handleExperienceChange && $options.handleExperienceChange(...args)),
+    C: common_vendor.t($options.currentServiceRadiusText),
+    D: $options.serviceRadiusRange,
+    E: $options.serviceRadiusIndex,
+    F: common_vendor.o((...args) => $options.handleServiceRadiusChange && $options.handleServiceRadiusChange(...args)),
+    G: common_vendor.t($options.currentServiceModeText),
+    H: $options.serviceModeRange,
+    I: $options.serviceModeIndex,
+    J: common_vendor.o((...args) => $options.handleServiceModeChange && $options.handleServiceModeChange(...args)),
+    K: $data.saving,
+    L: $data.saving || $data.avatarUploading,
+    M: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-22f0af08"]]);
