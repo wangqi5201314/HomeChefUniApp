@@ -77,6 +77,12 @@
       }
     },
     {
+      "path": "pages/review/chef-list",
+      "style": {
+        "navigationBarTitleText": "全部评价"
+      }
+    },
+    {
       "path": "pages/mine/index",
       "style": {
         "navigationBarTitleText": "我的"

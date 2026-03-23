@@ -12,6 +12,7 @@
     "pages/pay/result",
     "pages/review/create",
     "pages/review/list",
+    "pages/review/chef-list",
     "pages/mine/index",
     "pages/mine/profile",
     "pages/mine/change-password"

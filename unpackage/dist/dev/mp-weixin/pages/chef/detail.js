@@ -99,6 +99,11 @@ const _sfc_main = {
         url: `/pages/order/confirm?chefId=${this.chefId}&serviceDate=${encodeURIComponent(this.selectedSchedule.serviceDate || "")}&timeSlot=${encodeURIComponent(this.selectedSchedule.timeSlot || "")}&serviceStartTime=${encodeURIComponent(this.selectedSchedule.startTime || "")}&serviceEndTime=${encodeURIComponent(this.selectedSchedule.endTime || "")}`
       });
     },
+    goAllReviews() {
+      common_vendor.index.navigateTo({
+        url: `/pages/review/chef-list?chefId=${this.chefId}`
+      });
+    },
     getNameInitial(name) {
       return name ? String(name).slice(0, 1) : "厨";
     },
@@ -157,14 +162,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    q: $options.displayReviewList.length
+    q: $data.reviewList.length > $options.displayReviewList.length
+  }, $data.reviewList.length > $options.displayReviewList.length ? {
+    r: common_vendor.o((...args) => $options.goAllReviews && $options.goAllReviews(...args))
+  } : {}, {
+    s: $options.displayReviewList.length
   }, $options.displayReviewList.length ? {
-    r: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
+    t: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : `用户${item.userId}`),
         b: common_vendor.t($options.formatPlain(item.overallScore)),
         c: common_vendor.t(item.content || "用户未填写评价内容"),
-        d: common_vendor.t(item.createdAt || ""),
+        d: common_vendor.t(item.createdAt || "-"),
         e: item.replyContent
       }, item.replyContent ? {
         f: common_vendor.t(item.replyContent)
@@ -173,8 +182,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}), {
-    s: common_vendor.t($options.selectedScheduleText),
-    t: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
+    v: common_vendor.t($options.selectedScheduleText),
+    w: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b9a9a594"]]);

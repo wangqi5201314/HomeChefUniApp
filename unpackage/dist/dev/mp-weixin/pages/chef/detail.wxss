@@ -102,12 +102,27 @@
 .section-card.data-v-b9a9a594 {
   margin-bottom: 24rpx;
 }
+.section-head.data-v-b9a9a594 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
 .section-title.data-v-b9a9a594 {
   display: block;
   margin-bottom: 20rpx;
   font-size: 30rpx;
   font-weight: 600;
   color: #1f2329;
+}
+.section-title.no-margin.data-v-b9a9a594 {
+  margin-bottom: 0;
+}
+.more-link.data-v-b9a9a594 {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #d96c3a;
 }
 .tag-list.data-v-b9a9a594 {
   display: flex;

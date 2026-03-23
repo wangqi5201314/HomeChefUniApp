@@ -73,7 +73,17 @@
       </view>
 
       <view class="section-card">
-        <text class="section-title">用户评价</text>
+        <view class="section-head">
+          <text class="section-title no-margin">用户评价</text>
+          <text
+            v-if="reviewList.length > displayReviewList.length"
+            class="more-link"
+            @click="goAllReviews"
+          >
+            全部评价
+          </text>
+        </view>
+
         <view v-if="displayReviewList.length" class="review-list">
           <view v-for="item in displayReviewList" :key="item.id" class="review-item">
             <view class="review-head">
@@ -81,7 +91,7 @@
               <text class="review-score">评分 {{ formatPlain(item.overallScore) }}</text>
             </view>
             <text class="review-content">{{ item.content || '用户未填写评价内容' }}</text>
-            <text class="review-time">{{ item.createdAt || '' }}</text>
+            <text class="review-time">{{ item.createdAt || '-' }}</text>
             <view v-if="item.replyContent" class="reply-box">
               <text class="reply-text">厨师回复：{{ item.replyContent }}</text>
             </view>
@@ -94,9 +104,7 @@
     <view class="bottom-bar">
       <view class="selected-info">
         <text class="selected-title">已选档期</text>
-        <text class="selected-text">
-          {{ selectedScheduleText }}
-        </text>
+        <text class="selected-text">{{ selectedScheduleText }}</text>
       </view>
       <button class="book-btn" type="primary" @click="handleBook">立即预约</button>
     </view>
@@ -218,6 +226,11 @@ export default {
         url: `/pages/order/confirm?chefId=${this.chefId}&serviceDate=${encodeURIComponent(this.selectedSchedule.serviceDate || '')}&timeSlot=${encodeURIComponent(this.selectedSchedule.timeSlot || '')}&serviceStartTime=${encodeURIComponent(this.selectedSchedule.startTime || '')}&serviceEndTime=${encodeURIComponent(this.selectedSchedule.endTime || '')}`
       })
     },
+    goAllReviews() {
+      uni.navigateTo({
+        url: `/pages/review/chef-list?chefId=${this.chefId}`
+      })
+    },
     getNameInitial(name) {
       return name ? String(name).slice(0, 1) : '厨'
     },
@@ -225,12 +238,14 @@ export default {
       if (value === 0) {
         return `0${suffix}`
       }
+
       return value || value === 0 ? `${value}${suffix}` : '-'
     },
     formatPlain(value) {
       if (value === 0) {
         return '0'
       }
+
       return value || '-'
     }
   }
@@ -360,12 +375,30 @@ export default {
   margin-bottom: 24rpx;
 }
 
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
 .section-title {
   display: block;
   margin-bottom: 20rpx;
   font-size: 30rpx;
   font-weight: 600;
   color: #1f2329;
+}
+
+.section-title.no-margin {
+  margin-bottom: 0;
+}
+
+.more-link {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #d96c3a;
 }
 
 .tag-list {

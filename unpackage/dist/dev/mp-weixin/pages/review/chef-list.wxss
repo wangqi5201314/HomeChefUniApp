@@ -1,0 +1,94 @@
+
+.page.data-v-6ecc23c8 {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: #f6f7fb;
+  box-sizing: border-box;
+}
+.state-card.data-v-6ecc23c8,
+.review-card.data-v-6ecc23c8 {
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
+}
+.state-card.data-v-6ecc23c8 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320rpx;
+  padding: 32rpx;
+}
+.state-text.data-v-6ecc23c8 {
+  font-size: 28rpx;
+  color: #8a8f99;
+}
+.review-list.data-v-6ecc23c8 {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+.review-card.data-v-6ecc23c8 {
+  padding: 28rpx;
+}
+.review-head.data-v-6ecc23c8 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.review-user.data-v-6ecc23c8 {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+.review-score.data-v-6ecc23c8,
+.review-time.data-v-6ecc23c8,
+.reply-time.data-v-6ecc23c8 {
+  font-size: 24rpx;
+  color: #8a8f99;
+}
+.score-row.data-v-6ecc23c8 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx 20rpx;
+  margin-top: 16rpx;
+}
+.score-item.data-v-6ecc23c8 {
+  font-size: 26rpx;
+  color: #4f5662;
+}
+.review-content.data-v-6ecc23c8 {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #333333;
+}
+.image-list.data-v-6ecc23c8 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+.review-image.data-v-6ecc23c8 {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 16rpx;
+  background: #f3f4f6;
+}
+.reply-box.data-v-6ecc23c8 {
+  margin-top: 18rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: #f8f9fb;
+}
+.reply-text.data-v-6ecc23c8 {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #5f6671;
+}
+.reply-time.data-v-6ecc23c8 {
+  display: block;
+  margin-top: 10rpx;
+}
