@@ -31,7 +31,9 @@
       >
         <view class="card-head">
           <text class="order-no">订单号：{{ item.orderNo || '-' }}</text>
-          <text class="status-tag">{{ item.orderStatus || '-' }}</text>
+          <text class="status-tag" :class="getStatusClass(item.orderStatus)">
+            {{ getStatusLabel(item.orderStatus) }}
+          </text>
         </view>
 
         <view class="info-line">
@@ -63,15 +65,15 @@
           <text class="info-value">{{ item.createdAt || '-' }}</text>
         </view>
 
-        <view v-if="item.orderStatus === 'COMPLETED'" class="review-row" @click.stop>
+        <view v-if="item.orderStatus === ORDER_STATUS.COMPLETED" class="review-row" @click.stop>
           <button
-            v-if="item.reviewed === false"
+            v-if="isReviewed(item) === false"
             class="review-btn"
             @click="goReview(item)"
           >
             去评价
           </button>
-          <text v-else-if="item.reviewed === true" class="reviewed-text">已评价</text>
+          <text v-else-if="isReviewed(item) === true" class="reviewed-text">已评价</text>
         </view>
       </view>
     </view>
@@ -80,6 +82,7 @@
 
 <script>
 import { getOrderList } from '../../api/order'
+import { ORDER_STATUS, USER_ORDER_STATUS_TABS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 
 const USER_ID_KEY = 'user_id'
 
@@ -87,19 +90,12 @@ export default {
   name: 'OrderListPage',
   data() {
     return {
+      ORDER_STATUS,
       userId: '',
       loading: false,
       activeStatus: '',
       orderList: [],
-      statusTabs: [
-        { label: '全部', value: '' },
-        { label: 'PENDING_CONFIRM', value: 'PENDING_CONFIRM' },
-        { label: 'WAIT_PAY', value: 'WAIT_PAY' },
-        { label: 'PAID', value: 'PAID' },
-        { label: 'COMPLETED', value: 'COMPLETED' },
-        { label: 'CANCELLED', value: 'CANCELLED' },
-        { label: 'REFUNDED', value: 'REFUNDED' }
-      ]
+      statusTabs: USER_ORDER_STATUS_TABS
     }
   },
   onShow() {
@@ -175,10 +171,20 @@ export default {
         url: `/pages/review/create?orderId=${item.id}&chefId=${item.chefId}&userId=${item.userId}`
       })
     },
+    isReviewed(item) {
+      return item && (item.reviewed === true || item.reviewed === 1)
+    },
+    getStatusLabel(status) {
+      return getOrderStatusLabel(status)
+    },
+    getStatusClass(status) {
+      return getOrderStatusClass(status)
+    },
     formatAmount(value) {
       if (value === 0) {
         return '0'
       }
+
       return value || '-'
     }
   }
@@ -279,9 +285,22 @@ export default {
   flex-shrink: 0;
   padding: 8rpx 16rpx;
   border-radius: 999rpx;
-  background: #fff2eb;
   font-size: 22rpx;
+}
+
+.status-tag.pending {
+  background: #fff2eb;
   color: #c45e31;
+}
+
+.status-tag.success {
+  background: #edf8f1;
+  color: #2f8f55;
+}
+
+.status-tag.danger {
+  background: #fdeeee;
+  color: #d14a4a;
 }
 
 .info-line {

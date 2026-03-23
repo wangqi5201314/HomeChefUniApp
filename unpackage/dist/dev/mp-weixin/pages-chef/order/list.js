@@ -1,22 +1,14 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_chefOrder = require("../../api/chef-order.js");
-const TAB_OPTIONS = [
-  { label: "全部", value: "" },
-  { label: "PENDING_CONFIRM", value: "PENDING_CONFIRM" },
-  { label: "WAIT_PAY", value: "WAIT_PAY" },
-  { label: "PAID", value: "PAID" },
-  { label: "IN_SERVICE", value: "IN_SERVICE" },
-  { label: "COMPLETED", value: "COMPLETED" },
-  { label: "CANCELLED", value: "CANCELLED" }
-];
+const utils_orderStatus = require("../../utils/order-status.js");
 const _sfc_main = {
   name: "ChefOrderListPage",
   data() {
     return {
       loading: false,
       currentStatus: "",
-      tabs: TAB_OPTIONS,
+      tabs: utils_orderStatus.CHEF_ORDER_STATUS_TABS,
       orderList: []
     };
   },
@@ -61,6 +53,12 @@ const _sfc_main = {
         url: `/pages-chef/order/detail?id=${id}`
       });
     },
+    getStatusLabel(status) {
+      return utils_orderStatus.getOrderStatusLabel(status);
+    },
+    getStatusClass(status) {
+      return utils_orderStatus.getOrderStatusClass(status);
+    },
     formatPeopleCount(value) {
       if (value === 0) {
         return "0人";
@@ -90,16 +88,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: common_vendor.f($data.orderList, (item, k0, i0) => {
       return {
         a: common_vendor.t(item.orderNo || "-"),
-        b: common_vendor.t(item.orderStatus || "-"),
-        c: common_vendor.t(item.serviceDate || "-"),
-        d: common_vendor.t(item.timeSlot || "-"),
-        e: common_vendor.t($options.formatPeopleCount(item.peopleCount)),
-        f: common_vendor.t($options.formatAmount(item.payAmount)),
-        g: common_vendor.t(item.contactName || "-"),
-        h: common_vendor.t(item.contactPhone || "-"),
-        i: common_vendor.t(item.fullAddress || "-"),
-        j: item.id,
-        k: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
+        b: common_vendor.t($options.getStatusLabel(item.orderStatus)),
+        c: common_vendor.n($options.getStatusClass(item.orderStatus)),
+        d: common_vendor.t(item.serviceDate || "-"),
+        e: common_vendor.t(item.timeSlot || "-"),
+        f: common_vendor.t($options.formatPeopleCount(item.peopleCount)),
+        g: common_vendor.t($options.formatAmount(item.payAmount)),
+        h: common_vendor.t(item.contactName || "-"),
+        i: common_vendor.t(item.contactPhone || "-"),
+        j: common_vendor.t(item.fullAddress || "-"),
+        k: common_vendor.t(item.createdAt || "-"),
+        l: item.id,
+        m: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
       };
     })
   }, {

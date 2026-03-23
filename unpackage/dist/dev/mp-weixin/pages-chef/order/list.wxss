@@ -76,9 +76,19 @@
 .status.data-v-7a556a5b {
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
-  background: #edf8f1;
   font-size: 22rpx;
+}
+.status.pending.data-v-7a556a5b {
+  background: #fff2eb;
+  color: #c45e31;
+}
+.status.success.data-v-7a556a5b {
+  background: #edf8f1;
   color: #2f8f55;
+}
+.status.danger.data-v-7a556a5b {
+  background: #fdeeee;
+  color: #d14a4a;
 }
 .info-grid.data-v-7a556a5b {
   margin-top: 24rpx;

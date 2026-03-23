@@ -12,7 +12,7 @@
       <view class="section-card hero-card">
         <view class="hero-head">
           <text class="order-no">订单号：{{ orderDetail.orderNo || '-' }}</text>
-          <text class="status-tag" :class="statusClass">{{ orderDetail.orderStatus || '-' }}</text>
+          <text class="status-tag" :class="statusClass">{{ statusLabel }}</text>
         </view>
         <text class="hero-time">创建时间：{{ orderDetail.createdAt || '-' }}</text>
       </view>
@@ -42,10 +42,6 @@
         <view class="info-line">
           <text class="info-label">地址 ID</text>
           <text class="info-value">{{ orderDetail.addressId || '-' }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">确认码</text>
-          <text class="info-value">{{ orderDetail.confirmCode || '-' }}</text>
         </view>
       </view>
 
@@ -91,14 +87,6 @@
           <text class="info-label">服务地址</text>
           <text class="block-value">{{ orderDetail.fullAddress || '-' }}</text>
         </view>
-        <view class="info-line">
-          <text class="info-label">经度</text>
-          <text class="info-value">{{ formatPlain(orderDetail.longitude) }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">纬度</text>
-          <text class="info-value">{{ formatPlain(orderDetail.latitude) }}</text>
-        </view>
       </view>
 
       <view class="section-card">
@@ -106,10 +94,6 @@
         <view class="info-line">
           <text class="info-label">总金额</text>
           <text class="info-value amount">￥{{ formatAmount(orderDetail.totalAmount) }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">优惠金额</text>
-          <text class="info-value">￥{{ formatAmount(orderDetail.discountAmount) }}</text>
         </view>
         <view class="info-line">
           <text class="info-label">实付金额</text>
@@ -165,8 +149,8 @@
         >
           去评价
         </button>
-        <view v-if="showReviewedTag" class="reviewed-tag-wrap">
-          <text class="reviewed-tag">已评价</text>
+        <view v-if="showStatusNotice" class="status-notice-wrap">
+          <text class="status-notice">{{ statusNoticeText }}</text>
         </view>
       </view>
 
@@ -206,11 +190,13 @@
 <script>
 import { cancelOrder, getOrderDetail } from '../../api/order'
 import { createPayment, mockPaymentSuccess } from '../../api/pay'
+import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 
 export default {
   name: 'OrderDetailPage',
   data() {
     return {
+      ORDER_STATUS,
       id: '',
       loading: false,
       paying: false,
@@ -224,42 +210,64 @@ export default {
     isReviewed() {
       return this.orderDetail.reviewed === true || this.orderDetail.reviewed === 1
     },
+    statusLabel() {
+      return getOrderStatusLabel(this.orderDetail.orderStatus)
+    },
+    statusClass() {
+      return getOrderStatusClass(this.orderDetail.orderStatus)
+    },
     showCancelButton() {
-      return this.orderDetail.orderStatus === 'PENDING_CONFIRM' ||
-        this.orderDetail.orderStatus === 'WAIT_PAY' ||
-        this.orderDetail.orderStatus === 'PAID'
+      return this.orderDetail.orderStatus === ORDER_STATUS.PENDING_CONFIRM ||
+        this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY
     },
     showPayButton() {
-      return this.orderDetail.orderStatus === 'WAIT_PAY'
+      return this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY
     },
     showReviewButton() {
-      return this.orderDetail.orderStatus === 'COMPLETED' && !this.isReviewed
+      return this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED && !this.isReviewed
     },
-    showReviewedTag() {
-      return this.orderDetail.orderStatus === 'COMPLETED' && this.isReviewed
+    showStatusNotice() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.PAID ||
+        this.orderDetail.orderStatus === ORDER_STATUS.IN_SERVICE ||
+        this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED ||
+        this.orderDetail.orderStatus === ORDER_STATUS.REJECTED ||
+        this.orderDetail.orderStatus === ORDER_STATUS.CANCELLED ||
+        this.orderDetail.orderStatus === ORDER_STATUS.REFUNDED
+    },
+    statusNoticeText() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.PAID) {
+        return '已支付'
+      }
+
+      if (status === ORDER_STATUS.IN_SERVICE) {
+        return '服务中'
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return this.isReviewed ? '已评价' : '已完成'
+      }
+
+      if (status === ORDER_STATUS.REJECTED) {
+        return '厨师已拒单'
+      }
+
+      if (status === ORDER_STATUS.CANCELLED) {
+        return '已取消'
+      }
+
+      if (status === ORDER_STATUS.REFUNDED) {
+        return '已退款'
+      }
+
+      return ''
     },
     showBackHomeButton() {
       return this.showCancelButton
     },
     showActionBar() {
-      return this.showCancelButton || this.showPayButton || this.showReviewButton || this.showReviewedTag || this.showBackHomeButton
-    },
-    statusClass() {
-      const status = this.orderDetail.orderStatus
-
-      if (status === 'WAIT_PAY' || status === 'PENDING_CONFIRM') {
-        return 'pending'
-      }
-
-      if (status === 'PAID' || status === 'COMPLETED') {
-        return 'success'
-      }
-
-      if (status === 'CANCELLED' || status === 'REFUNDED') {
-        return 'danger'
-      }
-
-      return ''
+      return this.showCancelButton || this.showPayButton || this.showReviewButton || this.showStatusNotice || this.showBackHomeButton
     }
   },
   onLoad(options) {
@@ -293,16 +301,11 @@ export default {
         this.loading = false
       }
     },
-    formatPlain(value) {
-      if (value === 0) {
-        return '0'
-      }
-      return value || '-'
-    },
     formatAmount(value) {
       if (value === 0) {
         return '0'
       }
+
       return value || '-'
     },
     openCancelPopup() {
@@ -313,6 +316,7 @@ export default {
       if (this.cancelSubmitting) {
         return
       }
+
       this.showCancelModal = false
     },
     async submitCancel() {
@@ -341,7 +345,7 @@ export default {
         })
 
         this.showCancelModal = false
-        this.loadOrderDetail()
+        await this.loadOrderDetail()
       } catch (error) {
       } finally {
         this.cancelSubmitting = false
@@ -462,9 +466,7 @@ export default {
   flex-shrink: 0;
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
-  background: #eef1f5;
   font-size: 22rpx;
-  color: #5f6671;
 }
 
 .status-tag.pending {
@@ -566,13 +568,13 @@ export default {
   color: #4f5662;
 }
 
-.reviewed-tag-wrap {
+.status-notice-wrap {
   flex: 1;
   display: flex;
   justify-content: flex-end;
 }
 
-.reviewed-tag {
+.status-notice {
   padding: 0 28rpx;
   height: 88rpx;
   line-height: 88rpx;

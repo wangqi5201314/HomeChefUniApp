@@ -13,7 +13,7 @@
       <view class="hero-card">
         <view>
           <text class="hero-label">订单状态</text>
-          <text class="hero-status">{{ orderDetail.orderStatus || '-' }}</text>
+          <text class="hero-status" :class="statusClass">{{ statusLabel }}</text>
         </view>
         <text class="hero-no">订单号：{{ orderDetail.orderNo || '-' }}</text>
       </view>
@@ -21,7 +21,7 @@
       <view class="detail-card">
         <text class="section-title">服务信息</text>
         <view class="row"><text class="label">服务日期</text><text class="value">{{ orderDetail.serviceDate || '-' }}</text></view>
-        <view class="row"><text class="label">时段</text><text class="value">{{ orderDetail.timeSlot || '-' }}</text></view>
+        <view class="row"><text class="label">时间段</text><text class="value">{{ orderDetail.timeSlot || '-' }}</text></view>
         <view class="row"><text class="label">开始时间</text><text class="value">{{ orderDetail.serviceStartTime || '-' }}</text></view>
         <view class="row"><text class="label">结束时间</text><text class="value">{{ orderDetail.serviceEndTime || '-' }}</text></view>
         <view class="row"><text class="label">服务人数</text><text class="value">{{ formatPeopleCount(orderDetail.peopleCount) }}</text></view>
@@ -55,7 +55,7 @@
 
       <view class="footer-actions">
         <button
-          v-if="orderDetail.orderStatus === 'PENDING_CONFIRM'"
+          v-if="showAcceptButton"
           class="ghost-btn"
           :disabled="actionLoading"
           @click="openRejectPopup"
@@ -63,7 +63,7 @@
           拒单
         </button>
         <button
-          v-if="orderDetail.orderStatus === 'PENDING_CONFIRM'"
+          v-if="showAcceptButton"
           class="primary-btn"
           :loading="actionLoading && pendingAction === 'accept'"
           :disabled="actionLoading"
@@ -72,7 +72,7 @@
           接单
         </button>
         <button
-          v-if="orderDetail.orderStatus === 'PAID'"
+          v-if="showStartButton"
           class="primary-btn full-btn"
           :loading="actionLoading && pendingAction === 'start'"
           :disabled="actionLoading"
@@ -81,7 +81,7 @@
           开始服务
         </button>
         <button
-          v-if="orderDetail.orderStatus === 'IN_SERVICE'"
+          v-if="showFinishButton"
           class="primary-btn full-btn"
           :loading="actionLoading && pendingAction === 'finish'"
           :disabled="actionLoading"
@@ -89,6 +89,9 @@
         >
           完成服务
         </button>
+        <view v-if="showStatusNotice" class="status-note">
+          {{ statusNoticeText }}
+        </view>
         <button class="back-btn" :disabled="actionLoading" @click="backToList">返回订单列表</button>
       </view>
     </view>
@@ -126,11 +129,13 @@ import {
   rejectChefOrder,
   startChefOrder
 } from '../../api/chef-order'
+import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 
 export default {
   name: 'ChefOrderDetailPage',
   data() {
     return {
+      ORDER_STATUS,
       loading: false,
       actionLoading: false,
       pendingAction: '',
@@ -138,6 +143,55 @@ export default {
       orderDetail: {},
       showRejectPopup: false,
       rejectReason: ''
+    }
+  },
+  computed: {
+    statusLabel() {
+      return getOrderStatusLabel(this.orderDetail.orderStatus)
+    },
+    statusClass() {
+      return getOrderStatusClass(this.orderDetail.orderStatus)
+    },
+    showAcceptButton() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.PENDING_CONFIRM
+    },
+    showStartButton() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.PAID
+    },
+    showFinishButton() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.IN_SERVICE
+    },
+    showStatusNotice() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY ||
+        this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED ||
+        this.orderDetail.orderStatus === ORDER_STATUS.REJECTED ||
+        this.orderDetail.orderStatus === ORDER_STATUS.CANCELLED ||
+        this.orderDetail.orderStatus === ORDER_STATUS.REFUNDED
+    },
+    statusNoticeText() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.WAIT_PAY) {
+        return '待用户支付'
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return '服务已完成'
+      }
+
+      if (status === ORDER_STATUS.REJECTED) {
+        return '已拒单'
+      }
+
+      if (status === ORDER_STATUS.CANCELLED) {
+        return '用户已取消'
+      }
+
+      if (status === ORDER_STATUS.REFUNDED) {
+        return '已退款'
+      }
+
+      return ''
     }
   },
   onLoad(options) {
@@ -245,12 +299,14 @@ export default {
       if (value === 0) {
         return '0人'
       }
+
       return value ? `${value}人` : '-'
     },
     formatAmount(value) {
       if (value === 0) {
         return '0'
       }
+
       return value || '-'
     }
   }
@@ -305,7 +361,18 @@ export default {
   margin-top: 12rpx;
   font-size: 38rpx;
   font-weight: 700;
+}
+
+.hero-status.pending {
+  color: #c45e31;
+}
+
+.hero-status.success {
   color: #2f8f55;
+}
+
+.hero-status.danger {
+  color: #d14a4a;
 }
 
 .hero-no {
@@ -412,6 +479,18 @@ export default {
 .full-btn {
   width: 100%;
   flex: none;
+}
+
+.status-note {
+  width: 100%;
+  padding: 22rpx 24rpx;
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 2rpx #e3e8e4;
+  font-size: 28rpx;
+  color: #4d5d52;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .primary-btn::after,

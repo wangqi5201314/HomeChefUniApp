@@ -40,7 +40,15 @@
   margin-top: 12rpx;
   font-size: 38rpx;
   font-weight: 700;
+}
+.hero-status.pending.data-v-f5138f84 {
+  color: #c45e31;
+}
+.hero-status.success.data-v-f5138f84 {
   color: #2f8f55;
+}
+.hero-status.danger.data-v-f5138f84 {
+  color: #d14a4a;
 }
 .hero-no.data-v-f5138f84 {
   font-size: 24rpx;
@@ -130,6 +138,17 @@
 .full-btn.data-v-f5138f84 {
   width: 100%;
   flex: none;
+}
+.status-note.data-v-f5138f84 {
+  width: 100%;
+  padding: 22rpx 24rpx;
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 2rpx #e3e8e4;
+  font-size: 28rpx;
+  color: #4d5d52;
+  text-align: center;
+  box-sizing: border-box;
 }
 .primary-btn.data-v-f5138f84::after,
 .ghost-btn.data-v-f5138f84::after,

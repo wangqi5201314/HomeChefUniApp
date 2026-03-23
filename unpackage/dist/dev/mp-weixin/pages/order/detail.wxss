@@ -56,9 +56,7 @@
   flex-shrink: 0;
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
-  background: #eef1f5;
   font-size: 22rpx;
-  color: #5f6671;
 }
 .status-tag.pending.data-v-6b23c96c {
   background: #fff2eb;
@@ -143,12 +141,12 @@
   background: #f2f4f7;
   color: #4f5662;
 }
-.reviewed-tag-wrap.data-v-6b23c96c {
+.status-notice-wrap.data-v-6b23c96c {
   flex: 1;
   display: flex;
   justify-content: flex-end;
 }
-.reviewed-tag.data-v-6b23c96c {
+.status-notice.data-v-6b23c96c {
   padding: 0 28rpx;
   height: 88rpx;
   line-height: 88rpx;

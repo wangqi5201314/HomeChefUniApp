@@ -77,9 +77,19 @@
   flex-shrink: 0;
   padding: 8rpx 16rpx;
   border-radius: 999rpx;
-  background: #fff2eb;
   font-size: 22rpx;
+}
+.status-tag.pending.data-v-456ecf67 {
+  background: #fff2eb;
   color: #c45e31;
+}
+.status-tag.success.data-v-456ecf67 {
+  background: #edf8f1;
+  color: #2f8f55;
+}
+.status-tag.danger.data-v-456ecf67 {
+  background: #fdeeee;
+  color: #d14a4a;
 }
 .info-line.data-v-456ecf67 {
   padding: 12rpx 0;

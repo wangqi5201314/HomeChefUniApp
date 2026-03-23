@@ -1,24 +1,18 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_order = require("../../api/order.js");
+const utils_orderStatus = require("../../utils/order-status.js");
 const USER_ID_KEY = "user_id";
 const _sfc_main = {
   name: "OrderListPage",
   data() {
     return {
+      ORDER_STATUS: utils_orderStatus.ORDER_STATUS,
       userId: "",
       loading: false,
       activeStatus: "",
       orderList: [],
-      statusTabs: [
-        { label: "全部", value: "" },
-        { label: "PENDING_CONFIRM", value: "PENDING_CONFIRM" },
-        { label: "WAIT_PAY", value: "WAIT_PAY" },
-        { label: "PAID", value: "PAID" },
-        { label: "COMPLETED", value: "COMPLETED" },
-        { label: "CANCELLED", value: "CANCELLED" },
-        { label: "REFUNDED", value: "REFUNDED" }
-      ]
+      statusTabs: utils_orderStatus.USER_ORDER_STATUS_TABS
     };
   },
   onShow() {
@@ -86,6 +80,15 @@ const _sfc_main = {
         url: `/pages/review/create?orderId=${item.id}&chefId=${item.chefId}&userId=${item.userId}`
       });
     },
+    isReviewed(item) {
+      return item && (item.reviewed === true || item.reviewed === 1);
+    },
+    getStatusLabel(status) {
+      return utils_orderStatus.getOrderStatusLabel(status);
+    },
+    getStatusClass(status) {
+      return utils_orderStatus.getOrderStatusClass(status);
+    },
     formatAmount(value) {
       if (value === 0) {
         return "0";
@@ -109,26 +112,27 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: common_vendor.f($data.orderList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.orderNo || "-"),
-        b: common_vendor.t(item.orderStatus || "-"),
-        c: common_vendor.t(item.serviceDate || "-"),
-        d: common_vendor.t(item.timeSlot || "-"),
-        e: common_vendor.t($options.formatAmount(item.payAmount)),
-        f: common_vendor.t(item.contactName || "-"),
-        g: common_vendor.t(item.contactPhone || "-"),
-        h: common_vendor.t(item.fullAddress || "-"),
-        i: common_vendor.t(item.createdAt || "-"),
-        j: item.orderStatus === "COMPLETED"
-      }, item.orderStatus === "COMPLETED" ? common_vendor.e({
-        k: item.reviewed === false
-      }, item.reviewed === false ? {
-        l: common_vendor.o(($event) => $options.goReview(item), item.id)
-      } : item.reviewed === true ? {} : {}, {
-        m: item.reviewed === true,
-        n: common_vendor.o(() => {
+        b: common_vendor.t($options.getStatusLabel(item.orderStatus)),
+        c: common_vendor.n($options.getStatusClass(item.orderStatus)),
+        d: common_vendor.t(item.serviceDate || "-"),
+        e: common_vendor.t(item.timeSlot || "-"),
+        f: common_vendor.t($options.formatAmount(item.payAmount)),
+        g: common_vendor.t(item.contactName || "-"),
+        h: common_vendor.t(item.contactPhone || "-"),
+        i: common_vendor.t(item.fullAddress || "-"),
+        j: common_vendor.t(item.createdAt || "-"),
+        k: item.orderStatus === $data.ORDER_STATUS.COMPLETED
+      }, item.orderStatus === $data.ORDER_STATUS.COMPLETED ? common_vendor.e({
+        l: $options.isReviewed(item) === false
+      }, $options.isReviewed(item) === false ? {
+        m: common_vendor.o(($event) => $options.goReview(item), item.id)
+      } : $options.isReviewed(item) === true ? {} : {}, {
+        n: $options.isReviewed(item) === true,
+        o: common_vendor.o(() => {
         }, item.id)
       }) : {}, {
-        o: item.id,
-        p: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
+        p: item.id,
+        q: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
       });
     })
   }, {

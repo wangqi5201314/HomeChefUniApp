@@ -31,7 +31,9 @@
       >
         <view class="card-head">
           <text class="order-no">订单号：{{ item.orderNo || '-' }}</text>
-          <text class="status">{{ item.orderStatus || '-' }}</text>
+          <text class="status" :class="getStatusClass(item.orderStatus)">
+            {{ getStatusLabel(item.orderStatus) }}
+          </text>
         </view>
 
         <view class="info-grid">
@@ -40,7 +42,7 @@
             <text class="value">{{ item.serviceDate || '-' }}</text>
           </view>
           <view class="info-row">
-            <text class="label">时段</text>
+            <text class="label">时间段</text>
             <text class="value">{{ item.timeSlot || '-' }}</text>
           </view>
           <view class="info-row">
@@ -57,6 +59,7 @@
           <text class="contact-line">联系人：{{ item.contactName || '-' }}</text>
           <text class="contact-line">联系电话：{{ item.contactPhone || '-' }}</text>
           <text class="address">{{ item.fullAddress || '-' }}</text>
+          <text class="contact-line">创建时间：{{ item.createdAt || '-' }}</text>
         </view>
       </view>
     </view>
@@ -65,16 +68,7 @@
 
 <script>
 import { getChefOrderList } from '../../api/chef-order'
-
-const TAB_OPTIONS = [
-  { label: '全部', value: '' },
-  { label: 'PENDING_CONFIRM', value: 'PENDING_CONFIRM' },
-  { label: 'WAIT_PAY', value: 'WAIT_PAY' },
-  { label: 'PAID', value: 'PAID' },
-  { label: 'IN_SERVICE', value: 'IN_SERVICE' },
-  { label: 'COMPLETED', value: 'COMPLETED' },
-  { label: 'CANCELLED', value: 'CANCELLED' }
-]
+import { CHEF_ORDER_STATUS_TABS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 
 export default {
   name: 'ChefOrderListPage',
@@ -82,7 +76,7 @@ export default {
     return {
       loading: false,
       currentStatus: '',
-      tabs: TAB_OPTIONS,
+      tabs: CHEF_ORDER_STATUS_TABS,
       orderList: []
     }
   },
@@ -130,16 +124,24 @@ export default {
         url: `/pages-chef/order/detail?id=${id}`
       })
     },
+    getStatusLabel(status) {
+      return getOrderStatusLabel(status)
+    },
+    getStatusClass(status) {
+      return getOrderStatusClass(status)
+    },
     formatPeopleCount(value) {
       if (value === 0) {
         return '0人'
       }
+
       return value ? `${value}人` : '-'
     },
     formatAmount(value) {
       if (value === 0) {
         return '0'
       }
+
       return value || '-'
     }
   }
@@ -237,9 +239,22 @@ export default {
 .status {
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
-  background: #edf8f1;
   font-size: 22rpx;
+}
+
+.status.pending {
+  background: #fff2eb;
+  color: #c45e31;
+}
+
+.status.success {
+  background: #edf8f1;
   color: #2f8f55;
+}
+
+.status.danger {
+  background: #fdeeee;
+  color: #d14a4a;
 }
 
 .info-grid {
