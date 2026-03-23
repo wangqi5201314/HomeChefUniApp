@@ -4,6 +4,7 @@ const api_address = require("../../api/address.js");
 const api_order = require("../../api/order.js");
 const api_user = require("../../api/user.js");
 const utils_auth = require("../../utils/auth.js");
+const utils_userStatus = require("../../utils/user-status.js");
 const USER_ID_KEY = "user_id";
 const USER_TYPE_KEY = "user_type";
 const ADMIN_ID_KEY = "admin_id";
@@ -24,6 +25,15 @@ const _sfc_main = {
     avatarText() {
       const name = this.userInfo.nickname || this.userInfo.phone || "我";
       return String(name).slice(0, 1);
+    },
+    userStatusText() {
+      if (this.userInfo.statusDesc) {
+        return this.userInfo.statusDesc;
+      }
+      if (this.userInfo.status === 0 || this.userInfo.status) {
+        return utils_userStatus.getUserStatusText(this.userInfo.status);
+      }
+      return "未知状态";
     }
   },
   onShow() {
@@ -45,12 +55,8 @@ const _sfc_main = {
       try {
         const [userData, orderData, addressData] = await Promise.all([
           api_user.getCurrentUserInfo(),
-          api_order.getOrderList({
-            userId: this.userId
-          }),
-          api_address.getUserAddressList({
-            userId: this.userId
-          })
+          api_order.getOrderList({ userId: this.userId }),
+          api_address.getUserAddressList({ userId: this.userId })
         ]);
         this.userInfo = userData || {};
         this.orderCount = Array.isArray(orderData) ? orderData.length : 0;
@@ -62,29 +68,19 @@ const _sfc_main = {
       }
     },
     goProfile() {
-      common_vendor.index.navigateTo({
-        url: "/pages/mine/profile"
-      });
+      common_vendor.index.navigateTo({ url: "/pages/mine/profile" });
     },
     goReviewList() {
-      common_vendor.index.navigateTo({
-        url: "/pages/review/list"
-      });
+      common_vendor.index.navigateTo({ url: "/pages/review/list" });
     },
     goAddressList() {
-      common_vendor.index.navigateTo({
-        url: "/pages/address/list"
-      });
+      common_vendor.index.navigateTo({ url: "/pages/address/list" });
     },
     goChangePassword() {
-      common_vendor.index.navigateTo({
-        url: "/pages/mine/change-password"
-      });
+      common_vendor.index.navigateTo({ url: "/pages/mine/change-password" });
     },
     goOrderList() {
-      common_vendor.index.switchTab({
-        url: "/pages/order/list"
-      });
+      common_vendor.index.switchTab({ url: "/pages/order/list" });
     },
     handleLogout() {
       common_vendor.index.showModal({
@@ -98,9 +94,7 @@ const _sfc_main = {
           common_vendor.index.removeStorageSync(USER_ID_KEY);
           common_vendor.index.removeStorageSync(USER_TYPE_KEY);
           common_vendor.index.removeStorageSync(ADMIN_ID_KEY);
-          common_vendor.index.reLaunch({
-            url: "/pages/login/index"
-          });
+          common_vendor.index.reLaunch({ url: "/pages/login/index" });
         }
       });
     }
@@ -116,14 +110,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     d: common_vendor.t($options.displayNickname),
     e: common_vendor.t($data.userInfo.phone || "-"),
-    f: common_vendor.t($data.orderCount),
-    g: common_vendor.t($data.addressCount),
-    h: common_vendor.o((...args) => $options.goProfile && $options.goProfile(...args)),
-    i: common_vendor.o((...args) => $options.goReviewList && $options.goReviewList(...args)),
-    j: common_vendor.o((...args) => $options.goChangePassword && $options.goChangePassword(...args)),
-    k: common_vendor.o((...args) => $options.goAddressList && $options.goAddressList(...args)),
-    l: common_vendor.o((...args) => $options.goOrderList && $options.goOrderList(...args)),
-    m: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    f: common_vendor.t($options.userStatusText),
+    g: common_vendor.t($data.orderCount),
+    h: common_vendor.t($data.addressCount),
+    i: common_vendor.o((...args) => $options.goProfile && $options.goProfile(...args)),
+    j: common_vendor.o((...args) => $options.goReviewList && $options.goReviewList(...args)),
+    k: common_vendor.o((...args) => $options.goChangePassword && $options.goChangePassword(...args)),
+    l: common_vendor.o((...args) => $options.goAddressList && $options.goAddressList(...args)),
+    m: common_vendor.o((...args) => $options.goOrderList && $options.goOrderList(...args)),
+    n: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-569e925a"]]);

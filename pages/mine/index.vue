@@ -2,12 +2,7 @@
   <view class="page">
     <view class="profile-card">
       <view class="avatar-wrap">
-        <image
-          v-if="userInfo.avatar"
-          class="avatar"
-          :src="userInfo.avatar"
-          mode="aspectFill"
-        />
+        <image v-if="userInfo.avatar" class="avatar" :src="userInfo.avatar" mode="aspectFill" />
         <view v-else class="avatar avatar-placeholder">
           <text class="avatar-text">{{ avatarText }}</text>
         </view>
@@ -16,6 +11,7 @@
       <view class="profile-info">
         <text class="nickname">{{ displayNickname }}</text>
         <text class="phone">{{ userInfo.phone || '-' }}</text>
+        <text class="status-text">账号状态：{{ userStatusText }}</text>
       </view>
     </view>
 
@@ -63,6 +59,7 @@ import { getUserAddressList } from '../../api/address'
 import { getOrderList } from '../../api/order'
 import { getCurrentUserInfo } from '../../api/user'
 import { clearAuth, getUserInfo, setUserInfo } from '../../utils/auth'
+import { getUserStatusText } from '../../utils/user-status'
 
 const USER_ID_KEY = 'user_id'
 const USER_TYPE_KEY = 'user_type'
@@ -85,6 +82,17 @@ export default {
     avatarText() {
       const name = this.userInfo.nickname || this.userInfo.phone || '我'
       return String(name).slice(0, 1)
+    },
+    userStatusText() {
+      if (this.userInfo.statusDesc) {
+        return this.userInfo.statusDesc
+      }
+
+      if (this.userInfo.status === 0 || this.userInfo.status) {
+        return getUserStatusText(this.userInfo.status)
+      }
+
+      return '未知状态'
     }
   },
   onShow() {
@@ -108,12 +116,8 @@ export default {
       try {
         const [userData, orderData, addressData] = await Promise.all([
           getCurrentUserInfo(),
-          getOrderList({
-            userId: this.userId
-          }),
-          getUserAddressList({
-            userId: this.userId
-          })
+          getOrderList({ userId: this.userId }),
+          getUserAddressList({ userId: this.userId })
         ])
 
         this.userInfo = userData || {}
@@ -126,29 +130,19 @@ export default {
       }
     },
     goProfile() {
-      uni.navigateTo({
-        url: '/pages/mine/profile'
-      })
+      uni.navigateTo({ url: '/pages/mine/profile' })
     },
     goReviewList() {
-      uni.navigateTo({
-        url: '/pages/review/list'
-      })
+      uni.navigateTo({ url: '/pages/review/list' })
     },
     goAddressList() {
-      uni.navigateTo({
-        url: '/pages/address/list'
-      })
+      uni.navigateTo({ url: '/pages/address/list' })
     },
     goChangePassword() {
-      uni.navigateTo({
-        url: '/pages/mine/change-password'
-      })
+      uni.navigateTo({ url: '/pages/mine/change-password' })
     },
     goOrderList() {
-      uni.switchTab({
-        url: '/pages/order/list'
-      })
+      uni.switchTab({ url: '/pages/order/list' })
     },
     handleLogout() {
       uni.showModal({
@@ -163,10 +157,7 @@ export default {
           uni.removeStorageSync(USER_ID_KEY)
           uni.removeStorageSync(USER_TYPE_KEY)
           uni.removeStorageSync(ADMIN_ID_KEY)
-
-          uni.reLaunch({
-            url: '/pages/login/index'
-          })
+          uni.reLaunch({ url: '/pages/login/index' })
         }
       })
     }
@@ -175,143 +166,27 @@ export default {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  padding: 24rpx;
-  background: linear-gradient(180deg, #fff8f2 0%, #f6f7fb 34%, #f6f7fb 100%);
-  box-sizing: border-box;
-}
-
-.profile-card,
-.stats-card,
-.menu-card {
-  border-radius: 28rpx;
-  background: #ffffff;
-  box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.06);
-}
-
-.profile-card {
-  display: flex;
-  align-items: center;
-  padding: 36rpx 32rpx;
-}
-
-.avatar-wrap {
-  flex-shrink: 0;
-}
-
-.avatar {
-  width: 136rpx;
-  height: 136rpx;
-  border-radius: 50%;
-  background: #f1e1d9;
-}
-
-.avatar-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-text {
-  font-size: 48rpx;
-  font-weight: 600;
-  color: #b96845;
-}
-
-.profile-info {
-  flex: 1;
-  min-width: 0;
-  margin-left: 28rpx;
-}
-
-.nickname {
-  display: block;
-  font-size: 38rpx;
-  font-weight: 600;
-  color: #1f2329;
-}
-
-.phone {
-  display: block;
-  margin-top: 14rpx;
-  font-size: 28rpx;
-  color: #6b7280;
-}
-
-.stats-card {
-  display: flex;
-  align-items: center;
-  margin-top: 24rpx;
-  padding: 18rpx 0;
-}
-
-.stat-item {
-  flex: 1;
-  text-align: center;
-}
-
-.stat-value {
-  display: block;
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #d96c3a;
-}
-
-.stat-label {
-  display: block;
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  color: #8a8f99;
-}
-
-.stat-divider {
-  width: 2rpx;
-  height: 64rpx;
-  background: #f0f2f5;
-}
-
-.menu-card {
-  margin-top: 24rpx;
-  padding: 0 28rpx;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 108rpx;
-  border-bottom: 2rpx solid #f1f3f6;
-}
-
-.menu-item.last {
-  border-bottom: none;
-}
-
-.menu-text {
-  font-size: 30rpx;
-  color: #1f2329;
-}
-
-.menu-arrow {
-  font-size: 30rpx;
-  color: #b0b7c3;
-}
-
-.logout-btn {
-  width: 100%;
-  height: 88rpx;
-  margin-top: 36rpx;
-  line-height: 88rpx;
-  border: none;
-  border-radius: 999rpx;
-  background: #ffffff;
-  box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.06);
-  font-size: 30rpx;
-  color: #d14a4a;
-}
-
-.logout-btn::after {
-  border: none;
-}
+.page { min-height: 100vh; padding: 24rpx; background: linear-gradient(180deg, #fff8f2 0%, #f6f7fb 34%, #f6f7fb 100%); box-sizing: border-box; }
+.profile-card, .stats-card, .menu-card { border-radius: 28rpx; background: #ffffff; box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.06); }
+.profile-card { display: flex; align-items: center; padding: 36rpx 32rpx; }
+.avatar-wrap { flex-shrink: 0; }
+.avatar { width: 136rpx; height: 136rpx; border-radius: 50%; background: #f1e1d9; }
+.avatar-placeholder { display: flex; align-items: center; justify-content: center; }
+.avatar-text { font-size: 48rpx; font-weight: 600; color: #b96845; }
+.profile-info { flex: 1; min-width: 0; margin-left: 28rpx; }
+.nickname { display: block; font-size: 38rpx; font-weight: 600; color: #1f2329; }
+.phone { display: block; margin-top: 14rpx; font-size: 28rpx; color: #6b7280; }
+.status-text { display: block; margin-top: 12rpx; font-size: 24rpx; color: #8a8f99; }
+.stats-card { display: flex; align-items: center; margin-top: 24rpx; padding: 18rpx 0; }
+.stat-item { flex: 1; text-align: center; }
+.stat-value { display: block; font-size: 40rpx; font-weight: 700; color: #d96c3a; }
+.stat-label { display: block; margin-top: 10rpx; font-size: 24rpx; color: #8a8f99; }
+.stat-divider { width: 2rpx; height: 64rpx; background: #f0f2f5; }
+.menu-card { margin-top: 24rpx; padding: 0 28rpx; }
+.menu-item { display: flex; align-items: center; justify-content: space-between; min-height: 108rpx; border-bottom: 2rpx solid #f1f3f6; }
+.menu-item.last { border-bottom: none; }
+.menu-text { font-size: 30rpx; color: #1f2329; }
+.menu-arrow { font-size: 30rpx; color: #b0b7c3; }
+.logout-btn { width: 100%; height: 88rpx; margin-top: 36rpx; line-height: 88rpx; border: none; border-radius: 999rpx; background: #ffffff; box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.06); font-size: 30rpx; color: #d14a4a; }
+.logout-btn::after { border: none; }
 </style>

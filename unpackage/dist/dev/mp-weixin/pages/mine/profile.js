@@ -3,10 +3,12 @@ const common_vendor = require("../../common/vendor.js");
 const api_user = require("../../api/user.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_config = require("../../utils/config.js");
+const utils_userStatus = require("../../utils/user-status.js");
 function createDefaultForm() {
   return {
     phone: "",
     status: "",
+    statusDesc: "",
     nickname: "",
     avatar: "",
     gender: 0,
@@ -48,13 +50,13 @@ const _sfc_main = {
       return this.form.phone || "-";
     },
     statusDisplay() {
-      if (this.form.status === 1) {
-        return "正常";
+      if (this.form.statusDesc) {
+        return this.form.statusDesc;
       }
-      if (this.form.status === 0) {
-        return "禁用";
+      if (this.form.status === 0 || this.form.status) {
+        return utils_userStatus.getUserStatusText(this.form.status);
       }
-      return this.form.status || "-";
+      return "未知状态";
     }
   },
   onLoad() {
@@ -67,6 +69,7 @@ const _sfc_main = {
         this.form = {
           phone: data.phone || "",
           status: data.status,
+          statusDesc: data.statusDesc || "",
           nickname: data.nickname || "",
           avatar: data.avatar || "",
           gender: data.gender === 0 || data.gender ? Number(data.gender) : 0,
@@ -101,6 +104,8 @@ const _sfc_main = {
       });
       this.form.avatar = fileUrl || "";
       const latestUserInfo = await api_user.getCurrentUserInfo();
+      this.form.status = latestUserInfo.status;
+      this.form.statusDesc = latestUserInfo.statusDesc || "";
       utils_auth.setUserInfo(latestUserInfo || {});
     },
     chooseAvatar() {
@@ -127,48 +132,31 @@ const _sfc_main = {
               try {
                 result = JSON.parse(uploadRes.data);
               } catch (error) {
-                common_vendor.index.showToast({
-                  title: "上传返回格式错误",
-                  icon: "none"
-                });
+                common_vendor.index.showToast({ title: "上传返回格式错误", icon: "none" });
                 return;
               }
               if (uploadRes.statusCode === 401 || result.code === 401) {
                 utils_auth.clearAuth();
-                common_vendor.index.reLaunch({
-                  url: "/pages/login/index"
-                });
+                common_vendor.index.reLaunch({ url: "/pages/login/index" });
                 return;
               }
               if (uploadRes.statusCode < 200 || uploadRes.statusCode >= 300 || result.code !== 200) {
-                common_vendor.index.showToast({
-                  title: result.message || "上传失败",
-                  icon: "none"
-                });
+                common_vendor.index.showToast({ title: result.message || "上传失败", icon: "none" });
                 return;
               }
               const fileUrl = result.data && result.data.fileUrl ? result.data.fileUrl : "";
               if (!fileUrl) {
-                common_vendor.index.showToast({
-                  title: "未获取到头像地址",
-                  icon: "none"
-                });
+                common_vendor.index.showToast({ title: "未获取到头像地址", icon: "none" });
                 return;
               }
               try {
                 await this.handleAvatarUploaded(fileUrl);
-                common_vendor.index.showToast({
-                  title: "头像已更新",
-                  icon: "success"
-                });
+                common_vendor.index.showToast({ title: "头像已更新", icon: "success" });
               } catch (error) {
               }
             },
             fail: () => {
-              common_vendor.index.showToast({
-                title: "上传失败，请稍后重试",
-                icon: "none"
-              });
+              common_vendor.index.showToast({ title: "上传失败，请稍后重试", icon: "none" });
             },
             complete: () => {
               this.avatarUploading = false;
@@ -197,15 +185,12 @@ const _sfc_main = {
       try {
         await api_user.updateCurrentUserInfo(this.buildPayload());
         const latestUserInfo = await api_user.getCurrentUserInfo();
+        this.form.status = latestUserInfo.status;
+        this.form.statusDesc = latestUserInfo.statusDesc || "";
         utils_auth.setUserInfo(latestUserInfo || {});
-        common_vendor.index.showToast({
-          title: "保存成功",
-          icon: "success"
-        });
+        common_vendor.index.showToast({ title: "保存成功", icon: "success" });
         setTimeout(() => {
-          common_vendor.index.navigateBack({
-            delta: 1
-          });
+          common_vendor.index.navigateBack({ delta: 1 });
         }, 300);
       } catch (error) {
       } finally {

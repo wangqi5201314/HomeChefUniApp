@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_chefAuth = require("../../api/chef-auth.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
+const utils_chefStatus = require("../../utils/chef-status.js");
 const _sfc_main = {
   name: "ChefHomePage",
   data() {
@@ -20,6 +21,15 @@ const _sfc_main = {
       }
       if (this.chefInfo.certStatus === 0 || this.chefInfo.certStatus) {
         return utils_chefCertStatus.getChefCertStatusText(this.chefInfo.certStatus);
+      }
+      return "未知状态";
+    },
+    chefStatusText() {
+      if (this.chefInfo.statusDesc) {
+        return this.chefInfo.statusDesc;
+      }
+      if (this.chefInfo.status === 0 || this.chefInfo.status) {
+        return utils_chefStatus.getChefStatusText(this.chefInfo.status);
       }
       return "未知状态";
     }
@@ -47,9 +57,7 @@ const _sfc_main = {
       return value || "-";
     },
     goPage(url) {
-      common_vendor.index.navigateTo({
-        url
-      });
+      common_vendor.index.navigateTo({ url });
     },
     handleLogout() {
       common_vendor.index.showModal({
@@ -60,9 +68,7 @@ const _sfc_main = {
             return;
           }
           utils_auth.clearAuth();
-          common_vendor.index.reLaunch({
-            url: "/pages-chef/login/index"
-          });
+          common_vendor.index.reLaunch({ url: "/pages-chef/login/index" });
         }
       });
     }
@@ -79,15 +85,16 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: common_vendor.t($data.chefInfo.name || "未命名厨师"),
     e: common_vendor.t($options.certStatusText),
     f: common_vendor.t($data.chefInfo.phone || "-"),
-    g: common_vendor.t($options.formatValue($data.chefInfo.ratingAvg)),
-    h: common_vendor.t($options.formatValue($data.chefInfo.orderCount)),
-    i: common_vendor.o(($event) => $options.goPage("/pages-chef/order/list")),
-    j: common_vendor.o(($event) => $options.goPage("/pages-chef/review/list")),
-    k: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
-    l: common_vendor.t($options.certStatusText),
-    m: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
-    n: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
-    o: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    g: common_vendor.t($options.chefStatusText),
+    h: common_vendor.t($options.formatValue($data.chefInfo.ratingAvg)),
+    i: common_vendor.t($options.formatValue($data.chefInfo.orderCount)),
+    j: common_vendor.o(($event) => $options.goPage("/pages-chef/order/list")),
+    k: common_vendor.o(($event) => $options.goPage("/pages-chef/review/list")),
+    l: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
+    m: common_vendor.t($options.certStatusText),
+    n: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
+    o: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
+    p: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-74d96ff2"]]);

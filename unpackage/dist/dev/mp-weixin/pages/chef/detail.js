@@ -4,6 +4,7 @@ const api_chef = require("../../api/chef.js");
 const api_review = require("../../api/review.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
+const utils_chefStatus = require("../../utils/chef-status.js");
 const _sfc_main = {
   name: "ChefDetailPage",
   data() {
@@ -50,16 +51,22 @@ const _sfc_main = {
         return utils_chefCertStatus.getChefCertStatusText(this.chef.certStatus);
       }
       return "未知状态";
+    },
+    chefStatusText() {
+      if (this.chef.statusDesc) {
+        return this.chef.statusDesc;
+      }
+      if (this.chef.status === 0 || this.chef.status) {
+        return utils_chefStatus.getChefStatusText(this.chef.status);
+      }
+      return "未知状态";
     }
   },
   onLoad(options) {
     const { id = "" } = options || {};
     this.chefId = id;
     if (!this.chefId) {
-      common_vendor.index.showToast({
-        title: "缺少厨师 id",
-        icon: "none"
-      });
+      common_vendor.index.showToast({ title: "缺少厨师 id", icon: "none" });
       return;
     }
     this.loadPageData();
@@ -109,10 +116,7 @@ const _sfc_main = {
     },
     handleBook() {
       if (!this.selectedSchedule) {
-        common_vendor.index.showToast({
-          title: "请先选择档期",
-          icon: "none"
-        });
+        common_vendor.index.showToast({ title: "请先选择档期", icon: "none" });
         return;
       }
       common_vendor.index.navigateTo({
@@ -120,9 +124,7 @@ const _sfc_main = {
       });
     },
     goAllReviews() {
-      common_vendor.index.navigateTo({
-        url: `/pages/review/chef-list?chefId=${this.chefId}`
-      });
+      common_vendor.index.navigateTo({ url: `/pages/review/chef-list?chefId=${this.chefId}` });
     },
     getNameInitial(name) {
       return name ? String(name).slice(0, 1) : "厨";
@@ -153,25 +155,26 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     e: common_vendor.t($data.chef.name || "未命名厨师"),
     f: common_vendor.t($options.certStatusText),
-    g: common_vendor.t($data.chef.specialtyCuisine || "-"),
-    h: common_vendor.t($options.serviceModeText),
-    i: common_vendor.t($data.chef.introduction || "暂无介绍"),
-    j: common_vendor.t($options.formatValue($data.chef.yearsOfExperience, "年")),
-    k: common_vendor.t($options.formatPlain($data.chef.ratingAvg)),
-    l: common_vendor.t($options.formatPlain($data.chef.orderCount)),
-    m: common_vendor.t($options.certStatusText),
-    n: $options.tagList.length
+    g: common_vendor.t($options.chefStatusText),
+    h: common_vendor.t($data.chef.specialtyCuisine || "-"),
+    i: common_vendor.t($options.serviceModeText),
+    j: common_vendor.t($data.chef.introduction || "暂无介绍"),
+    k: common_vendor.t($options.formatValue($data.chef.yearsOfExperience, "年")),
+    l: common_vendor.t($options.formatPlain($data.chef.ratingAvg)),
+    m: common_vendor.t($options.formatPlain($data.chef.orderCount)),
+    n: common_vendor.t($options.certStatusText),
+    o: $options.tagList.length
   }, $options.tagList.length ? {
-    o: common_vendor.f($options.tagList, (tag, index, i0) => {
+    p: common_vendor.f($options.tagList, (tag, index, i0) => {
       return {
         a: common_vendor.t(tag),
         b: index
       };
     })
   } : {}, {
-    p: $data.availableScheduleList.length
+    q: $data.availableScheduleList.length
   }, $data.availableScheduleList.length ? {
-    q: common_vendor.f($data.availableScheduleList, (item, k0, i0) => {
+    r: common_vendor.f($data.availableScheduleList, (item, k0, i0) => {
       return {
         a: common_vendor.t(item.serviceDate),
         b: common_vendor.t(item.timeSlot),
@@ -183,13 +186,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    r: $data.reviewList.length > $options.displayReviewList.length
+    s: $data.reviewList.length > $options.displayReviewList.length
   }, $data.reviewList.length > $options.displayReviewList.length ? {
-    s: common_vendor.o((...args) => $options.goAllReviews && $options.goAllReviews(...args))
+    t: common_vendor.o((...args) => $options.goAllReviews && $options.goAllReviews(...args))
   } : {}, {
-    t: $options.displayReviewList.length
+    v: $options.displayReviewList.length
   }, $options.displayReviewList.length ? {
-    v: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
+    w: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : `用户${item.userId}`),
         b: common_vendor.t($options.formatPlain(item.overallScore)),
@@ -203,8 +206,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}), {
-    w: common_vendor.t($options.selectedScheduleText),
-    x: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
+    x: common_vendor.t($options.selectedScheduleText),
+    y: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b9a9a594"]]);

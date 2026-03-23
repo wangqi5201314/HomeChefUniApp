@@ -3,6 +3,8 @@ const common_vendor = require("../../common/vendor.js");
 const api_order = require("../../api/order.js");
 const api_pay = require("../../api/pay.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_payStatus = require("../../utils/pay-status.js");
+const utils_refundStatus = require("../../utils/refund-status.js");
 const _sfc_main = {
   name: "OrderDetailPage",
   data() {
@@ -27,6 +29,33 @@ const _sfc_main = {
     statusClass() {
       return utils_orderStatus.getOrderStatusClass(this.orderDetail.orderStatus);
     },
+    hasPayStatus() {
+      return Boolean(this.orderDetail.payStatus || this.orderDetail.payStatusDesc);
+    },
+    hasRefundStatus() {
+      return Boolean(this.orderDetail.refundStatus || this.orderDetail.refundStatusDesc);
+    },
+    hasPaymentStatusInfo() {
+      return this.hasPayStatus || this.hasRefundStatus;
+    },
+    payStatusText() {
+      if (this.orderDetail.payStatusDesc) {
+        return this.orderDetail.payStatusDesc;
+      }
+      if (this.orderDetail.payStatus) {
+        return utils_payStatus.getPayStatusText(this.orderDetail.payStatus);
+      }
+      return "未知状态";
+    },
+    refundStatusText() {
+      if (this.orderDetail.refundStatusDesc) {
+        return this.orderDetail.refundStatusDesc;
+      }
+      if (this.orderDetail.refundStatus) {
+        return utils_refundStatus.getRefundStatusText(this.orderDetail.refundStatus);
+      }
+      return "未知状态";
+    },
     showCancelButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.PENDING_CONFIRM || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.WAIT_PAY;
     },
@@ -41,24 +70,18 @@ const _sfc_main = {
     },
     statusNoticeText() {
       const status = this.orderDetail.orderStatus;
-      if (status === utils_orderStatus.ORDER_STATUS.PAID) {
+      if (status === utils_orderStatus.ORDER_STATUS.PAID)
         return "已支付";
-      }
-      if (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE) {
+      if (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE)
         return "服务中";
-      }
-      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED)
         return this.isReviewed ? "已评价" : "已完成";
-      }
-      if (status === utils_orderStatus.ORDER_STATUS.REJECTED) {
+      if (status === utils_orderStatus.ORDER_STATUS.REJECTED)
         return "厨师已拒单";
-      }
-      if (status === utils_orderStatus.ORDER_STATUS.CANCELLED) {
+      if (status === utils_orderStatus.ORDER_STATUS.CANCELLED)
         return "已取消";
-      }
-      if (status === utils_orderStatus.ORDER_STATUS.REFUNDED) {
+      if (status === utils_orderStatus.ORDER_STATUS.REFUNDED)
         return "已退款";
-      }
       return "";
     },
     showBackHomeButton() {
@@ -71,10 +94,7 @@ const _sfc_main = {
   onLoad(options) {
     this.id = options && options.id ? options.id : "";
     if (!this.id) {
-      common_vendor.index.showToast({
-        title: "缺少订单 id",
-        icon: "none"
-      });
+      common_vendor.index.showToast({ title: "缺少订单 id", icon: "none" });
       return;
     }
     this.loadOrderDetail();
@@ -117,21 +137,13 @@ const _sfc_main = {
         return;
       }
       if (!this.cancelReason.trim()) {
-        common_vendor.index.showToast({
-          title: "请输入取消原因",
-          icon: "none"
-        });
+        common_vendor.index.showToast({ title: "请输入取消原因", icon: "none" });
         return;
       }
       this.cancelSubmitting = true;
       try {
-        await api_order.cancelOrder(this.id, {
-          reason: this.cancelReason.trim()
-        });
-        common_vendor.index.showToast({
-          title: "取消成功",
-          icon: "success"
-        });
+        await api_order.cancelOrder(this.id, { reason: this.cancelReason.trim() });
+        common_vendor.index.showToast({ title: "取消成功", icon: "success" });
         this.showCancelModal = false;
         await this.loadOrderDetail();
       } catch (error) {
@@ -145,18 +157,11 @@ const _sfc_main = {
       }
       this.paying = true;
       try {
-        await api_pay.createPayment({
-          orderId: this.orderDetail.id
-        });
+        await api_pay.createPayment({ orderId: this.orderDetail.id });
         await api_pay.mockPaymentSuccess(this.orderDetail.id);
-        common_vendor.index.showToast({
-          title: "支付成功",
-          icon: "success"
-        });
+        common_vendor.index.showToast({ title: "支付成功", icon: "success" });
         setTimeout(() => {
-          common_vendor.index.navigateTo({
-            url: `/pages/pay/result?orderId=${this.orderDetail.id}`
-          });
+          common_vendor.index.navigateTo({ url: `/pages/pay/result?orderId=${this.orderDetail.id}` });
         }, 300);
       } catch (error) {
       } finally {
@@ -167,14 +172,10 @@ const _sfc_main = {
       if (this.isReviewed) {
         return;
       }
-      common_vendor.index.navigateTo({
-        url: `/pages/review/create?orderId=${this.orderDetail.id}&chefId=${this.orderDetail.chefId}&userId=${this.orderDetail.userId}`
-      });
+      common_vendor.index.navigateTo({ url: `/pages/review/create?orderId=${this.orderDetail.id}&chefId=${this.orderDetail.chefId}&userId=${this.orderDetail.userId}` });
     },
     goHome() {
-      common_vendor.index.switchTab({
-        url: "/pages/home/index"
-      });
+      common_vendor.index.switchTab({ url: "/pages/home/index" });
     }
   }
 };
@@ -203,55 +204,65 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     v: common_vendor.t($data.orderDetail.fullAddress || "-"),
     w: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
     x: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
-    y: common_vendor.t($options.isReviewed ? "已评价" : "未评价"),
-    z: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
-  }, $data.orderDetail.cancelReason || $data.orderDetail.refundReason ? common_vendor.e({
-    A: $data.orderDetail.cancelReason
-  }, $data.orderDetail.cancelReason ? {
-    B: common_vendor.t($data.orderDetail.cancelReason)
+    y: $options.hasPaymentStatusInfo
+  }, $options.hasPaymentStatusInfo ? common_vendor.e({
+    z: $options.hasPayStatus
+  }, $options.hasPayStatus ? {
+    A: common_vendor.t($options.payStatusText)
   } : {}, {
-    C: $data.orderDetail.refundReason
+    B: $options.hasRefundStatus
+  }, $options.hasRefundStatus ? {
+    C: common_vendor.t($options.refundStatusText)
+  } : {}) : {}, {
+    D: common_vendor.t($options.isReviewed ? "已评价" : "未评价"),
+    E: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
+  }, $data.orderDetail.cancelReason || $data.orderDetail.refundReason ? common_vendor.e({
+    F: $data.orderDetail.cancelReason
+  }, $data.orderDetail.cancelReason ? {
+    G: common_vendor.t($data.orderDetail.cancelReason)
+  } : {}, {
+    H: $data.orderDetail.refundReason
   }, $data.orderDetail.refundReason ? {
-    D: common_vendor.t($data.orderDetail.refundReason)
+    I: common_vendor.t($data.orderDetail.refundReason)
   } : {}) : {}), {
     b: !$data.orderDetail.id,
-    E: $options.showActionBar
+    J: $options.showActionBar
   }, $options.showActionBar ? common_vendor.e({
-    F: $options.showCancelButton
+    K: $options.showCancelButton
   }, $options.showCancelButton ? {
-    G: $data.cancelSubmitting,
-    H: $data.cancelSubmitting || $data.paying,
-    I: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
+    L: $data.cancelSubmitting,
+    M: $data.cancelSubmitting || $data.paying,
+    N: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
   } : {}, {
-    J: $options.showPayButton
+    O: $options.showPayButton
   }, $options.showPayButton ? {
-    K: $data.paying,
-    L: $data.paying || $data.cancelSubmitting,
-    M: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
+    P: $data.paying,
+    Q: $data.paying || $data.cancelSubmitting,
+    R: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
   } : {}, {
-    N: $options.showReviewButton
+    S: $options.showReviewButton
   }, $options.showReviewButton ? {
-    O: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
+    T: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
   } : {}, {
-    P: $options.showStatusNotice
+    U: $options.showStatusNotice
   }, $options.showStatusNotice ? {
-    Q: common_vendor.t($options.statusNoticeText)
+    V: common_vendor.t($options.statusNoticeText)
   } : {}, {
-    R: $options.showBackHomeButton
+    W: $options.showBackHomeButton
   }, $options.showBackHomeButton ? {
-    S: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
+    X: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
   } : {}) : {}, {
-    T: $data.showCancelModal
+    Y: $data.showCancelModal
   }, $data.showCancelModal ? {
-    U: $data.cancelReason,
-    V: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
-    W: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
-    X: $data.cancelSubmitting,
-    Y: $data.cancelSubmitting,
-    Z: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
-    aa: common_vendor.o(() => {
+    Z: $data.cancelReason,
+    aa: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
+    ab: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
+    ac: $data.cancelSubmitting,
+    ad: $data.cancelSubmitting,
+    ae: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
+    af: common_vendor.o(() => {
     }),
-    ab: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+    ag: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-6b23c96c"]]);
