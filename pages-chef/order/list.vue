@@ -51,7 +51,7 @@
           </view>
           <view class="info-row">
             <text class="label">实付金额</text>
-            <text class="value amount">￥{{ formatAmount(item.payAmount) }}</text>
+            <text class="value amount">¥{{ formatAmount(item.payAmount) }}</text>
           </view>
         </view>
 
@@ -63,15 +63,21 @@
         </view>
       </view>
     </view>
+
+    <chef-tabbar current="order" />
   </view>
 </template>
 
 <script>
+import ChefTabbar from '../../components/chef-tabbar.vue'
 import { getChefOrderList } from '../../api/chef-order'
 import { CHEF_ORDER_STATUS_TABS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 
 export default {
   name: 'ChefOrderListPage',
+  components: {
+    ChefTabbar
+  },
   data() {
     return {
       loading: false,
@@ -151,7 +157,7 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 24rpx;
+  padding: 24rpx 24rpx 190rpx;
   background:
     radial-gradient(circle at top right, rgba(47, 143, 85, 0.14), transparent 34%),
     linear-gradient(180deg, #eef7f1 0%, #f6f7fb 38%, #f6f7fb 100%);

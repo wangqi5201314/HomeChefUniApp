@@ -2,8 +2,12 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chefOrder = require("../../api/chef-order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const ChefTabbar = () => "../../components/chef-tabbar.js";
 const _sfc_main = {
   name: "ChefOrderListPage",
+  components: {
+    ChefTabbar
+  },
   data() {
     return {
       loading: false,
@@ -73,6 +77,10 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_chef_tabbar = common_vendor.resolveComponent("chef-tabbar");
+  _component_chef_tabbar();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.f($data.tabs, (item, k0, i0) => {
@@ -103,7 +111,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   }, {
-    c: $data.orderList.length === 0
+    c: $data.orderList.length === 0,
+    e: common_vendor.p({
+      current: "order"
+    })
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-7a556a5b"]]);

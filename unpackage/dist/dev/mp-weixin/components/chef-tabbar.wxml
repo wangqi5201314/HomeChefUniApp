@@ -1,0 +1,1 @@
+<view class="chef-tabbar data-v-78bb8aa6"><view class="tabbar-inner data-v-78bb8aa6"><view wx:for="{{a}}" wx:for-item="item" wx:key="b" class="{{['tab-item', 'data-v-78bb8aa6', item.c && 'active']}}" bindtap="{{item.d}}"><text class="tab-text data-v-78bb8aa6">{{item.a}}</text></view></view></view>

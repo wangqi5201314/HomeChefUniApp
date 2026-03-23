@@ -1,7 +1,7 @@
 
 .page.data-v-7a556a5b {
   min-height: 100vh;
-  padding: 24rpx;
+  padding: 24rpx 24rpx 190rpx;
   background:
     radial-gradient(circle at top right, rgba(47, 143, 85, 0.14), transparent 34%),
     linear-gradient(180deg, #eef7f1 0%, #f6f7fb 38%, #f6f7fb 100%);

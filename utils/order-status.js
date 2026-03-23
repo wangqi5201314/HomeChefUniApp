@@ -63,3 +63,12 @@ export function getOrderStatusClass(status) {
 
   return ''
 }
+
+export default {
+  ORDER_STATUS,
+  ORDER_STATUS_LABEL_MAP,
+  USER_ORDER_STATUS_TABS,
+  CHEF_ORDER_STATUS_TABS,
+  getOrderStatusLabel,
+  getOrderStatusClass
+}

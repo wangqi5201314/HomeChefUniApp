@@ -152,7 +152,9 @@
         {
           "path": "home/index",
           "style": {
-            "navigationBarTitleText": "厨师首页"
+            "navigationBarTitleText": "厨师首页",
+            "enablePullDownRefresh": true,
+            "backgroundTextStyle": "dark"
           }
         },
         {

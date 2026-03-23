@@ -4,8 +4,12 @@ const api_chefProfile = require("../../api/chef-profile.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const utils_chefStatus = require("../../utils/chef-status.js");
+const ChefTabbar = () => "../../components/chef-tabbar.js";
 const _sfc_main = {
   name: "ChefMinePage",
+  components: {
+    ChefTabbar
+  },
   data() {
     return {
       chefInfo: {}
@@ -74,6 +78,10 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_chef_tabbar = common_vendor.resolveComponent("chef-tabbar");
+  _component_chef_tabbar();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $data.chefInfo.avatar
@@ -93,7 +101,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     l: common_vendor.t($options.certStatusText),
     m: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
     n: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
-    o: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    o: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args)),
+    p: common_vendor.p({
+      current: "mine"
+    })
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-1ec0422a"]]);
