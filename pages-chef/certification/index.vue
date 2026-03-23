@@ -31,13 +31,20 @@
             mode="aspectFill"
           />
           <view v-else class="upload-placeholder">
-            <text class="upload-placeholder-text">点击上传图片</text>
+            <text class="upload-placeholder-text">
+              {{ uploadingKey === item.key ? '上传中...' : '点击上传图片' }}
+            </text>
           </view>
         </view>
       </view>
     </view>
 
-    <button class="submit-btn" :loading="saving" :disabled="saving || !!uploadingKey" @click="submitCertification">
+    <button
+      class="submit-btn"
+      :loading="saving"
+      :disabled="saving || !!uploadingKey"
+      @click="submitCertification"
+    >
       提交认证资料
     </button>
   </view>
@@ -61,10 +68,43 @@ function createDefaultForm() {
   }
 }
 
+function isValidChineseIdCard(idCardNo) {
+  const value = String(idCardNo || '').trim().toUpperCase()
+
+  if (!/^\d{17}[\dX]$/.test(value)) {
+    return false
+  }
+
+  const year = Number(value.slice(6, 10))
+  const month = Number(value.slice(10, 12))
+  const day = Number(value.slice(12, 14))
+  const birthday = new Date(year, month - 1, day)
+
+  if (
+    birthday.getFullYear() !== year
+    || birthday.getMonth() + 1 !== month
+    || birthday.getDate() !== day
+  ) {
+    return false
+  }
+
+  const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
+  const codes = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2']
+
+  const sum = value
+    .slice(0, 17)
+    .split('')
+    .reduce((total, current, index) => total + Number(current) * weights[index], 0)
+
+  return codes[sum % 11] === value[17]
+}
+
 export default {
   name: 'ChefCertificationPage',
   data() {
     return {
+      loaded: false,
+      skipNextOnShowReload: false,
       saving: false,
       uploadingKey: '',
       form: createDefaultForm(),
@@ -107,7 +147,7 @@ export default {
       return '请完善并提交认证资料。'
     }
   },
-  onShow() {
+  onLoad() {
     const cachedInfo = getChefInfo()
     if (cachedInfo) {
       this.chefInfo = cachedInfo
@@ -115,7 +155,48 @@ export default {
 
     this.loadPageData()
   },
+  onShow() {
+    if (this.skipNextOnShowReload) {
+      this.skipNextOnShowReload = false
+      return
+    }
+
+    if (!this.loaded) {
+      const cachedInfo = getChefInfo()
+      if (cachedInfo) {
+        this.chefInfo = cachedInfo
+      }
+      this.loadPageData()
+    }
+  },
   methods: {
+    validateForm() {
+      if (!this.form.realName.trim()) {
+        uni.showToast({
+          title: '请输入真实姓名',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (!this.form.idCardNo.trim()) {
+        uni.showToast({
+          title: '请输入身份证号',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (!isValidChineseIdCard(this.form.idCardNo)) {
+        uni.showToast({
+          title: '请输入正确的身份证号',
+          icon: 'none'
+        })
+        return false
+      }
+
+      return true
+    },
     async loadPageData() {
       try {
         const [certificationData, chefData] = await Promise.all([
@@ -130,13 +211,17 @@ export default {
         this.chefInfo = chefData || {}
         setChefInfo(this.chefInfo)
       } catch (error) {
-        this.form = createDefaultForm()
+      } finally {
+        this.loaded = true
       }
     },
     chooseCertImage(field) {
       if (this.uploadingKey) {
         return
       }
+
+      // 从相册或相机返回时会触发 onShow，这里跳过那一次重载，避免把未提交表单覆盖掉。
+      this.skipNextOnShowReload = true
 
       uni.chooseImage({
         count: 1,
@@ -161,7 +246,7 @@ export default {
       })
     },
     async submitCertification() {
-      if (this.saving || this.uploadingKey) {
+      if (this.saving || this.uploadingKey || !this.validateForm()) {
         return
       }
 
@@ -182,7 +267,11 @@ export default {
           icon: 'success'
         })
 
-        await this.loadPageData()
+        setTimeout(() => {
+          uni.redirectTo({
+            url: '/pages-chef/mine/index'
+          })
+        }, 300)
       } catch (error) {
       } finally {
         this.saving = false

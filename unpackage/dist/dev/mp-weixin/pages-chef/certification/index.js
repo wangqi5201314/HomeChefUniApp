@@ -15,10 +15,29 @@ function createDefaultForm() {
     advancedCertUrl: ""
   };
 }
+function isValidChineseIdCard(idCardNo) {
+  const value = String(idCardNo || "").trim().toUpperCase();
+  if (!/^\d{17}[\dX]$/.test(value)) {
+    return false;
+  }
+  const year = Number(value.slice(6, 10));
+  const month = Number(value.slice(10, 12));
+  const day = Number(value.slice(12, 14));
+  const birthday = new Date(year, month - 1, day);
+  if (birthday.getFullYear() !== year || birthday.getMonth() + 1 !== month || birthday.getDate() !== day) {
+    return false;
+  }
+  const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+  const codes = ["1", "0", "X", "9", "8", "7", "6", "5", "4", "3", "2"];
+  const sum = value.slice(0, 17).split("").reduce((total, current, index) => total + Number(current) * weights[index], 0);
+  return codes[sum % 11] === value[17];
+}
 const _sfc_main = {
   name: "ChefCertificationPage",
   data() {
     return {
+      loaded: false,
+      skipNextOnShowReload: false,
       saving: false,
       uploadingKey: "",
       form: createDefaultForm(),
@@ -55,14 +74,51 @@ const _sfc_main = {
       return "请完善并提交认证资料。";
     }
   },
-  onShow() {
+  onLoad() {
     const cachedInfo = utils_auth.getChefInfo();
     if (cachedInfo) {
       this.chefInfo = cachedInfo;
     }
     this.loadPageData();
   },
+  onShow() {
+    if (this.skipNextOnShowReload) {
+      this.skipNextOnShowReload = false;
+      return;
+    }
+    if (!this.loaded) {
+      const cachedInfo = utils_auth.getChefInfo();
+      if (cachedInfo) {
+        this.chefInfo = cachedInfo;
+      }
+      this.loadPageData();
+    }
+  },
   methods: {
+    validateForm() {
+      if (!this.form.realName.trim()) {
+        common_vendor.index.showToast({
+          title: "请输入真实姓名",
+          icon: "none"
+        });
+        return false;
+      }
+      if (!this.form.idCardNo.trim()) {
+        common_vendor.index.showToast({
+          title: "请输入身份证号",
+          icon: "none"
+        });
+        return false;
+      }
+      if (!isValidChineseIdCard(this.form.idCardNo)) {
+        common_vendor.index.showToast({
+          title: "请输入正确的身份证号",
+          icon: "none"
+        });
+        return false;
+      }
+      return true;
+    },
     async loadPageData() {
       try {
         const [certificationData, chefData] = await Promise.all([
@@ -76,13 +132,15 @@ const _sfc_main = {
         this.chefInfo = chefData || {};
         utils_auth.setChefInfo(this.chefInfo);
       } catch (error) {
-        this.form = createDefaultForm();
+      } finally {
+        this.loaded = true;
       }
     },
     chooseCertImage(field) {
       if (this.uploadingKey) {
         return;
       }
+      this.skipNextOnShowReload = true;
       common_vendor.index.chooseImage({
         count: 1,
         sizeType: ["compressed"],
@@ -104,7 +162,7 @@ const _sfc_main = {
       });
     },
     async submitCertification() {
-      if (this.saving || this.uploadingKey) {
+      if (this.saving || this.uploadingKey || !this.validateForm()) {
         return;
       }
       this.saving = true;
@@ -121,7 +179,11 @@ const _sfc_main = {
           title: "提交成功",
           icon: "success"
         });
-        await this.loadPageData();
+        setTimeout(() => {
+          common_vendor.index.redirectTo({
+            url: "/pages-chef/mine/index"
+          });
+        }, 300);
       } catch (error) {
       } finally {
         this.saving = false;
@@ -143,9 +205,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: $data.form[item.key]
       }, $data.form[item.key] ? {
         c: $data.form[item.key]
-      } : {}, {
-        d: common_vendor.o(($event) => $options.chooseCertImage(item.key), item.key),
-        e: item.key
+      } : {
+        d: common_vendor.t($data.uploadingKey === item.key ? "上传中..." : "点击上传图片")
+      }, {
+        e: common_vendor.o(($event) => $options.chooseCertImage(item.key), item.key),
+        f: item.key
       });
     }),
     h: $data.saving,
