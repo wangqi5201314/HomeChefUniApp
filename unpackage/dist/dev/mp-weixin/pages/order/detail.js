@@ -3,8 +3,6 @@ const common_vendor = require("../../common/vendor.js");
 const api_order = require("../../api/order.js");
 const api_pay = require("../../api/pay.js");
 const utils_orderStatus = require("../../utils/order-status.js");
-const utils_payStatus = require("../../utils/pay-status.js");
-const utils_refundStatus = require("../../utils/refund-status.js");
 const _sfc_main = {
   name: "OrderDetailPage",
   data() {
@@ -14,8 +12,11 @@ const _sfc_main = {
       loading: false,
       paying: false,
       cancelSubmitting: false,
+      refundSubmitting: false,
       showCancelModal: false,
+      showRefundModal: false,
       cancelReason: "",
+      refundReason: "",
       orderDetail: {}
     };
   },
@@ -29,38 +30,14 @@ const _sfc_main = {
     statusClass() {
       return utils_orderStatus.getOrderStatusClass(this.orderDetail.orderStatus);
     },
-    hasPayStatus() {
-      return Boolean(this.orderDetail.payStatus || this.orderDetail.payStatusDesc);
-    },
-    hasRefundStatus() {
-      return Boolean(this.orderDetail.refundStatus || this.orderDetail.refundStatusDesc);
-    },
-    hasPaymentStatusInfo() {
-      return this.hasPayStatus || this.hasRefundStatus;
-    },
-    payStatusText() {
-      if (this.orderDetail.payStatusDesc) {
-        return this.orderDetail.payStatusDesc;
-      }
-      if (this.orderDetail.payStatus) {
-        return utils_payStatus.getPayStatusText(this.orderDetail.payStatus);
-      }
-      return "未知状态";
-    },
-    refundStatusText() {
-      if (this.orderDetail.refundStatusDesc) {
-        return this.orderDetail.refundStatusDesc;
-      }
-      if (this.orderDetail.refundStatus) {
-        return utils_refundStatus.getRefundStatusText(this.orderDetail.refundStatus);
-      }
-      return "未知状态";
-    },
     showCancelButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.PENDING_CONFIRM || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.WAIT_PAY;
     },
     showPayButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.WAIT_PAY;
+    },
+    showRefundButton() {
+      return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.PAID;
     },
     showReviewButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED && !this.isReviewed;
@@ -85,10 +62,10 @@ const _sfc_main = {
       return "";
     },
     showBackHomeButton() {
-      return this.showCancelButton;
+      return this.showCancelButton || this.showRefundButton;
     },
     showActionBar() {
-      return this.showCancelButton || this.showPayButton || this.showReviewButton || this.showStatusNotice || this.showBackHomeButton;
+      return this.showCancelButton || this.showPayButton || this.showRefundButton || this.showReviewButton || this.showStatusNotice || this.showBackHomeButton;
     }
   },
   onLoad(options) {
@@ -151,6 +128,39 @@ const _sfc_main = {
         this.cancelSubmitting = false;
       }
     },
+    openRefundPopup() {
+      this.refundReason = "";
+      this.showRefundModal = true;
+    },
+    closeRefundPopup() {
+      if (this.refundSubmitting) {
+        return;
+      }
+      this.showRefundModal = false;
+    },
+    async submitRefund() {
+      if (this.refundSubmitting) {
+        return;
+      }
+      if (!this.refundReason.trim()) {
+        common_vendor.index.showToast({ title: "请输入退款原因", icon: "none" });
+        return;
+      }
+      this.refundSubmitting = true;
+      try {
+        await api_pay.refundPayment({
+          orderId: Number(this.orderDetail.id),
+          refundAmount: Number(this.orderDetail.payAmount || 0),
+          refundReason: this.refundReason.trim()
+        });
+        common_vendor.index.showToast({ title: "退款申请成功", icon: "success" });
+        this.showRefundModal = false;
+        await this.loadOrderDetail();
+      } catch (error) {
+      } finally {
+        this.refundSubmitting = false;
+      }
+    },
     async handlePay() {
       if (this.paying) {
         return;
@@ -204,65 +214,72 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     v: common_vendor.t($data.orderDetail.fullAddress || "-"),
     w: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
     x: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
-    y: $options.hasPaymentStatusInfo
-  }, $options.hasPaymentStatusInfo ? common_vendor.e({
-    z: $options.hasPayStatus
-  }, $options.hasPayStatus ? {
-    A: common_vendor.t($options.payStatusText)
-  } : {}, {
-    B: $options.hasRefundStatus
-  }, $options.hasRefundStatus ? {
-    C: common_vendor.t($options.refundStatusText)
-  } : {}) : {}, {
-    D: common_vendor.t($options.isReviewed ? "已评价" : "未评价"),
-    E: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
+    y: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
   }, $data.orderDetail.cancelReason || $data.orderDetail.refundReason ? common_vendor.e({
-    F: $data.orderDetail.cancelReason
+    z: $data.orderDetail.cancelReason
   }, $data.orderDetail.cancelReason ? {
-    G: common_vendor.t($data.orderDetail.cancelReason)
+    A: common_vendor.t($data.orderDetail.cancelReason)
   } : {}, {
-    H: $data.orderDetail.refundReason
+    B: $data.orderDetail.refundReason
   }, $data.orderDetail.refundReason ? {
-    I: common_vendor.t($data.orderDetail.refundReason)
+    C: common_vendor.t($data.orderDetail.refundReason)
   } : {}) : {}), {
     b: !$data.orderDetail.id,
-    J: $options.showActionBar
+    D: $options.showActionBar
   }, $options.showActionBar ? common_vendor.e({
-    K: $options.showCancelButton
+    E: $options.showCancelButton
   }, $options.showCancelButton ? {
-    L: $data.cancelSubmitting,
-    M: $data.cancelSubmitting || $data.paying,
-    N: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
+    F: $data.cancelSubmitting,
+    G: $data.cancelSubmitting || $data.paying || $data.refundSubmitting,
+    H: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
   } : {}, {
-    O: $options.showPayButton
+    I: $options.showPayButton
   }, $options.showPayButton ? {
-    P: $data.paying,
-    Q: $data.paying || $data.cancelSubmitting,
-    R: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
+    J: $data.paying,
+    K: $data.paying || $data.cancelSubmitting || $data.refundSubmitting,
+    L: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
   } : {}, {
-    S: $options.showReviewButton
+    M: $options.showRefundButton
+  }, $options.showRefundButton ? {
+    N: $data.refundSubmitting,
+    O: $data.refundSubmitting || $data.paying || $data.cancelSubmitting,
+    P: common_vendor.o((...args) => $options.openRefundPopup && $options.openRefundPopup(...args))
+  } : {}, {
+    Q: $options.showReviewButton
   }, $options.showReviewButton ? {
-    T: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
+    R: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
   } : {}, {
-    U: $options.showStatusNotice
+    S: $options.showStatusNotice
   }, $options.showStatusNotice ? {
-    V: common_vendor.t($options.statusNoticeText)
+    T: common_vendor.t($options.statusNoticeText)
   } : {}, {
-    W: $options.showBackHomeButton
+    U: $options.showBackHomeButton
   }, $options.showBackHomeButton ? {
-    X: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
+    V: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
   } : {}) : {}, {
-    Y: $data.showCancelModal
+    W: $data.showCancelModal
   }, $data.showCancelModal ? {
-    Z: $data.cancelReason,
-    aa: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
-    ab: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
-    ac: $data.cancelSubmitting,
-    ad: $data.cancelSubmitting,
-    ae: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
-    af: common_vendor.o(() => {
+    X: $data.cancelReason,
+    Y: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
+    Z: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
+    aa: $data.cancelSubmitting,
+    ab: $data.cancelSubmitting,
+    ac: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
+    ad: common_vendor.o(() => {
     }),
-    ag: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+    ae: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+  } : {}, {
+    af: $data.showRefundModal
+  }, $data.showRefundModal ? {
+    ag: $data.refundReason,
+    ah: common_vendor.o(($event) => $data.refundReason = $event.detail.value),
+    ai: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args)),
+    aj: $data.refundSubmitting,
+    ak: $data.refundSubmitting,
+    al: common_vendor.o((...args) => $options.submitRefund && $options.submitRefund(...args)),
+    am: common_vendor.o(() => {
+    }),
+    an: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-6b23c96c"]]);

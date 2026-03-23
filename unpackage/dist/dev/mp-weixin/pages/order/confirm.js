@@ -9,6 +9,16 @@ const SELECTED_ADDRESS_KEY = "selected_address";
 const FIXED_TOTAL_AMOUNT = 299;
 const FIXED_DISCOUNT_AMOUNT = 0;
 const FIXED_PAY_AMOUNT = 299;
+const INGREDIENT_MODE_OPTIONS = [
+  {
+    label: "用户自备食材",
+    value: 1
+  },
+  {
+    label: "平台协同采购",
+    value: 2
+  }
+];
 function createDefaultForm() {
   return {
     peopleCount: "1",
@@ -52,6 +62,9 @@ const _sfc_main = {
         address.doorplate
       ].filter(Boolean).join("");
     },
+    chefServiceModeValue() {
+      return Number(this.chef.serviceMode);
+    },
     chefServiceModeText() {
       if (this.chef.serviceModeDesc) {
         return this.chef.serviceModeDesc;
@@ -60,6 +73,36 @@ const _sfc_main = {
         return utils_chefServiceMode.getChefServiceModeText(this.chef.serviceMode);
       }
       return "-";
+    },
+    canSelectIngredientMode() {
+      return this.chefServiceModeValue === 3;
+    },
+    ingredientModeOptions() {
+      if (this.canSelectIngredientMode) {
+        return INGREDIENT_MODE_OPTIONS;
+      }
+      if (this.chefServiceModeValue === 1 || this.chefServiceModeValue === 2) {
+        return [
+          {
+            label: utils_chefServiceMode.getChefServiceModeText(this.chefServiceModeValue),
+            value: this.chefServiceModeValue
+          }
+        ];
+      }
+      return INGREDIENT_MODE_OPTIONS;
+    },
+    ingredientModeRange() {
+      return this.ingredientModeOptions.map((item) => item.label);
+    },
+    ingredientModeIndex() {
+      const currentValue = Number(this.form.ingredientMode);
+      const index = this.ingredientModeOptions.findIndex((item) => item.value === currentValue);
+      return index >= 0 ? index : 0;
+    },
+    ingredientModeText() {
+      const currentValue = Number(this.form.ingredientMode);
+      const matched = this.ingredientModeOptions.find((item) => item.value === currentValue);
+      return matched ? matched.label : "请选择食材模式";
     }
   },
   onLoad(options) {
@@ -107,6 +150,7 @@ const _sfc_main = {
           })
         ]);
         this.chef = chefData || {};
+        this.syncIngredientModeWithChef();
         if (addressData && addressData.id) {
           this.selectedAddress = addressData;
         }
@@ -124,6 +168,15 @@ const _sfc_main = {
         common_vendor.index.removeStorageSync(SELECTED_ADDRESS_KEY);
       }
     },
+    syncIngredientModeWithChef() {
+      if (this.chefServiceModeValue === 1 || this.chefServiceModeValue === 2) {
+        this.form.ingredientMode = String(this.chefServiceModeValue);
+        return;
+      }
+      if (Number(this.form.ingredientMode) !== 1 && Number(this.form.ingredientMode) !== 2) {
+        this.form.ingredientMode = "1";
+      }
+    },
     normalizeServiceTime(value, serviceDate) {
       if (!value) {
         return "";
@@ -136,6 +189,13 @@ const _sfc_main = {
     },
     getNameInitial(name) {
       return name ? String(name).slice(0, 1) : "厨";
+    },
+    handleIngredientModeChange(event) {
+      const index = Number(event.detail.value);
+      const selected = this.ingredientModeOptions[index];
+      if (selected) {
+        this.form.ingredientMode = String(selected.value);
+      }
     },
     goSelectAddress() {
       common_vendor.index.navigateTo({
@@ -164,9 +224,9 @@ const _sfc_main = {
         });
         return false;
       }
-      if (this.form.ingredientMode === "" || Number(this.form.ingredientMode) < 0) {
+      if (Number(this.form.ingredientMode) !== 1 && Number(this.form.ingredientMode) !== 2) {
         common_vendor.index.showToast({
-          title: "请输入食材模式",
+          title: "请选择正确的食材模式",
           icon: "none"
         });
         return false;
@@ -256,21 +316,30 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     w: common_vendor.o(($event) => $data.form.tabooFood = $event.detail.value),
     x: $data.form.specialRequirement,
     y: common_vendor.o(($event) => $data.form.specialRequirement = $event.detail.value),
-    z: $data.form.ingredientMode,
-    A: common_vendor.o(($event) => $data.form.ingredientMode = $event.detail.value),
-    B: $data.form.ingredientList,
-    C: common_vendor.o(($event) => $data.form.ingredientList = $event.detail.value),
-    D: common_vendor.t($data.selectedAddress.contactName || "-"),
-    E: common_vendor.t($data.selectedAddress.contactPhone || "-"),
-    F: common_vendor.t($data.totalAmount),
-    G: common_vendor.t($data.discountAmount),
-    H: common_vendor.t($data.payAmount)
+    z: $options.canSelectIngredientMode
+  }, $options.canSelectIngredientMode ? {
+    A: common_vendor.t($options.ingredientModeText),
+    B: $options.ingredientModeRange,
+    C: $options.ingredientModeIndex,
+    D: common_vendor.o((...args) => $options.handleIngredientModeChange && $options.handleIngredientModeChange(...args))
+  } : {
+    E: common_vendor.t($options.ingredientModeText)
+  }, {
+    F: !$options.canSelectIngredientMode
+  }, !$options.canSelectIngredientMode ? {} : {}, {
+    G: $data.form.ingredientList,
+    H: common_vendor.o(($event) => $data.form.ingredientList = $event.detail.value),
+    I: common_vendor.t($data.selectedAddress.contactName || "-"),
+    J: common_vendor.t($data.selectedAddress.contactPhone || "-"),
+    K: common_vendor.t($data.totalAmount),
+    L: common_vendor.t($data.discountAmount),
+    M: common_vendor.t($data.payAmount)
   }), {
-    I: common_vendor.t($data.payAmount),
-    J: common_vendor.t($data.submitting ? "提交中..." : "提交订单"),
-    K: $data.submitting,
-    L: $data.submitting,
-    M: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
+    N: common_vendor.t($data.payAmount),
+    O: common_vendor.t($data.submitting ? "提交中..." : "提交订单"),
+    P: $data.submitting,
+    Q: $data.submitting,
+    R: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-324e7894"]]);

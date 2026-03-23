@@ -9,7 +9,11 @@ function getPaymentStatus(orderId) {
 function mockPaymentSuccess(orderId) {
   return api_request.request.post(`/api/pay/mock-success/${orderId}`);
 }
+function refundPayment(data) {
+  return api_request.request.post("/api/pay/refund", data);
+}
 exports.createPayment = createPayment;
 exports.getPaymentStatus = getPaymentStatus;
 exports.mockPaymentSuccess = mockPaymentSuccess;
+exports.refundPayment = refundPayment;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/api/pay.js.map

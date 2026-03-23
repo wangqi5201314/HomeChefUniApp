@@ -46,19 +46,8 @@
 
       <view class="section-card">
         <text class="section-title">费用信息</text>
-        <view class="info-line"><text class="info-label">总金额</text><text class="info-value amount">￥{{ formatAmount(orderDetail.totalAmount) }}</text></view>
-        <view class="info-line"><text class="info-label">实付金额</text><text class="info-value amount">￥{{ formatAmount(orderDetail.payAmount) }}</text></view>
-      </view>
-
-      <view v-if="hasPaymentStatusInfo" class="section-card">
-        <text class="section-title">支付信息</text>
-        <view v-if="hasPayStatus" class="info-line"><text class="info-label">支付状态</text><text class="info-value">{{ payStatusText }}</text></view>
-        <view v-if="hasRefundStatus" class="info-line"><text class="info-label">退款状态</text><text class="info-value">{{ refundStatusText }}</text></view>
-      </view>
-
-      <view class="section-card">
-        <text class="section-title">评价状态</text>
-        <view class="info-line"><text class="info-label">是否已评价</text><text class="info-value">{{ isReviewed ? '已评价' : '未评价' }}</text></view>
+        <view class="info-line"><text class="info-label">总金额</text><text class="info-value amount">¥{{ formatAmount(orderDetail.totalAmount) }}</text></view>
+        <view class="info-line"><text class="info-label">实付金额</text><text class="info-value amount">¥{{ formatAmount(orderDetail.payAmount) }}</text></view>
       </view>
 
       <view v-if="orderDetail.cancelReason || orderDetail.refundReason" class="section-card">
@@ -70,8 +59,33 @@
 
     <view v-if="showActionBar" class="bottom-bar">
       <view class="action-row">
-        <button v-if="showCancelButton" class="action-btn secondary" :loading="cancelSubmitting" :disabled="cancelSubmitting || paying" @click="openCancelPopup">取消订单</button>
-        <button v-if="showPayButton" class="action-btn primary" :loading="paying" :disabled="paying || cancelSubmitting" @click="handlePay">立即支付</button>
+        <button
+          v-if="showCancelButton"
+          class="action-btn secondary"
+          :loading="cancelSubmitting"
+          :disabled="cancelSubmitting || paying || refundSubmitting"
+          @click="openCancelPopup"
+        >
+          取消订单
+        </button>
+        <button
+          v-if="showPayButton"
+          class="action-btn primary"
+          :loading="paying"
+          :disabled="paying || cancelSubmitting || refundSubmitting"
+          @click="handlePay"
+        >
+          立即支付
+        </button>
+        <button
+          v-if="showRefundButton"
+          class="action-btn danger"
+          :loading="refundSubmitting"
+          :disabled="refundSubmitting || paying || cancelSubmitting"
+          @click="openRefundPopup"
+        >
+          申请退款
+        </button>
         <button v-if="showReviewButton" class="action-btn primary" @click="goReview">去评价</button>
         <view v-if="showStatusNotice" class="status-notice-wrap"><text class="status-notice">{{ statusNoticeText }}</text></view>
       </view>
@@ -89,15 +103,24 @@
         </view>
       </view>
     </view>
+
+    <view v-if="showRefundModal" class="modal-mask" @click="closeRefundPopup">
+      <view class="modal-card" @click.stop>
+        <text class="modal-title">申请退款</text>
+        <textarea v-model="refundReason" class="modal-textarea" placeholder="请输入退款原因" />
+        <view class="modal-actions">
+          <button class="modal-btn plain" @click="closeRefundPopup">再想想</button>
+          <button class="modal-btn danger" :loading="refundSubmitting" :disabled="refundSubmitting" @click="submitRefund">确认退款</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script>
 import { cancelOrder, getOrderDetail } from '../../api/order'
-import { createPayment, mockPaymentSuccess } from '../../api/pay'
+import { createPayment, mockPaymentSuccess, refundPayment } from '../../api/pay'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
-import { getPayStatusText } from '../../utils/pay-status'
-import { getRefundStatusText } from '../../utils/refund-status'
 
 export default {
   name: 'OrderDetailPage',
@@ -108,8 +131,11 @@ export default {
       loading: false,
       paying: false,
       cancelSubmitting: false,
+      refundSubmitting: false,
       showCancelModal: false,
+      showRefundModal: false,
       cancelReason: '',
+      refundReason: '',
       orderDetail: {}
     }
   },
@@ -123,38 +149,14 @@ export default {
     statusClass() {
       return getOrderStatusClass(this.orderDetail.orderStatus)
     },
-    hasPayStatus() {
-      return Boolean(this.orderDetail.payStatus || this.orderDetail.payStatusDesc)
-    },
-    hasRefundStatus() {
-      return Boolean(this.orderDetail.refundStatus || this.orderDetail.refundStatusDesc)
-    },
-    hasPaymentStatusInfo() {
-      return this.hasPayStatus || this.hasRefundStatus
-    },
-    payStatusText() {
-      if (this.orderDetail.payStatusDesc) {
-        return this.orderDetail.payStatusDesc
-      }
-      if (this.orderDetail.payStatus) {
-        return getPayStatusText(this.orderDetail.payStatus)
-      }
-      return '未知状态'
-    },
-    refundStatusText() {
-      if (this.orderDetail.refundStatusDesc) {
-        return this.orderDetail.refundStatusDesc
-      }
-      if (this.orderDetail.refundStatus) {
-        return getRefundStatusText(this.orderDetail.refundStatus)
-      }
-      return '未知状态'
-    },
     showCancelButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.PENDING_CONFIRM || this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY
     },
     showPayButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY
+    },
+    showRefundButton() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.PAID
     },
     showReviewButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED && !this.isReviewed
@@ -178,10 +180,15 @@ export default {
       return ''
     },
     showBackHomeButton() {
-      return this.showCancelButton
+      return this.showCancelButton || this.showRefundButton
     },
     showActionBar() {
-      return this.showCancelButton || this.showPayButton || this.showReviewButton || this.showStatusNotice || this.showBackHomeButton
+      return this.showCancelButton ||
+        this.showPayButton ||
+        this.showRefundButton ||
+        this.showReviewButton ||
+        this.showStatusNotice ||
+        this.showBackHomeButton
     }
   },
   onLoad(options) {
@@ -244,6 +251,39 @@ export default {
         this.cancelSubmitting = false
       }
     },
+    openRefundPopup() {
+      this.refundReason = ''
+      this.showRefundModal = true
+    },
+    closeRefundPopup() {
+      if (this.refundSubmitting) {
+        return
+      }
+      this.showRefundModal = false
+    },
+    async submitRefund() {
+      if (this.refundSubmitting) {
+        return
+      }
+      if (!this.refundReason.trim()) {
+        uni.showToast({ title: '请输入退款原因', icon: 'none' })
+        return
+      }
+      this.refundSubmitting = true
+      try {
+        await refundPayment({
+          orderId: Number(this.orderDetail.id),
+          refundAmount: Number(this.orderDetail.payAmount || 0),
+          refundReason: this.refundReason.trim()
+        })
+        uni.showToast({ title: '退款申请成功', icon: 'success' })
+        this.showRefundModal = false
+        await this.loadOrderDetail()
+      } catch (error) {
+      } finally {
+        this.refundSubmitting = false
+      }
+    },
     async handlePay() {
       if (this.paying) {
         return
@@ -302,6 +342,7 @@ export default {
 .action-btn::after, .modal-btn::after, .home-btn::after { border: none; }
 .action-btn.primary { background: #d96c3a; color: #ffffff; }
 .action-btn.secondary { background: #f2f4f7; color: #4f5662; }
+.action-btn.danger { background: #fdeeee; color: #d14a4a; }
 .status-notice-wrap { flex: 1; display: flex; justify-content: flex-end; }
 .status-notice { padding: 0 28rpx; height: 88rpx; line-height: 88rpx; border-radius: 999rpx; background: #f2f4f7; font-size: 30rpx; font-weight: 500; color: #8a8f99; }
 .home-btn { width: 100%; height: 84rpx; line-height: 84rpx; margin-top: 16rpx; border: none; border-radius: 999rpx; background: #fff2eb; font-size: 28rpx; color: #c45e31; }

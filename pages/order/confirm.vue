@@ -103,12 +103,19 @@
 
         <view class="form-item">
           <text class="label">食材模式</text>
-          <input
-            v-model="form.ingredientMode"
-            class="input"
-            type="number"
-            placeholder="请输入食材模式"
-          />
+          <picker
+            v-if="canSelectIngredientMode"
+            class="picker"
+            :range="ingredientModeRange"
+            :value="ingredientModeIndex"
+            @change="handleIngredientModeChange"
+          >
+            <view class="picker-value">{{ ingredientModeText }}</view>
+          </picker>
+          <view v-else class="picker-value picker-value--readonly">{{ ingredientModeText }}</view>
+          <text v-if="!canSelectIngredientMode" class="helper-text">
+            当前厨师仅支持该食材模式，不能修改
+          </text>
         </view>
 
         <view class="form-item">
@@ -137,15 +144,15 @@
         <text class="section-title">费用信息</text>
         <view class="info-line">
           <text class="info-label">总金额</text>
-          <text class="info-value amount">￥{{ totalAmount }}</text>
+          <text class="info-value amount">¥{{ totalAmount }}</text>
         </view>
         <view class="info-line">
           <text class="info-label">优惠金额</text>
-          <text class="info-value">￥{{ discountAmount }}</text>
+          <text class="info-value">¥{{ discountAmount }}</text>
         </view>
         <view class="info-line">
           <text class="info-label">应付金额</text>
-          <text class="info-value amount">￥{{ payAmount }}</text>
+          <text class="info-value amount">¥{{ payAmount }}</text>
         </view>
       </view>
     </view>
@@ -153,7 +160,7 @@
     <view class="bottom-bar">
       <view class="price-box">
         <text class="price-label">应付</text>
-        <text class="price-value">￥{{ payAmount }}</text>
+        <text class="price-value">¥{{ payAmount }}</text>
       </view>
       <button class="submit-btn" type="primary" :loading="submitting" :disabled="submitting" @click="submitOrder">
         {{ submitting ? '提交中...' : '提交订单' }}
@@ -173,6 +180,17 @@ const SELECTED_ADDRESS_KEY = 'selected_address'
 const FIXED_TOTAL_AMOUNT = 299
 const FIXED_DISCOUNT_AMOUNT = 0
 const FIXED_PAY_AMOUNT = 299
+
+const INGREDIENT_MODE_OPTIONS = [
+  {
+    label: '用户自备食材',
+    value: 1
+  },
+  {
+    label: '平台协同采购',
+    value: 2
+  }
+]
 
 function createDefaultForm() {
   return {
@@ -220,6 +238,9 @@ export default {
         .filter(Boolean)
         .join('')
     },
+    chefServiceModeValue() {
+      return Number(this.chef.serviceMode)
+    },
     chefServiceModeText() {
       if (this.chef.serviceModeDesc) {
         return this.chef.serviceModeDesc
@@ -230,6 +251,38 @@ export default {
       }
 
       return '-'
+    },
+    canSelectIngredientMode() {
+      return this.chefServiceModeValue === 3
+    },
+    ingredientModeOptions() {
+      if (this.canSelectIngredientMode) {
+        return INGREDIENT_MODE_OPTIONS
+      }
+
+      if (this.chefServiceModeValue === 1 || this.chefServiceModeValue === 2) {
+        return [
+          {
+            label: getChefServiceModeText(this.chefServiceModeValue),
+            value: this.chefServiceModeValue
+          }
+        ]
+      }
+
+      return INGREDIENT_MODE_OPTIONS
+    },
+    ingredientModeRange() {
+      return this.ingredientModeOptions.map((item) => item.label)
+    },
+    ingredientModeIndex() {
+      const currentValue = Number(this.form.ingredientMode)
+      const index = this.ingredientModeOptions.findIndex((item) => item.value === currentValue)
+      return index >= 0 ? index : 0
+    },
+    ingredientModeText() {
+      const currentValue = Number(this.form.ingredientMode)
+      const matched = this.ingredientModeOptions.find((item) => item.value === currentValue)
+      return matched ? matched.label : '请选择食材模式'
     }
   },
   onLoad(options) {
@@ -282,6 +335,8 @@ export default {
         ])
 
         this.chef = chefData || {}
+        this.syncIngredientModeWithChef()
+
         if (addressData && addressData.id) {
           this.selectedAddress = addressData
         }
@@ -301,6 +356,16 @@ export default {
         uni.removeStorageSync(SELECTED_ADDRESS_KEY)
       }
     },
+    syncIngredientModeWithChef() {
+      if (this.chefServiceModeValue === 1 || this.chefServiceModeValue === 2) {
+        this.form.ingredientMode = String(this.chefServiceModeValue)
+        return
+      }
+
+      if (Number(this.form.ingredientMode) !== 1 && Number(this.form.ingredientMode) !== 2) {
+        this.form.ingredientMode = '1'
+      }
+    },
     normalizeServiceTime(value, serviceDate) {
       if (!value) {
         return ''
@@ -315,6 +380,14 @@ export default {
     },
     getNameInitial(name) {
       return name ? String(name).slice(0, 1) : '厨'
+    },
+    handleIngredientModeChange(event) {
+      const index = Number(event.detail.value)
+      const selected = this.ingredientModeOptions[index]
+
+      if (selected) {
+        this.form.ingredientMode = String(selected.value)
+      }
     },
     goSelectAddress() {
       uni.navigateTo({
@@ -346,9 +419,9 @@ export default {
         return false
       }
 
-      if (this.form.ingredientMode === '' || Number(this.form.ingredientMode) < 0) {
+      if (Number(this.form.ingredientMode) !== 1 && Number(this.form.ingredientMode) !== 2) {
         uni.showToast({
-          title: '请输入食材模式',
+          title: '请选择正确的食材模式',
           icon: 'none'
         })
         return false
@@ -563,7 +636,8 @@ export default {
 }
 
 .input,
-.textarea {
+.textarea,
+.picker-value {
   width: 100%;
   border-radius: 16rpx;
   background: #f7f8fb;
@@ -572,14 +646,27 @@ export default {
   box-sizing: border-box;
 }
 
-.input {
+.input,
+.picker-value {
   height: 84rpx;
+  line-height: 84rpx;
   padding: 0 24rpx;
 }
 
 .textarea {
   min-height: 160rpx;
   padding: 22rpx 24rpx;
+}
+
+.picker-value--readonly {
+  color: #4f5662;
+}
+
+.helper-text {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #8a8f99;
 }
 
 .bottom-bar {

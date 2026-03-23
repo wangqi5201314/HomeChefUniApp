@@ -123,7 +123,8 @@
   color: #1f2329;
 }
 .input.data-v-324e7894,
-.textarea.data-v-324e7894 {
+.textarea.data-v-324e7894,
+.picker-value.data-v-324e7894 {
   width: 100%;
   border-radius: 16rpx;
   background: #f7f8fb;
@@ -131,13 +132,24 @@
   color: #222222;
   box-sizing: border-box;
 }
-.input.data-v-324e7894 {
+.input.data-v-324e7894,
+.picker-value.data-v-324e7894 {
   height: 84rpx;
+  line-height: 84rpx;
   padding: 0 24rpx;
 }
 .textarea.data-v-324e7894 {
   min-height: 160rpx;
   padding: 22rpx 24rpx;
+}
+.picker-value--readonly.data-v-324e7894 {
+  color: #4f5662;
+}
+.helper-text.data-v-324e7894 {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #8a8f99;
 }
 .bottom-bar.data-v-324e7894 {
   position: fixed;
