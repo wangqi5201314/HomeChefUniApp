@@ -13,6 +13,7 @@ if (!Math) {
   "./pages/order/detail.js";
   "./pages/pay/result.js";
   "./pages/review/create.js";
+  "./pages/review/list.js";
   "./pages/mine/index.js";
   "./pages/mine/profile.js";
   "./pages/mine/change-password.js";

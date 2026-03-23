@@ -71,6 +71,12 @@
       }
     },
     {
+      "path": "pages/review/list",
+      "style": {
+        "navigationBarTitleText": "我的评价"
+      }
+    },
+    {
       "path": "pages/mine/index",
       "style": {
         "navigationBarTitleText": "我的"

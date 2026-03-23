@@ -11,6 +11,7 @@
     "pages/order/detail",
     "pages/pay/result",
     "pages/review/create",
+    "pages/review/list",
     "pages/mine/index",
     "pages/mine/profile",
     "pages/mine/change-password"

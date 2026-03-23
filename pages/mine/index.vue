@@ -36,6 +36,10 @@
         <text class="menu-text">我的资料</text>
         <text class="menu-arrow">›</text>
       </view>
+      <view class="menu-item" @click="goReviewList">
+        <text class="menu-text">我的评价</text>
+        <text class="menu-arrow">›</text>
+      </view>
       <view class="menu-item" @click="goChangePassword">
         <text class="menu-text">修改密码</text>
         <text class="menu-arrow">›</text>
@@ -124,6 +128,11 @@ export default {
     goProfile() {
       uni.navigateTo({
         url: '/pages/mine/profile'
+      })
+    },
+    goReviewList() {
+      uni.navigateTo({
+        url: '/pages/review/list'
       })
     },
     goAddressList() {

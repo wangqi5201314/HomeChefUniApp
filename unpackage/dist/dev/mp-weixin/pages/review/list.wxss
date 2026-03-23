@@ -1,0 +1,120 @@
+
+.page.data-v-eeac79e8 {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: #f6f7fb;
+  box-sizing: border-box;
+}
+.state-card.data-v-eeac79e8,
+.review-card.data-v-eeac79e8 {
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.06);
+}
+.state-card.data-v-eeac79e8 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220rpx;
+  padding: 32rpx;
+}
+.state-text.data-v-eeac79e8 {
+  font-size: 28rpx;
+  color: #8a8f99;
+}
+.review-list.data-v-eeac79e8 {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+.review-card.data-v-eeac79e8 {
+  padding: 28rpx;
+}
+.card-header.data-v-eeac79e8 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+}
+.order-no.data-v-eeac79e8 {
+  font-size: 26rpx;
+  color: #5f6671;
+}
+.overall-score.data-v-eeac79e8 {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #d96c3a;
+}
+.score-row.data-v-eeac79e8 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx 24rpx;
+  margin-top: 20rpx;
+}
+.score-item.data-v-eeac79e8 {
+  font-size: 26rpx;
+  color: #333333;
+}
+.meta-row.data-v-eeac79e8 {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  margin-top: 20rpx;
+}
+.meta-text.data-v-eeac79e8 {
+  font-size: 24rpx;
+  color: #8a8f99;
+}
+.content-block.data-v-eeac79e8 {
+  margin-top: 24rpx;
+}
+.block-title.data-v-eeac79e8 {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+.content-text.data-v-eeac79e8 {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #333333;
+}
+.image-list.data-v-eeac79e8 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.review-image.data-v-eeac79e8 {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 16rpx;
+  background: #f3f4f6;
+}
+.reply-card.data-v-eeac79e8 {
+  margin-top: 24rpx;
+  padding: 20rpx;
+  border-radius: 18rpx;
+  background: #fff6ef;
+}
+.reply-title.data-v-eeac79e8 {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #b96845;
+}
+.reply-content.data-v-eeac79e8 {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #5a3d2f;
+}
+.reply-time.data-v-eeac79e8 {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #8f7466;
+}
