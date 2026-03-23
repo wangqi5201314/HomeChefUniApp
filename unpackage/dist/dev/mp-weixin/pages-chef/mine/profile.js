@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_chefProfile = require("../../api/chef-profile.js");
 const api_upload = require("../../api/upload.js");
 const utils_auth = require("../../utils/auth.js");
+const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 function createDefaultForm() {
   return {
     phone: "",
@@ -16,7 +17,8 @@ function createDefaultForm() {
     specialtyTags: "",
     yearsOfExperience: "",
     serviceRadiusKm: "",
-    serviceMode: "1"
+    serviceMode: "1",
+    serviceModeDesc: ""
   };
 }
 const _sfc_main = {
@@ -25,7 +27,8 @@ const _sfc_main = {
     return {
       saving: false,
       avatarUploading: false,
-      form: createDefaultForm()
+      form: createDefaultForm(),
+      serviceModeOptions: utils_chefServiceMode.chefServiceModeOptions
     };
   },
   computed: {
@@ -44,6 +47,19 @@ const _sfc_main = {
         return "未认证";
       }
       return this.form.certStatus || "-";
+    },
+    serviceModeRange() {
+      return this.serviceModeOptions.map((item) => item.label);
+    },
+    serviceModeIndex() {
+      const index = this.serviceModeOptions.findIndex((item) => item.value === Number(this.form.serviceMode));
+      return index < 0 ? 0 : index;
+    },
+    currentServiceModeText() {
+      if (this.form.serviceModeDesc) {
+        return this.form.serviceModeDesc;
+      }
+      return utils_chefServiceMode.getChefServiceModeText(this.form.serviceMode);
     }
   },
   onLoad() {
@@ -55,6 +71,7 @@ const _sfc_main = {
   },
   methods: {
     fillForm(data) {
+      const normalizedServiceMode = [1, 2, 3].includes(Number(data.serviceMode)) ? String(Number(data.serviceMode)) : "1";
       this.form = {
         phone: data.phone || "",
         certStatus: data.certStatus === 0 || data.certStatus ? String(data.certStatus) : "",
@@ -67,7 +84,8 @@ const _sfc_main = {
         specialtyTags: data.specialtyTags || "",
         yearsOfExperience: data.yearsOfExperience === 0 || data.yearsOfExperience ? String(data.yearsOfExperience) : "",
         serviceRadiusKm: data.serviceRadiusKm === 0 || data.serviceRadiusKm ? String(data.serviceRadiusKm) : "",
-        serviceMode: data.serviceMode === 0 || data.serviceMode ? String(data.serviceMode) : "1"
+        serviceMode: normalizedServiceMode,
+        serviceModeDesc: data.serviceModeDesc || ""
       };
     },
     async loadChefProfile() {
@@ -89,8 +107,17 @@ const _sfc_main = {
         specialtyTags: this.form.specialtyTags.trim(),
         yearsOfExperience: Number(this.form.yearsOfExperience || 0),
         serviceRadiusKm: Number(this.form.serviceRadiusKm || 0),
-        serviceMode: Number(this.form.serviceMode || 0)
+        serviceMode: Number(this.form.serviceMode || 1)
       };
+    },
+    handleServiceModeChange(event) {
+      const index = Number(event.detail.value);
+      const selected = this.serviceModeOptions[index];
+      if (!selected) {
+        return;
+      }
+      this.form.serviceMode = String(selected.value);
+      this.form.serviceModeDesc = selected.label;
     },
     chooseAvatar() {
       if (this.avatarUploading) {
@@ -170,11 +197,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     v: common_vendor.o(($event) => $data.form.yearsOfExperience = $event.detail.value),
     w: $data.form.serviceRadiusKm,
     x: common_vendor.o(($event) => $data.form.serviceRadiusKm = $event.detail.value),
-    y: $data.form.serviceMode,
-    z: common_vendor.o(($event) => $data.form.serviceMode = $event.detail.value),
-    A: $data.saving,
-    B: $data.saving || $data.avatarUploading,
-    C: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
+    y: common_vendor.t($options.currentServiceModeText),
+    z: $options.serviceModeRange,
+    A: $options.serviceModeIndex,
+    B: common_vendor.o((...args) => $options.handleServiceModeChange && $options.handleServiceModeChange(...args)),
+    C: $data.saving,
+    D: $data.saving || $data.avatarUploading,
+    E: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-22f0af08"]]);

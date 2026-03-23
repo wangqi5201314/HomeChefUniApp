@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chef = require("../../api/chef.js");
 const api_review = require("../../api/review.js");
+const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const _sfc_main = {
   name: "ChefDetailPage",
   data() {
@@ -30,6 +31,15 @@ const _sfc_main = {
         return "请选择一个可预约档期";
       }
       return `${this.selectedSchedule.serviceDate} ${this.selectedSchedule.timeSlot} ${this.selectedSchedule.startTime}-${this.selectedSchedule.endTime}`;
+    },
+    serviceModeText() {
+      if (this.chef.serviceModeDesc) {
+        return this.chef.serviceModeDesc;
+      }
+      if (this.chef.serviceMode === 0 || this.chef.serviceMode) {
+        return utils_chefServiceMode.getChefServiceModeText(this.chef.serviceMode);
+      }
+      return "-";
     }
   },
   onLoad(options) {
@@ -133,7 +143,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     e: common_vendor.t($data.chef.name || "未命名厨师"),
     f: common_vendor.t($data.chef.specialtyCuisine || "-"),
-    g: common_vendor.t($data.chef.serviceMode || "-"),
+    g: common_vendor.t($options.serviceModeText),
     h: common_vendor.t($data.chef.introduction || "暂无介绍"),
     i: common_vendor.t($options.formatValue($data.chef.yearsOfExperience, "年")),
     j: common_vendor.t($options.formatPlain($data.chef.ratingAvg)),

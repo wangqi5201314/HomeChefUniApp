@@ -63,17 +63,22 @@
   font-size: 28rpx;
   color: #1f2329;
 }
+.label-inline.data-v-22f0af08 {
+  margin-bottom: 0;
+}
 .readonly-item .label.data-v-22f0af08 {
   margin-bottom: 0;
 }
 .readonly-value.data-v-22f0af08,
 .input.data-v-22f0af08,
-.textarea.data-v-22f0af08 {
+.textarea.data-v-22f0af08,
+.picker-value.data-v-22f0af08 {
   font-size: 28rpx;
   color: #1f2329;
 }
 .input.data-v-22f0af08,
-.textarea.data-v-22f0af08 {
+.textarea.data-v-22f0af08,
+.picker-value.data-v-22f0af08 {
   width: 100%;
   border-radius: 16rpx;
   background: #f5f7f6;
@@ -86,6 +91,15 @@
 .textarea.data-v-22f0af08 {
   min-height: 180rpx;
   padding: 24rpx;
+}
+.picker-wrap.data-v-22f0af08 {
+  width: 100%;
+}
+.picker-value.data-v-22f0af08 {
+  min-height: 84rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
 }
 .bottom-bar.data-v-22f0af08 {
   position: fixed;

@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_address = require("../../api/address.js");
 const api_chef = require("../../api/chef.js");
 const api_order = require("../../api/order.js");
+const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const USER_ID_KEY = "user_id";
 const SELECTED_ADDRESS_KEY = "selected_address";
 const FIXED_TOTAL_AMOUNT = 299;
@@ -50,6 +51,15 @@ const _sfc_main = {
         address.detailAddress,
         address.doorplate
       ].filter(Boolean).join("");
+    },
+    chefServiceModeText() {
+      if (this.chef.serviceModeDesc) {
+        return this.chef.serviceModeDesc;
+      }
+      if (this.chef.serviceMode === 0 || this.chef.serviceMode) {
+        return utils_chefServiceMode.getChefServiceModeText(this.chef.serviceMode);
+      }
+      return "-";
     }
   },
   onLoad(options) {
@@ -233,7 +243,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     j: common_vendor.t($data.chef.name || "未命名厨师"),
     k: common_vendor.t($data.chef.specialtyCuisine || "-"),
-    l: common_vendor.t($data.chef.serviceMode || "-"),
+    l: common_vendor.t($options.chefServiceModeText),
     m: common_vendor.t($data.orderInfo.serviceDate || "-"),
     n: common_vendor.t($data.orderInfo.timeSlot || "-"),
     o: common_vendor.t($data.orderInfo.serviceStartTime || "-"),

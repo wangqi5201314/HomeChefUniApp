@@ -20,7 +20,7 @@
           <view class="hero-info">
             <text class="name">{{ chef.name || '未命名厨师' }}</text>
             <text class="summary">擅长菜系：{{ chef.specialtyCuisine || '-' }}</text>
-            <text class="summary">服务模式：{{ chef.serviceMode || '-' }}</text>
+            <text class="summary">服务模式：{{ serviceModeText }}</text>
           </view>
         </view>
 
@@ -114,6 +114,7 @@
 <script>
 import { getChefDetail, getChefSchedule } from '../../api/chef'
 import { getChefReviewList } from '../../api/review'
+import { getChefServiceModeText } from '../../utils/chef-service-mode'
 
 export default {
   name: 'ChefDetailPage',
@@ -148,6 +149,17 @@ export default {
       }
 
       return `${this.selectedSchedule.serviceDate} ${this.selectedSchedule.timeSlot} ${this.selectedSchedule.startTime}-${this.selectedSchedule.endTime}`
+    },
+    serviceModeText() {
+      if (this.chef.serviceModeDesc) {
+        return this.chef.serviceModeDesc
+      }
+
+      if (this.chef.serviceMode === 0 || this.chef.serviceMode) {
+        return getChefServiceModeText(this.chef.serviceMode)
+      }
+
+      return '-'
     }
   },
   onLoad(options) {

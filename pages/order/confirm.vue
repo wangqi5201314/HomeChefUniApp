@@ -36,7 +36,7 @@
           <view class="chef-info">
             <text class="chef-name">{{ chef.name || '未命名厨师' }}</text>
             <text class="chef-text">擅长菜系：{{ chef.specialtyCuisine || '-' }}</text>
-            <text class="chef-text">服务模式：{{ chef.serviceMode || '-' }}</text>
+            <text class="chef-text">服务模式：{{ chefServiceModeText }}</text>
           </view>
         </view>
       </view>
@@ -166,6 +166,7 @@
 import { getDefaultUserAddress } from '../../api/address'
 import { getChefDetail } from '../../api/chef'
 import { createOrder } from '../../api/order'
+import { getChefServiceModeText } from '../../utils/chef-service-mode'
 
 const USER_ID_KEY = 'user_id'
 const SELECTED_ADDRESS_KEY = 'selected_address'
@@ -218,6 +219,17 @@ export default {
       ]
         .filter(Boolean)
         .join('')
+    },
+    chefServiceModeText() {
+      if (this.chef.serviceModeDesc) {
+        return this.chef.serviceModeDesc
+      }
+
+      if (this.chef.serviceMode === 0 || this.chef.serviceMode) {
+        return getChefServiceModeText(this.chef.serviceMode)
+      }
+
+      return '-'
     }
   },
   onLoad(options) {

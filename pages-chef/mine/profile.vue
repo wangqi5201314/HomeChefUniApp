@@ -2,7 +2,7 @@
   <view class="page">
     <view class="section-card">
       <view class="avatar-row">
-        <text class="label">头像</text>
+        <text class="label label-inline">头像</text>
         <view class="avatar-area" @click="chooseAvatar">
           <image
             v-if="form.avatar"
@@ -20,11 +20,11 @@
 
     <view class="section-card">
       <view class="form-item readonly-item">
-        <text class="label">手机号</text>
+        <text class="label label-inline">手机号</text>
         <text class="readonly-value">{{ phoneDisplay }}</text>
       </view>
       <view class="form-item readonly-item no-border">
-        <text class="label">认证状态</text>
+        <text class="label label-inline">认证状态</text>
         <text class="readonly-value">{{ certStatusText }}</text>
       </view>
     </view>
@@ -37,7 +37,7 @@
 
       <view class="form-item">
         <text class="label">性别</text>
-        <input v-model="form.gender" class="input" type="number" placeholder="请输入 gender 数值" />
+        <input v-model="form.gender" class="input" type="number" placeholder="请输入性别数值" />
       </view>
 
       <view class="form-item">
@@ -57,7 +57,7 @@
 
       <view class="form-item">
         <text class="label">技能标签</text>
-        <input v-model="form.specialtyTags" class="input" placeholder="请输入技能标签" />
+        <input v-model="form.specialtyTags" class="input" placeholder="请输入技能标签，多个可用逗号分隔" />
       </view>
 
       <view class="form-item">
@@ -67,12 +67,22 @@
 
       <view class="form-item">
         <text class="label">服务半径</text>
-        <input v-model="form.serviceRadiusKm" class="input" type="number" placeholder="请输入服务半径" />
+        <input v-model="form.serviceRadiusKm" class="input" type="number" placeholder="请输入服务半径（公里）" />
       </view>
 
       <view class="form-item no-border">
         <text class="label">服务模式</text>
-        <input v-model="form.serviceMode" class="input" type="number" placeholder="请输入 serviceMode 数值" />
+        <picker
+          class="picker-wrap"
+          mode="selector"
+          :range="serviceModeRange"
+          :value="serviceModeIndex"
+          @change="handleServiceModeChange"
+        >
+          <view class="picker-value">
+            <text>{{ currentServiceModeText }}</text>
+          </view>
+        </picker>
       </view>
     </view>
 
@@ -88,6 +98,7 @@
 import { getCurrentChefProfile, updateCurrentChefProfile } from '../../api/chef-profile'
 import { uploadImage } from '../../api/upload'
 import { getChefInfo, setChefInfo } from '../../utils/auth'
+import { chefServiceModeOptions, getChefServiceModeText } from '../../utils/chef-service-mode'
 
 function createDefaultForm() {
   return {
@@ -102,7 +113,8 @@ function createDefaultForm() {
     specialtyTags: '',
     yearsOfExperience: '',
     serviceRadiusKm: '',
-    serviceMode: '1'
+    serviceMode: '1',
+    serviceModeDesc: ''
   }
 }
 
@@ -112,7 +124,8 @@ export default {
     return {
       saving: false,
       avatarUploading: false,
-      form: createDefaultForm()
+      form: createDefaultForm(),
+      serviceModeOptions: chefServiceModeOptions
     }
   },
   computed: {
@@ -133,6 +146,20 @@ export default {
       }
 
       return this.form.certStatus || '-'
+    },
+    serviceModeRange() {
+      return this.serviceModeOptions.map((item) => item.label)
+    },
+    serviceModeIndex() {
+      const index = this.serviceModeOptions.findIndex((item) => item.value === Number(this.form.serviceMode))
+      return index < 0 ? 0 : index
+    },
+    currentServiceModeText() {
+      if (this.form.serviceModeDesc) {
+        return this.form.serviceModeDesc
+      }
+
+      return getChefServiceModeText(this.form.serviceMode)
     }
   },
   onLoad() {
@@ -145,6 +172,8 @@ export default {
   },
   methods: {
     fillForm(data) {
+      const normalizedServiceMode = [1, 2, 3].includes(Number(data.serviceMode)) ? String(Number(data.serviceMode)) : '1'
+
       this.form = {
         phone: data.phone || '',
         certStatus: data.certStatus === 0 || data.certStatus ? String(data.certStatus) : '',
@@ -157,7 +186,8 @@ export default {
         specialtyTags: data.specialtyTags || '',
         yearsOfExperience: data.yearsOfExperience === 0 || data.yearsOfExperience ? String(data.yearsOfExperience) : '',
         serviceRadiusKm: data.serviceRadiusKm === 0 || data.serviceRadiusKm ? String(data.serviceRadiusKm) : '',
-        serviceMode: data.serviceMode === 0 || data.serviceMode ? String(data.serviceMode) : '1'
+        serviceMode: normalizedServiceMode,
+        serviceModeDesc: data.serviceModeDesc || ''
       }
     },
     async loadChefProfile() {
@@ -179,8 +209,19 @@ export default {
         specialtyTags: this.form.specialtyTags.trim(),
         yearsOfExperience: Number(this.form.yearsOfExperience || 0),
         serviceRadiusKm: Number(this.form.serviceRadiusKm || 0),
-        serviceMode: Number(this.form.serviceMode || 0)
+        serviceMode: Number(this.form.serviceMode || 1)
       }
+    },
+    handleServiceModeChange(event) {
+      const index = Number(event.detail.value)
+      const selected = this.serviceModeOptions[index]
+
+      if (!selected) {
+        return
+      }
+
+      this.form.serviceMode = String(selected.value)
+      this.form.serviceModeDesc = selected.label
     },
     chooseAvatar() {
       if (this.avatarUploading) {
@@ -319,19 +360,25 @@ export default {
   color: #1f2329;
 }
 
+.label-inline {
+  margin-bottom: 0;
+}
+
 .readonly-item .label {
   margin-bottom: 0;
 }
 
 .readonly-value,
 .input,
-.textarea {
+.textarea,
+.picker-value {
   font-size: 28rpx;
   color: #1f2329;
 }
 
 .input,
-.textarea {
+.textarea,
+.picker-value {
   width: 100%;
   border-radius: 16rpx;
   background: #f5f7f6;
@@ -346,6 +393,17 @@ export default {
 .textarea {
   min-height: 180rpx;
   padding: 24rpx;
+}
+
+.picker-wrap {
+  width: 100%;
+}
+
+.picker-value {
+  min-height: 84rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
 }
 
 .bottom-bar {
