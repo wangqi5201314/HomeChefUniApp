@@ -1,6 +1,8 @@
 <template>
   <view class="page">
     <view class="form-card">
+      <view class="section-title">联系人信息</view>
+
       <view class="form-item">
         <text class="label">联系人</text>
         <input
@@ -21,6 +23,59 @@
           placeholder="请输入联系电话"
         />
       </view>
+    </view>
+
+    <view class="form-card">
+      <view class="section-head">
+        <text class="section-title">地图选址</text>
+        <text class="section-tip">搜索或点击地图可自动回填地址</text>
+      </view>
+
+      <view class="search-bar">
+        <input
+          v-model="searchKeyword"
+          class="search-input"
+          confirm-type="search"
+          placeholder="搜索小区、写字楼、街道等地址"
+          @confirm="handleSearch"
+        />
+        <button class="search-btn" size="mini" type="primary" :loading="searching" @click="handleSearch">
+          搜索
+        </button>
+      </view>
+
+      <view v-if="searchResults.length > 0" class="search-result-list">
+        <view
+          v-for="(item, index) in searchResults"
+          :key="item.id || `${item.title}-${index}`"
+          class="search-result-item"
+          @click="handleSelectSearchResult(item)"
+        >
+          <text class="result-title">{{ item.title || '未命名地点' }}</text>
+          <text class="result-address">{{ item.address || '暂无详细地址' }}</text>
+        </view>
+      </view>
+
+      <view class="map-wrapper">
+        <map
+          class="map"
+          :latitude="mapLatitude"
+          :longitude="mapLongitude"
+          :scale="16"
+          :show-location="true"
+          @tap="handleMapTap"
+        />
+        <view class="map-center-pin">+</view>
+      </view>
+
+      <view class="selected-location">
+        <text class="selected-location-label">当前选点</text>
+        <text class="selected-location-text">{{ selectedLocationText }}</text>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="section-title">地址信息</view>
 
       <view class="form-item">
         <text class="label">省份</text>
@@ -83,8 +138,11 @@
 <script>
 import { createAddress, getAddressDetail, updateAddress } from '../../api/address'
 import { loadProvinceRegion, provinceList } from '../../data/address/regions'
+import { reverseGeocoder, searchAddress } from '../../utils/tencent-map'
 
 const USER_ID_KEY = 'user_id'
+const DEFAULT_LATITUDE = 39.90469
+const DEFAULT_LONGITUDE = 116.40717
 
 function createDefaultForm() {
   return {
@@ -95,8 +153,8 @@ function createDefaultForm() {
     district: '',
     town: '',
     detailAddress: '',
-    longitude: 0,
-    latitude: 0,
+    longitude: DEFAULT_LONGITUDE,
+    latitude: DEFAULT_LATITUDE,
     isDefault: 0
   }
 }
@@ -108,13 +166,29 @@ export default {
       id: '',
       userId: '',
       saving: false,
+      searching: false,
       provinceOptions: provinceList,
       currentProvinceCode: '',
       currentProvinceRegion: null,
+      searchKeyword: '',
+      searchResults: [],
+      mapLatitude: DEFAULT_LATITUDE,
+      mapLongitude: DEFAULT_LONGITUDE,
       form: createDefaultForm()
     }
   },
   computed: {
+    selectedLocationText() {
+      const parts = [
+        this.form.province,
+        this.form.city,
+        this.form.district,
+        this.form.town,
+        this.form.detailAddress
+      ].filter(Boolean)
+
+      return parts.length > 0 ? parts.join('') : '暂未选择具体位置'
+    },
     provinceRange() {
       return this.provinceOptions.map((item) => item.name)
     },
@@ -218,7 +292,9 @@ export default {
       this.form.district = district ? district.name : ''
 
       const townOptions = district && Array.isArray(district.towns) ? district.towns : []
-      const town = townOptions.find((item) => item === townName) || townOptions[0] || ''
+      const exactTown = townOptions.find((item) => item === townName)
+      const fuzzyTown = townOptions.find((item) => townName && (item.includes(townName) || townName.includes(item)))
+      const town = exactTown || fuzzyTown || townOptions[0] || townName || ''
       this.form.town = town
     },
     initDefaultRegion() {
@@ -244,6 +320,12 @@ export default {
       this.loadProvinceData(province.code)
       this.applyRegionValues(this.form.city, this.form.district, this.form.town)
     },
+    setMapCenter(latitude, longitude) {
+      this.mapLatitude = Number(latitude) || DEFAULT_LATITUDE
+      this.mapLongitude = Number(longitude) || DEFAULT_LONGITUDE
+      this.form.latitude = this.mapLatitude
+      this.form.longitude = this.mapLongitude
+    },
     async loadAddressDetail() {
       try {
         const data = await getAddressDetail(this.id)
@@ -255,10 +337,11 @@ export default {
           district: data.district || '',
           town: data.town || '',
           detailAddress: data.detailAddress || '',
-          longitude: data.longitude === 0 || data.longitude ? Number(data.longitude) : 0,
-          latitude: data.latitude === 0 || data.latitude ? Number(data.latitude) : 0,
+          longitude: data.longitude === 0 || data.longitude ? Number(data.longitude) : DEFAULT_LONGITUDE,
+          latitude: data.latitude === 0 || data.latitude ? Number(data.latitude) : DEFAULT_LATITUDE,
           isDefault: data.isDefault === 1 || data.isDefault === true ? 1 : 0
         }
+        this.setMapCenter(this.form.latitude, this.form.longitude)
         this.syncRegionByForm()
       } catch (error) {
         this.initDefaultRegion()
@@ -310,6 +393,132 @@ export default {
     },
     handleDefaultChange(event) {
       this.form.isDefault = event.detail.value ? 1 : 0
+    },
+    async handleSearch() {
+      const keyword = this.searchKeyword.trim()
+
+      if (!keyword || this.searching) {
+        if (!keyword) {
+          uni.showToast({
+            title: '请输入地址关键词',
+            icon: 'none'
+          })
+        }
+        return
+      }
+
+      this.searching = true
+
+      try {
+        const list = await searchAddress(keyword, {
+          region: this.form.city || this.form.province || '',
+          location: {
+            latitude: this.mapLatitude,
+            longitude: this.mapLongitude
+          },
+          pageSize: 10
+        })
+        this.searchResults = Array.isArray(list) ? list : []
+
+        if (this.searchResults.length === 0) {
+          uni.showToast({
+            title: '未找到相关地址',
+            icon: 'none'
+          })
+        }
+      } catch (error) {
+        uni.showToast({
+          title: '地址搜索失败',
+          icon: 'none'
+        })
+      } finally {
+        this.searching = false
+      }
+    },
+    async handleSelectSearchResult(item) {
+      if (!item) {
+        return
+      }
+
+      this.searchKeyword = item.title || item.address || ''
+      this.searchResults = []
+      await this.fillFormByCoordinate(item.latitude, item.longitude, {
+        title: item.title || '',
+        address: item.address || ''
+      })
+    },
+    async handleMapTap(event) {
+      const detail = event && event.detail ? event.detail : {}
+      const latitude = Number(detail.latitude)
+      const longitude = Number(detail.longitude)
+
+      if (!latitude || !longitude) {
+        return
+      }
+
+      await this.fillFormByCoordinate(latitude, longitude)
+    },
+    extractTownName(result, simplify) {
+      return (
+        (result.address_reference &&
+          result.address_reference.town &&
+          (result.address_reference.town.title || result.address_reference.town.name)) ||
+        (result.address_component && result.address_component.street) ||
+        simplify.street ||
+        ''
+      )
+    },
+    extractDetailAddress(result, simplify, fallback) {
+      const precise = [simplify.street, simplify.street_number].filter(Boolean).join('')
+      if (precise) {
+        return precise
+      }
+
+      if (fallback && fallback.title) {
+        return fallback.title
+      }
+
+      return (
+        simplify.recommend ||
+        simplify.rough ||
+        (result.formatted_addresses && result.formatted_addresses.recommend) ||
+        ''
+      )
+    },
+    async fillFormByCoordinate(latitude, longitude, fallback = {}) {
+      try {
+        this.setMapCenter(latitude, longitude)
+        const data = await reverseGeocoder(latitude, longitude)
+        const province = data.province || ''
+        const city = data.city || ''
+        const district = data.district || ''
+        const town = data.town || ''
+        const detailAddress = this.extractDetailAddress(data.raw, data.simplify, fallback)
+
+        if (province) {
+          this.form.province = province
+          const provinceItem = this.getProvinceByName(province)
+          if (provinceItem) {
+            this.loadProvinceData(provinceItem.code)
+          }
+        }
+
+        this.applyRegionValues(city, district, town)
+
+        if (detailAddress) {
+          this.form.detailAddress = detailAddress
+        }
+
+        uni.showToast({
+          title: '地址已回填',
+          icon: 'success'
+        })
+      } catch (error) {
+        uni.showToast({
+          title: '地址解析失败',
+          icon: 'none'
+        })
+      }
     },
     validateForm() {
       if (!this.form.contactName.trim()) {
@@ -388,14 +597,8 @@ export default {
         district: this.form.district,
         town: this.form.town,
         detailAddress: this.form.detailAddress.trim(),
-        longitude:
-          this.form.longitude === '' || this.form.longitude === undefined || this.form.longitude === null
-            ? 0
-            : Number(this.form.longitude),
-        latitude:
-          this.form.latitude === '' || this.form.latitude === undefined || this.form.latitude === null
-            ? 0
-            : Number(this.form.latitude),
+        longitude: Number(this.form.longitude) || 0,
+        latitude: Number(this.form.latitude) || 0,
         isDefault: Number(this.form.isDefault) === 1 ? 1 : 0
       }
     },
@@ -451,10 +654,151 @@ export default {
 }
 
 .form-card {
+  margin-bottom: 24rpx;
   padding: 28rpx;
   border-radius: 24rpx;
   background: #ffffff;
   box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.section-head .section-title {
+  margin-bottom: 0;
+}
+
+.section-tip {
+  font-size: 24rpx;
+  color: #8a8f99;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 84rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: #f7f8fb;
+  font-size: 28rpx;
+  color: #222222;
+  box-sizing: border-box;
+}
+
+.search-btn {
+  margin: 0;
+  width: 140rpx;
+  height: 84rpx;
+  line-height: 84rpx;
+  border: none;
+  border-radius: 16rpx;
+  background: #d96c3a;
+  font-size: 28rpx;
+}
+
+.search-btn::after,
+.save-btn::after {
+  border: none;
+}
+
+.search-result-list {
+  margin-top: 20rpx;
+  border: 2rpx solid #f1f3f6;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.search-result-item {
+  padding: 22rpx 24rpx;
+  border-bottom: 2rpx solid #f1f3f6;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.result-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1f2329;
+}
+
+.result-address {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #7a818d;
+}
+
+.map-wrapper {
+  position: relative;
+  margin-top: 20rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 360rpx;
+}
+
+.map-center-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48rpx;
+  height: 48rpx;
+  margin-left: -24rpx;
+  margin-top: -24rpx;
+  border-radius: 50%;
+  background: rgba(217, 108, 58, 0.95);
+  color: #ffffff;
+  font-size: 34rpx;
+  line-height: 48rpx;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 8rpx 20rpx rgba(217, 108, 58, 0.25);
+}
+
+.selected-location {
+  margin-top: 18rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  background: #fff5ee;
+}
+
+.selected-location-label {
+  display: block;
+  font-size: 24rpx;
+  color: #b85d33;
+}
+
+.selected-location-text {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #4f5662;
 }
 
 .form-item,
@@ -532,9 +876,5 @@ export default {
   background: #d96c3a;
   font-size: 30rpx;
   font-weight: 500;
-}
-
-.save-btn::after {
-  border: none;
 }
 </style>

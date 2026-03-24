@@ -2,7 +2,10 @@
 const common_vendor = require("../../common/vendor.js");
 const api_address = require("../../api/address.js");
 const data_address_regions_index = require("../../data/address/regions/index.js");
+const utils_tencentMap = require("../../utils/tencent-map.js");
 const USER_ID_KEY = "user_id";
+const DEFAULT_LATITUDE = 39.90469;
+const DEFAULT_LONGITUDE = 116.40717;
 function createDefaultForm() {
   return {
     contactName: "",
@@ -12,8 +15,8 @@ function createDefaultForm() {
     district: "",
     town: "",
     detailAddress: "",
-    longitude: 0,
-    latitude: 0,
+    longitude: DEFAULT_LONGITUDE,
+    latitude: DEFAULT_LATITUDE,
     isDefault: 0
   };
 }
@@ -24,13 +27,28 @@ const _sfc_main = {
       id: "",
       userId: "",
       saving: false,
+      searching: false,
       provinceOptions: data_address_regions_index.provinceList,
       currentProvinceCode: "",
       currentProvinceRegion: null,
+      searchKeyword: "",
+      searchResults: [],
+      mapLatitude: DEFAULT_LATITUDE,
+      mapLongitude: DEFAULT_LONGITUDE,
       form: createDefaultForm()
     };
   },
   computed: {
+    selectedLocationText() {
+      const parts = [
+        this.form.province,
+        this.form.city,
+        this.form.district,
+        this.form.town,
+        this.form.detailAddress
+      ].filter(Boolean);
+      return parts.length > 0 ? parts.join("") : "暂未选择具体位置";
+    },
     provinceRange() {
       return this.provinceOptions.map((item) => item.name);
     },
@@ -121,7 +139,9 @@ const _sfc_main = {
       const district = availableDistricts.find((item) => item.name === districtName) || availableDistricts[0] || null;
       this.form.district = district ? district.name : "";
       const townOptions = district && Array.isArray(district.towns) ? district.towns : [];
-      const town = townOptions.find((item) => item === townName) || townOptions[0] || "";
+      const exactTown = townOptions.find((item) => item === townName);
+      const fuzzyTown = townOptions.find((item) => townName && (item.includes(townName) || townName.includes(item)));
+      const town = exactTown || fuzzyTown || townOptions[0] || townName || "";
       this.form.town = town;
     },
     initDefaultRegion() {
@@ -144,6 +164,12 @@ const _sfc_main = {
       this.loadProvinceData(province.code);
       this.applyRegionValues(this.form.city, this.form.district, this.form.town);
     },
+    setMapCenter(latitude, longitude) {
+      this.mapLatitude = Number(latitude) || DEFAULT_LATITUDE;
+      this.mapLongitude = Number(longitude) || DEFAULT_LONGITUDE;
+      this.form.latitude = this.mapLatitude;
+      this.form.longitude = this.mapLongitude;
+    },
     async loadAddressDetail() {
       try {
         const data = await api_address.getAddressDetail(this.id);
@@ -155,10 +181,11 @@ const _sfc_main = {
           district: data.district || "",
           town: data.town || "",
           detailAddress: data.detailAddress || "",
-          longitude: data.longitude === 0 || data.longitude ? Number(data.longitude) : 0,
-          latitude: data.latitude === 0 || data.latitude ? Number(data.latitude) : 0,
+          longitude: data.longitude === 0 || data.longitude ? Number(data.longitude) : DEFAULT_LONGITUDE,
+          latitude: data.latitude === 0 || data.latitude ? Number(data.latitude) : DEFAULT_LATITUDE,
           isDefault: data.isDefault === 1 || data.isDefault === true ? 1 : 0
         };
+        this.setMapCenter(this.form.latitude, this.form.longitude);
         this.syncRegionByForm();
       } catch (error) {
         this.initDefaultRegion();
@@ -202,6 +229,107 @@ const _sfc_main = {
     },
     handleDefaultChange(event) {
       this.form.isDefault = event.detail.value ? 1 : 0;
+    },
+    async handleSearch() {
+      const keyword = this.searchKeyword.trim();
+      if (!keyword || this.searching) {
+        if (!keyword) {
+          common_vendor.index.showToast({
+            title: "请输入地址关键词",
+            icon: "none"
+          });
+        }
+        return;
+      }
+      this.searching = true;
+      try {
+        const list = await utils_tencentMap.searchAddress(keyword, {
+          region: this.form.city || this.form.province || "",
+          location: {
+            latitude: this.mapLatitude,
+            longitude: this.mapLongitude
+          },
+          pageSize: 10
+        });
+        this.searchResults = Array.isArray(list) ? list : [];
+        if (this.searchResults.length === 0) {
+          common_vendor.index.showToast({
+            title: "未找到相关地址",
+            icon: "none"
+          });
+        }
+      } catch (error) {
+        common_vendor.index.showToast({
+          title: "地址搜索失败",
+          icon: "none"
+        });
+      } finally {
+        this.searching = false;
+      }
+    },
+    async handleSelectSearchResult(item) {
+      if (!item) {
+        return;
+      }
+      this.searchKeyword = item.title || item.address || "";
+      this.searchResults = [];
+      await this.fillFormByCoordinate(item.latitude, item.longitude, {
+        title: item.title || "",
+        address: item.address || ""
+      });
+    },
+    async handleMapTap(event) {
+      const detail = event && event.detail ? event.detail : {};
+      const latitude = Number(detail.latitude);
+      const longitude = Number(detail.longitude);
+      if (!latitude || !longitude) {
+        return;
+      }
+      await this.fillFormByCoordinate(latitude, longitude);
+    },
+    extractTownName(result, simplify) {
+      return result.address_reference && result.address_reference.town && (result.address_reference.town.title || result.address_reference.town.name) || result.address_component && result.address_component.street || simplify.street || "";
+    },
+    extractDetailAddress(result, simplify, fallback) {
+      const precise = [simplify.street, simplify.street_number].filter(Boolean).join("");
+      if (precise) {
+        return precise;
+      }
+      if (fallback && fallback.title) {
+        return fallback.title;
+      }
+      return simplify.recommend || simplify.rough || result.formatted_addresses && result.formatted_addresses.recommend || "";
+    },
+    async fillFormByCoordinate(latitude, longitude, fallback = {}) {
+      try {
+        this.setMapCenter(latitude, longitude);
+        const data = await utils_tencentMap.reverseGeocoder(latitude, longitude);
+        const province = data.province || "";
+        const city = data.city || "";
+        const district = data.district || "";
+        const town = data.town || "";
+        const detailAddress = this.extractDetailAddress(data.raw, data.simplify, fallback);
+        if (province) {
+          this.form.province = province;
+          const provinceItem = this.getProvinceByName(province);
+          if (provinceItem) {
+            this.loadProvinceData(provinceItem.code);
+          }
+        }
+        this.applyRegionValues(city, district, town);
+        if (detailAddress) {
+          this.form.detailAddress = detailAddress;
+        }
+        common_vendor.index.showToast({
+          title: "地址已回填",
+          icon: "success"
+        });
+      } catch (error) {
+        common_vendor.index.showToast({
+          title: "地址解析失败",
+          icon: "none"
+        });
+      }
     },
     validateForm() {
       if (!this.form.contactName.trim()) {
@@ -272,8 +400,8 @@ const _sfc_main = {
         district: this.form.district,
         town: this.form.town,
         detailAddress: this.form.detailAddress.trim(),
-        longitude: this.form.longitude === "" || this.form.longitude === void 0 || this.form.longitude === null ? 0 : Number(this.form.longitude),
-        latitude: this.form.latitude === "" || this.form.latitude === void 0 || this.form.latitude === null ? 0 : Number(this.form.latitude),
+        longitude: Number(this.form.longitude) || 0,
+        latitude: Number(this.form.latitude) || 0,
         isDefault: Number(this.form.isDefault) === 1 ? 1 : 0
       };
     },
@@ -313,39 +441,59 @@ const _sfc_main = {
   }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {
+  return common_vendor.e({
     a: $data.form.contactName,
     b: common_vendor.o(($event) => $data.form.contactName = $event.detail.value),
     c: $data.form.contactPhone,
     d: common_vendor.o(($event) => $data.form.contactPhone = $event.detail.value),
-    e: common_vendor.t($data.form.province || "请选择省份"),
-    f: $options.provinceRange,
-    g: $options.provinceIndex,
-    h: common_vendor.o((...args) => $options.handleProvinceChange && $options.handleProvinceChange(...args)),
-    i: common_vendor.t($data.form.city || "请选择城市"),
-    j: !$data.form.city ? 1 : "",
-    k: $options.cityRange,
-    l: $options.cityIndex,
-    m: common_vendor.o((...args) => $options.handleCityChange && $options.handleCityChange(...args)),
-    n: common_vendor.t($data.form.district || "请选择区县"),
-    o: !$data.form.district ? 1 : "",
-    p: $options.districtRange,
-    q: $options.districtIndex,
-    r: common_vendor.o((...args) => $options.handleDistrictChange && $options.handleDistrictChange(...args)),
-    s: common_vendor.t($data.form.town || "请选择镇 / 街道"),
-    t: !$data.form.town ? 1 : "",
-    v: $options.townRange,
-    w: $options.townIndex,
-    x: common_vendor.o((...args) => $options.handleTownChange && $options.handleTownChange(...args)),
-    y: $data.form.detailAddress,
-    z: common_vendor.o(($event) => $data.form.detailAddress = $event.detail.value),
-    A: Number($data.form.isDefault) === 1,
-    B: common_vendor.o((...args) => $options.handleDefaultChange && $options.handleDefaultChange(...args)),
-    C: common_vendor.t($data.saving ? "保存中..." : "保存地址"),
-    D: $data.saving,
-    E: $data.saving,
-    F: common_vendor.o((...args) => $options.handleSubmit && $options.handleSubmit(...args))
-  };
+    e: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
+    f: $data.searchKeyword,
+    g: common_vendor.o(($event) => $data.searchKeyword = $event.detail.value),
+    h: $data.searching,
+    i: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
+    j: $data.searchResults.length > 0
+  }, $data.searchResults.length > 0 ? {
+    k: common_vendor.f($data.searchResults, (item, index, i0) => {
+      return {
+        a: common_vendor.t(item.title || "未命名地点"),
+        b: common_vendor.t(item.address || "暂无详细地址"),
+        c: item.id || `${item.title}-${index}`,
+        d: common_vendor.o(($event) => $options.handleSelectSearchResult(item), item.id || `${item.title}-${index}`)
+      };
+    })
+  } : {}, {
+    l: $data.mapLatitude,
+    m: $data.mapLongitude,
+    n: common_vendor.o((...args) => $options.handleMapTap && $options.handleMapTap(...args)),
+    o: common_vendor.t($options.selectedLocationText),
+    p: common_vendor.t($data.form.province || "请选择省份"),
+    q: $options.provinceRange,
+    r: $options.provinceIndex,
+    s: common_vendor.o((...args) => $options.handleProvinceChange && $options.handleProvinceChange(...args)),
+    t: common_vendor.t($data.form.city || "请选择城市"),
+    v: !$data.form.city ? 1 : "",
+    w: $options.cityRange,
+    x: $options.cityIndex,
+    y: common_vendor.o((...args) => $options.handleCityChange && $options.handleCityChange(...args)),
+    z: common_vendor.t($data.form.district || "请选择区县"),
+    A: !$data.form.district ? 1 : "",
+    B: $options.districtRange,
+    C: $options.districtIndex,
+    D: common_vendor.o((...args) => $options.handleDistrictChange && $options.handleDistrictChange(...args)),
+    E: common_vendor.t($data.form.town || "请选择镇 / 街道"),
+    F: !$data.form.town ? 1 : "",
+    G: $options.townRange,
+    H: $options.townIndex,
+    I: common_vendor.o((...args) => $options.handleTownChange && $options.handleTownChange(...args)),
+    J: $data.form.detailAddress,
+    K: common_vendor.o(($event) => $data.form.detailAddress = $event.detail.value),
+    L: Number($data.form.isDefault) === 1,
+    M: common_vendor.o((...args) => $options.handleDefaultChange && $options.handleDefaultChange(...args)),
+    N: common_vendor.t($data.saving ? "保存中..." : "保存地址"),
+    O: $data.saving,
+    P: $data.saving,
+    Q: common_vendor.o((...args) => $options.handleSubmit && $options.handleSubmit(...args))
+  });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-dcb1f0d8"]]);
 wx.createPage(MiniProgramPage);
