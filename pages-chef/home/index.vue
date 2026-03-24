@@ -405,8 +405,8 @@ export default {
         this.actionLoadingType = ''
       }
     },
-    closeRejectPopup() {
-      if (this.actionLoadingType === 'reject') {
+    closeRejectPopup(force = false) {
+      if (!force && this.actionLoadingType === 'reject') {
         return
       }
 
@@ -440,9 +440,10 @@ export default {
           icon: 'success'
         })
 
-        this.closeRejectPopup()
+        this.closeRejectPopup(true)
         await this.loadWorkbench(false)
       } catch (error) {
+      } finally {
         this.actionLoadingId = null
         this.actionLoadingType = ''
       }

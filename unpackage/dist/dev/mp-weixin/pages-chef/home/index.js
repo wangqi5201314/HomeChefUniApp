@@ -239,8 +239,8 @@ const _sfc_main = {
         this.actionLoadingType = "";
       }
     },
-    closeRejectPopup() {
-      if (this.actionLoadingType === "reject") {
+    closeRejectPopup(force = false) {
+      if (!force && this.actionLoadingType === "reject") {
         return;
       }
       this.showRejectModal = false;
@@ -268,9 +268,10 @@ const _sfc_main = {
           title: "操作成功",
           icon: "success"
         });
-        this.closeRejectPopup();
+        this.closeRejectPopup(true);
         await this.loadWorkbench(false);
       } catch (error) {
+      } finally {
         this.actionLoadingId = null;
         this.actionLoadingType = "";
       }
