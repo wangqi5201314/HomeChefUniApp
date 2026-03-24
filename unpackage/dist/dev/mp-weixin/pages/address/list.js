@@ -42,13 +42,16 @@ const _sfc_main = {
         this.loading = false;
       }
     },
+    isDefaultAddress(item) {
+      return item && (item.isDefault === 1 || item.isDefault === true);
+    },
     getFullAddress(item) {
       return [
         item.province,
         item.city,
         item.district,
-        item.detailAddress,
-        item.doorplate
+        item.town,
+        item.detailAddress
       ].filter(Boolean).join("");
     },
     goAddAddress() {
@@ -65,6 +68,9 @@ const _sfc_main = {
       });
     },
     handleDeleteAddress(item) {
+      if (!item || !item.id) {
+        return;
+      }
       common_vendor.index.showModal({
         title: "提示",
         content: "确认删除这条地址吗？",
@@ -90,7 +96,7 @@ const _sfc_main = {
       }
       try {
         await api_address.setDefaultAddress(item.id, {
-          userId: this.userId
+          userId: Number(this.userId)
         });
         common_vendor.index.showToast({
           title: "设置成功",
@@ -129,11 +135,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return common_vendor.e({
         a: common_vendor.t(item.contactName || "-"),
         b: common_vendor.t(item.contactPhone || "-"),
-        c: item.isDefault === 1 || item.isDefault === true
-      }, item.isDefault === 1 || item.isDefault === true ? {} : {}, {
-        d: common_vendor.t($options.getFullAddress(item)),
-        e: item.isDefault !== 1 && item.isDefault !== true
-      }, item.isDefault !== 1 && item.isDefault !== true ? {
+        c: $options.isDefaultAddress(item)
+      }, $options.isDefaultAddress(item) ? {} : {}, {
+        d: common_vendor.t($options.getFullAddress(item) || "暂无地址信息"),
+        e: !$options.isDefaultAddress(item)
+      }, !$options.isDefaultAddress(item) ? {
         f: common_vendor.o(($event) => $options.handleSetDefault(item), item.id)
       } : {}, {
         g: common_vendor.o(($event) => $options.goEditAddress(item.id), item.id),

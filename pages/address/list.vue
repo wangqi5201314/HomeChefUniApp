@@ -1,15 +1,15 @@
 <template>
   <view class="page">
     <view v-if="mode === 'select'" class="select-tip">
-      <text class="select-tip-text">请选择一个服务地址，返回下单页后会自动带入</text>
+      <text class="select-tip-text">请选择一个服务地址，返回下单页后会自动带入。</text>
     </view>
 
     <view v-if="loading" class="state-card">
-      <text class="state-text">加载中...</text>
+      <text class="state-text">地址加载中...</text>
     </view>
 
     <view v-else-if="addressList.length === 0" class="state-card">
-      <text class="state-text">暂无地址，先新增一个吧</text>
+      <text class="state-text">暂无地址，先新增一个吧。</text>
       <button class="empty-btn" type="primary" @click="goAddAddress">新增地址</button>
     </view>
 
@@ -25,14 +25,14 @@
             <text class="contact-name">{{ item.contactName || '-' }}</text>
             <text class="contact-phone">{{ item.contactPhone || '-' }}</text>
           </view>
-          <text v-if="item.isDefault === 1 || item.isDefault === true" class="default-tag">默认地址</text>
+          <text v-if="isDefaultAddress(item)" class="default-tag">默认地址</text>
         </view>
 
-        <text class="address-text">{{ getFullAddress(item) }}</text>
+        <text class="address-text">{{ getFullAddress(item) || '暂无地址信息' }}</text>
 
         <view class="card-actions">
           <text
-            v-if="item.isDefault !== 1 && item.isDefault !== true"
+            v-if="!isDefaultAddress(item)"
             class="action-text primary"
             @click.stop="handleSetDefault(item)"
           >
@@ -97,13 +97,16 @@ export default {
         this.loading = false
       }
     },
+    isDefaultAddress(item) {
+      return item && (item.isDefault === 1 || item.isDefault === true)
+    },
     getFullAddress(item) {
       return [
         item.province,
         item.city,
         item.district,
-        item.detailAddress,
-        item.doorplate
+        item.town,
+        item.detailAddress
       ]
         .filter(Boolean)
         .join('')
@@ -123,6 +126,10 @@ export default {
       })
     },
     handleDeleteAddress(item) {
+      if (!item || !item.id) {
+        return
+      }
+
       uni.showModal({
         title: '提示',
         content: '确认删除这条地址吗？',
@@ -149,7 +156,7 @@ export default {
 
       try {
         await setDefaultAddress(item.id, {
-          userId: this.userId
+          userId: Number(this.userId)
         })
         uni.showToast({
           title: '设置成功',
