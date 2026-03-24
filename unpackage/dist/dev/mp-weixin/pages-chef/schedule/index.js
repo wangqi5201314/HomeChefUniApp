@@ -29,53 +29,115 @@ function parseClock(dateTime) {
   const match = String(dateTime || "").match(/T(\d{2}:\d{2})/);
   return match ? match[1] : "";
 }
+function compareScheduleDesc(a, b) {
+  const aTime = `${a.serviceDate || ""} ${parseClock(a.startTime) || "00:00"}`;
+  const bTime = `${b.serviceDate || ""} ${parseClock(b.startTime) || "00:00"}`;
+  return bTime.localeCompare(aTime);
+}
 const _sfc_main = {
   name: "ChefSchedulePage",
   data() {
-    const startDate = /* @__PURE__ */ new Date();
-    const endDate = /* @__PURE__ */ new Date();
-    endDate.setDate(endDate.getDate() + 30);
+    const now = /* @__PURE__ */ new Date();
     return {
       loading: false,
       saving: false,
+      switchingId: null,
       showPopup: false,
       editingId: "",
-      filters: {
-        startDate: formatDate(startDate),
-        endDate: formatDate(endDate)
-      },
-      scheduleList: [],
+      today: formatDate(now),
+      allScheduleList: [],
       form: {
         ...getDefaultForm(),
-        serviceDate: formatDate(startDate),
-        startClock: formatTime(startDate),
+        serviceDate: formatDate(now),
+        startClock: formatTime(now),
         endClock: "20:00"
       }
     };
   },
+  computed: {
+    displayScheduleList() {
+      return this.allScheduleList;
+    },
+    availableScheduleCount() {
+      return this.allScheduleList.filter((item) => this.isAvailableSchedule(item)).length;
+    },
+    expiredScheduleCount() {
+      return this.allScheduleList.filter((item) => this.isExpiredSchedule(item)).length;
+    },
+    emptyText() {
+      return "暂无档期";
+    }
+  },
   onShow() {
-    this.fetchScheduleList();
+    this.fetchScheduleList(false);
+  },
+  onPullDownRefresh() {
+    this.fetchScheduleList(true);
   },
   methods: {
-    async fetchScheduleList() {
-      this.loading = true;
+    async fetchScheduleList(fromPullDown = false) {
+      if (!fromPullDown) {
+        this.loading = true;
+      }
       try {
-        const data = await api_chefSchedule.getMyChefSchedule({
-          startDate: this.filters.startDate,
-          endDate: this.filters.endDate
-        });
-        this.scheduleList = Array.isArray(data) ? data : [];
+        const data = await api_chefSchedule.getMySchedule();
+        const list = Array.isArray(data) ? data.slice().sort(compareScheduleDesc) : [];
+        this.allScheduleList = list;
       } catch (error) {
-        this.scheduleList = [];
+        this.allScheduleList = [];
       } finally {
         this.loading = false;
+        common_vendor.index.stopPullDownRefresh();
       }
     },
-    handleStartDateChange(event) {
-      this.filters.startDate = event.detail.value;
+    formatDateTime(dateTime) {
+      if (!dateTime) {
+        return "-";
+      }
+      const text = String(dateTime);
+      return text.includes("T") ? text.replace("T", " ") : text;
     },
-    handleEndDateChange(event) {
-      this.filters.endDate = event.detail.value;
+    isExpiredSchedule(item) {
+      return !item || item.serviceDate < this.today;
+    },
+    isAvailableSchedule(item) {
+      return !!item && item.serviceDate >= this.today && Number(item.isAvailable) === 1;
+    },
+    isClosedSchedule(item) {
+      return !!item && item.serviceDate >= this.today && Number(item.isAvailable) !== 1;
+    },
+    canOperate(item) {
+      return !!item && !this.isExpiredSchedule(item);
+    },
+    showToggleButton(item) {
+      return !!item && !this.isExpiredSchedule(item);
+    },
+    getScheduleActions(item) {
+      if (!item || !item.id) {
+        return [];
+      }
+      if (this.isExpiredSchedule(item)) {
+        return ["delete"];
+      }
+      return ["edit", "toggle", "delete"];
+    },
+    getScheduleStatusText(item) {
+      if (this.isAvailableSchedule(item)) {
+        return "可预约";
+      }
+      if (this.isClosedSchedule(item)) {
+        return "已关闭预约";
+      }
+      return "已过期不可预约";
+    },
+    getScheduleStatusClass(item) {
+      if (this.isAvailableSchedule(item)) {
+        return "success";
+      }
+      if (this.isClosedSchedule(item)) {
+        return "closed";
+      }
+      return "expired";
     },
     handleFormDateChange(event) {
       this.form.serviceDate = event.detail.value || "";
@@ -101,6 +163,9 @@ const _sfc_main = {
       this.showPopup = true;
     },
     openEditPopup(item) {
+      if (!item || !item.id || this.isExpiredSchedule(item)) {
+        return;
+      }
       this.editingId = item.id;
       this.form = {
         serviceDate: item.serviceDate || "",
@@ -112,8 +177,8 @@ const _sfc_main = {
       };
       this.showPopup = true;
     },
-    closePopup() {
-      if (this.saving) {
+    closePopup(force = false) {
+      if (!force && this.saving) {
         return;
       }
       this.showPopup = false;
@@ -134,6 +199,13 @@ const _sfc_main = {
       if (!this.form.serviceDate) {
         common_vendor.index.showToast({
           title: "请选择服务日期",
+          icon: "none"
+        });
+        return false;
+      }
+      if (this.form.serviceDate < this.today) {
+        common_vendor.index.showToast({
+          title: "不能新增或编辑过期档期",
           icon: "none"
         });
         return false;
@@ -187,14 +259,17 @@ const _sfc_main = {
           title: "保存成功",
           icon: "success"
         });
-        this.closePopup();
-        await this.fetchScheduleList();
+        this.closePopup(true);
+        await this.fetchScheduleList(false);
       } catch (error) {
       } finally {
         this.saving = false;
       }
     },
-    handleDelete(id) {
+    handleDelete(item) {
+      if (!item || !item.id) {
+        return;
+      }
       common_vendor.index.showModal({
         title: "提示",
         content: "确认删除该档期吗？",
@@ -203,84 +278,106 @@ const _sfc_main = {
             return;
           }
           try {
-            await api_chefSchedule.deleteChefSchedule(id);
+            await api_chefSchedule.deleteChefSchedule(item.id);
             common_vendor.index.showToast({
               title: "删除成功",
               icon: "success"
             });
-            await this.fetchScheduleList();
+            await this.fetchScheduleList(false);
           } catch (error) {
           }
         }
       });
     },
-    async toggleAvailability(item, event) {
+    async handleToggleAvailability(item) {
+      if (!item || !item.id || this.isExpiredSchedule(item) || this.switchingId) {
+        return;
+      }
+      this.switchingId = item.id;
       try {
         await api_chefSchedule.updateChefScheduleAvailability(item.id, {
-          isAvailable: event.detail.value ? 1 : 0
+          isAvailable: Number(item.isAvailable) === 1 ? 0 : 1
         });
-        await this.fetchScheduleList();
+        common_vendor.index.showToast({
+          title: Number(item.isAvailable) === 1 ? "已关闭预约" : "已开启预约",
+          icon: "success"
+        });
+        await this.fetchScheduleList(false);
       } catch (error) {
+      } finally {
+        this.switchingId = null;
       }
     }
   }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.t($data.filters.startDate),
-    b: $data.filters.startDate,
-    c: common_vendor.o((...args) => $options.handleStartDateChange && $options.handleStartDateChange(...args)),
-    d: common_vendor.t($data.filters.endDate),
-    e: $data.filters.endDate,
-    f: common_vendor.o((...args) => $options.handleEndDateChange && $options.handleEndDateChange(...args)),
-    g: $data.loading,
-    h: common_vendor.o((...args) => $options.fetchScheduleList && $options.fetchScheduleList(...args)),
-    i: common_vendor.o((...args) => $options.openCreatePopup && $options.openCreatePopup(...args)),
-    j: $data.loading
-  }, $data.loading ? {} : $data.scheduleList.length === 0 ? {} : {
-    l: common_vendor.f($data.scheduleList, (item, k0, i0) => {
-      return {
+    a: common_vendor.o((...args) => $options.openCreatePopup && $options.openCreatePopup(...args)),
+    b: common_vendor.t($data.allScheduleList.length),
+    c: common_vendor.t($options.availableScheduleCount),
+    d: common_vendor.t($options.expiredScheduleCount),
+    e: $data.loading
+  }, $data.loading ? {} : $options.displayScheduleList.length === 0 ? {
+    g: common_vendor.t($options.emptyText)
+  } : {
+    h: common_vendor.f($options.displayScheduleList, (item, k0, i0) => {
+      return common_vendor.e({
         a: common_vendor.t(item.serviceDate || "-"),
         b: common_vendor.t(item.timeSlot || "-"),
-        c: Number(item.isAvailable) === 1,
-        d: common_vendor.o(($event) => $options.toggleAvailability(item, $event), item.id),
-        e: common_vendor.t(item.startTime || "-"),
-        f: common_vendor.t(item.endTime || "-"),
-        g: common_vendor.t(Number(item.isAvailable) === 1 ? "是" : "否"),
+        c: common_vendor.t($options.getScheduleStatusText(item)),
+        d: common_vendor.n($options.getScheduleStatusClass(item)),
+        e: common_vendor.t($options.formatDateTime(item.startTime)),
+        f: common_vendor.t($options.formatDateTime(item.endTime)),
+        g: common_vendor.t(Number(item.isAvailable) === 1 ? "可预约" : "不可预约"),
         h: common_vendor.t(item.remark || "-"),
-        i: common_vendor.o(($event) => $options.openEditPopup(item), item.id),
-        j: common_vendor.o(($event) => $options.handleDelete(item.id), item.id),
-        k: item.id
-      };
+        i: $options.getScheduleActions(item).length
+      }, $options.getScheduleActions(item).length ? common_vendor.e({
+        j: $options.getScheduleActions(item).includes("edit")
+      }, $options.getScheduleActions(item).includes("edit") ? {
+        k: common_vendor.o(($event) => $options.openEditPopup(item), item.id)
+      } : {}, {
+        l: $options.getScheduleActions(item).includes("toggle")
+      }, $options.getScheduleActions(item).includes("toggle") ? {
+        m: common_vendor.t(Number(item.isAvailable) === 1 ? "关闭预约" : "开启预约"),
+        n: $data.switchingId === item.id,
+        o: $data.switchingId === item.id,
+        p: common_vendor.o(($event) => $options.handleToggleAvailability(item), item.id)
+      } : {}, {
+        q: $options.getScheduleActions(item).includes("delete")
+      }, $options.getScheduleActions(item).includes("delete") ? {
+        r: common_vendor.o(($event) => $options.handleDelete(item), item.id)
+      } : {}) : {}, {
+        s: item.id
+      });
     })
   }, {
-    k: $data.scheduleList.length === 0,
-    m: $data.showPopup
+    f: $options.displayScheduleList.length === 0,
+    i: $data.showPopup
   }, $data.showPopup ? {
-    n: common_vendor.t($data.editingId ? "编辑档期" : "新增档期"),
-    o: common_vendor.t($data.form.serviceDate || "请选择服务日期"),
-    p: $data.form.serviceDate,
-    q: common_vendor.o((...args) => $options.handleFormDateChange && $options.handleFormDateChange(...args)),
-    r: $data.form.timeSlot,
-    s: common_vendor.o(($event) => $data.form.timeSlot = $event.detail.value),
-    t: common_vendor.t($data.form.startClock || "请选择开始时间"),
-    v: $data.form.startClock,
-    w: common_vendor.o((...args) => $options.handleStartClockChange && $options.handleStartClockChange(...args)),
-    x: common_vendor.t($data.form.endClock || "请选择结束时间"),
-    y: $data.form.endClock,
-    z: common_vendor.o((...args) => $options.handleEndClockChange && $options.handleEndClockChange(...args)),
-    A: Number($data.form.isAvailable) === 1,
-    B: common_vendor.o((...args) => $options.handleFormSwitchChange && $options.handleFormSwitchChange(...args)),
-    C: $data.form.remark,
-    D: common_vendor.o(($event) => $data.form.remark = $event.detail.value),
-    E: $data.saving,
-    F: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args)),
-    G: $data.saving,
-    H: $data.saving,
-    I: common_vendor.o((...args) => $options.submitSchedule && $options.submitSchedule(...args)),
-    J: common_vendor.o(() => {
+    j: common_vendor.t($data.editingId ? "编辑档期" : "新增档期"),
+    k: common_vendor.t($data.form.serviceDate || "请选择服务日期"),
+    l: $data.form.serviceDate,
+    m: common_vendor.o((...args) => $options.handleFormDateChange && $options.handleFormDateChange(...args)),
+    n: $data.form.timeSlot,
+    o: common_vendor.o(($event) => $data.form.timeSlot = $event.detail.value),
+    p: common_vendor.t($data.form.startClock || "请选择开始时间"),
+    q: $data.form.startClock,
+    r: common_vendor.o((...args) => $options.handleStartClockChange && $options.handleStartClockChange(...args)),
+    s: common_vendor.t($data.form.endClock || "请选择结束时间"),
+    t: $data.form.endClock,
+    v: common_vendor.o((...args) => $options.handleEndClockChange && $options.handleEndClockChange(...args)),
+    w: Number($data.form.isAvailable) === 1,
+    x: common_vendor.o((...args) => $options.handleFormSwitchChange && $options.handleFormSwitchChange(...args)),
+    y: $data.form.remark,
+    z: common_vendor.o(($event) => $data.form.remark = $event.detail.value),
+    A: $data.saving,
+    B: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args)),
+    C: $data.saving,
+    D: $data.saving,
+    E: common_vendor.o((...args) => $options.submitSchedule && $options.submitSchedule(...args)),
+    F: common_vendor.o(() => {
     }),
-    K: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args))
+    G: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-09c466c6"]]);

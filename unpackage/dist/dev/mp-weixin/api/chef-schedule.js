@@ -3,6 +3,9 @@ const api_request = require("./request.js");
 function getMyChefSchedule(params) {
   return api_request.request.get("/api/chef/schedule/my", params);
 }
+function getMySchedule(params) {
+  return getMyChefSchedule(params);
+}
 function createChefSchedule(data) {
   return api_request.request.post("/api/chef/schedule", data);
 }
@@ -18,6 +21,7 @@ function updateChefScheduleAvailability(id, data) {
 exports.createChefSchedule = createChefSchedule;
 exports.deleteChefSchedule = deleteChefSchedule;
 exports.getMyChefSchedule = getMyChefSchedule;
+exports.getMySchedule = getMySchedule;
 exports.updateChefSchedule = updateChefSchedule;
 exports.updateChefScheduleAvailability = updateChefScheduleAvailability;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/api/chef-schedule.js.map

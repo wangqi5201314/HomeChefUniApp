@@ -1,65 +1,83 @@
 <template>
   <view class="page">
-    <view class="filter-card">
-      <view class="filter-item">
-        <text class="label">开始日期</text>
-        <picker mode="date" :value="filters.startDate" @change="handleStartDateChange">
-          <view class="picker-value">{{ filters.startDate }}</view>
-        </picker>
+    <view class="toolbar-card">
+      <view class="toolbar-main">
+        <view>
+          <text class="toolbar-title">我的档期</text>
+          <text class="toolbar-desc">默认展示全部档期，按时间倒序排列</text>
+        </view>
+        <button class="add-btn" @click="openCreatePopup">新增档期</button>
       </view>
-      <view class="filter-item">
-        <text class="label">结束日期</text>
-        <picker mode="date" :value="filters.endDate" @change="handleEndDateChange">
-          <view class="picker-value">{{ filters.endDate }}</view>
-        </picker>
-      </view>
-      <button class="query-btn" :disabled="loading" @click="fetchScheduleList">查询档期</button>
-    </view>
 
-    <button class="add-btn" @click="openCreatePopup">新增档期</button>
+      <view class="summary-row">
+        <view class="summary-item">
+          <text class="summary-value">{{ allScheduleList.length }}</text>
+          <text class="summary-label">全部档期</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-value">{{ availableScheduleCount }}</text>
+          <text class="summary-label">可预约</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-value">{{ expiredScheduleCount }}</text>
+          <text class="summary-label">不可预约</text>
+        </view>
+      </view>
+    </view>
 
     <view v-if="loading" class="state-card">
       <text class="state-text">档期加载中...</text>
     </view>
 
-    <view v-else-if="scheduleList.length === 0" class="state-card">
-      <text class="state-text">当前没有档期</text>
+    <view v-else-if="displayScheduleList.length === 0" class="state-card">
+      <text class="state-text">{{ emptyText }}</text>
     </view>
 
-    <view v-else>
-      <view v-for="item in scheduleList" :key="item.id" class="schedule-card">
+    <view v-else class="schedule-list">
+      <view v-for="item in displayScheduleList" :key="item.id" class="schedule-card">
         <view class="card-head">
           <view>
             <text class="date-text">{{ item.serviceDate || '-' }}</text>
             <text class="time-slot">{{ item.timeSlot || '-' }}</text>
           </view>
-          <switch
-            :checked="Number(item.isAvailable) === 1"
-            color="#2f8f55"
-            @change="toggleAvailability(item, $event)"
-          />
+          <text class="status-tag" :class="getScheduleStatusClass(item)">
+            {{ getScheduleStatusText(item) }}
+          </text>
         </view>
 
         <view class="row">
           <text class="row-label">开始时间</text>
-          <text class="row-value">{{ item.startTime || '-' }}</text>
+          <text class="row-value">{{ formatDateTime(item.startTime) }}</text>
         </view>
         <view class="row">
           <text class="row-label">结束时间</text>
-          <text class="row-value">{{ item.endTime || '-' }}</text>
+          <text class="row-value">{{ formatDateTime(item.endTime) }}</text>
         </view>
         <view class="row">
-          <text class="row-label">可预约</text>
-          <text class="row-value">{{ Number(item.isAvailable) === 1 ? '是' : '否' }}</text>
+          <text class="row-label">可预约状态</text>
+          <text class="row-value">{{ Number(item.isAvailable) === 1 ? '可预约' : '不可预约' }}</text>
         </view>
         <view class="row">
           <text class="row-label">备注</text>
           <text class="row-value">{{ item.remark || '-' }}</text>
         </view>
 
-        <view class="actions">
-          <button class="ghost-btn" @click="openEditPopup(item)">编辑</button>
-          <button class="danger-btn" @click="handleDelete(item.id)">删除</button>
+        <view v-if="getScheduleActions(item).length" class="actions">
+          <button v-if="getScheduleActions(item).includes('edit')" class="ghost-btn" @click="openEditPopup(item)">
+            编辑
+          </button>
+          <button
+            v-if="getScheduleActions(item).includes('toggle')"
+            class="ghost-btn"
+            :loading="switchingId === item.id"
+            :disabled="switchingId === item.id"
+            @click="handleToggleAvailability(item)"
+          >
+            {{ Number(item.isAvailable) === 1 ? '关闭预约' : '开启预约' }}
+          </button>
+          <button v-if="getScheduleActions(item).includes('delete')" class="danger-btn" @click="handleDelete(item)">
+            删除
+          </button>
         </view>
       </view>
     </view>
@@ -95,7 +113,7 @@
         </view>
 
         <view class="form-item switch-item">
-          <text class="label switch-label">是否可预约</text>
+          <text class="label switch-label">可预约</text>
           <switch :checked="Number(form.isAvailable) === 1" color="#2f8f55" @change="handleFormSwitchChange" />
         </view>
 
@@ -117,7 +135,7 @@
 import {
   createChefSchedule,
   deleteChefSchedule,
-  getMyChefSchedule,
+  getMySchedule,
   updateChefSchedule,
   updateChefScheduleAvailability
 } from '../../api/chef-schedule'
@@ -155,55 +173,125 @@ function parseClock(dateTime) {
   return match ? match[1] : ''
 }
 
+function compareScheduleDesc(a, b) {
+  const aTime = `${a.serviceDate || ''} ${parseClock(a.startTime) || '00:00'}`
+  const bTime = `${b.serviceDate || ''} ${parseClock(b.startTime) || '00:00'}`
+  return bTime.localeCompare(aTime)
+}
+
 export default {
   name: 'ChefSchedulePage',
   data() {
-    const startDate = new Date()
-    const endDate = new Date()
-    endDate.setDate(endDate.getDate() + 30)
+    const now = new Date()
 
     return {
       loading: false,
       saving: false,
+      switchingId: null,
       showPopup: false,
       editingId: '',
-      filters: {
-        startDate: formatDate(startDate),
-        endDate: formatDate(endDate)
-      },
-      scheduleList: [],
+      today: formatDate(now),
+      allScheduleList: [],
       form: {
         ...getDefaultForm(),
-        serviceDate: formatDate(startDate),
-        startClock: formatTime(startDate),
+        serviceDate: formatDate(now),
+        startClock: formatTime(now),
         endClock: '20:00'
       }
     }
   },
+  computed: {
+    displayScheduleList() {
+      return this.allScheduleList
+    },
+    availableScheduleCount() {
+      return this.allScheduleList.filter((item) => this.isAvailableSchedule(item)).length
+    },
+    expiredScheduleCount() {
+      return this.allScheduleList.filter((item) => this.isExpiredSchedule(item)).length
+    },
+    emptyText() {
+      return '暂无档期'
+    }
+  },
   onShow() {
-    this.fetchScheduleList()
+    this.fetchScheduleList(false)
+  },
+  onPullDownRefresh() {
+    this.fetchScheduleList(true)
   },
   methods: {
-    async fetchScheduleList() {
-      this.loading = true
+    async fetchScheduleList(fromPullDown = false) {
+      if (!fromPullDown) {
+        this.loading = true
+      }
 
       try {
-        const data = await getMyChefSchedule({
-          startDate: this.filters.startDate,
-          endDate: this.filters.endDate
-        })
-        this.scheduleList = Array.isArray(data) ? data : []
+        const data = await getMySchedule()
+        const list = Array.isArray(data) ? data.slice().sort(compareScheduleDesc) : []
+        this.allScheduleList = list
       } catch (error) {
-        this.scheduleList = []
+        this.allScheduleList = []
       } finally {
         this.loading = false
+        uni.stopPullDownRefresh()
       }
     },
-    handleStartDateChange(event) {
-      this.filters.startDate = event.detail.value
+    formatDateTime(dateTime) {
+      if (!dateTime) {
+        return '-'
+      }
+
+      const text = String(dateTime)
+      return text.includes('T') ? text.replace('T', ' ') : text
     },
-    handleEndDateChange(event) {
-      this.filters.endDate = event.detail.value
+    isExpiredSchedule(item) {
+      return !item || item.serviceDate < this.today
+    },
+    isAvailableSchedule(item) {
+      return !!item && item.serviceDate >= this.today && Number(item.isAvailable) === 1
+    },
+    isClosedSchedule(item) {
+      return !!item && item.serviceDate >= this.today && Number(item.isAvailable) !== 1
+    },
+    canOperate(item) {
+      return !!item && !this.isExpiredSchedule(item)
+    },
+    showToggleButton(item) {
+      return !!item && !this.isExpiredSchedule(item)
+    },
+    getScheduleActions(item) {
+      if (!item || !item.id) {
+        return []
+      }
+
+      if (this.isExpiredSchedule(item)) {
+        return ['delete']
+      }
+
+      return ['edit', 'toggle', 'delete']
+    },
+    getScheduleStatusText(item) {
+      if (this.isAvailableSchedule(item)) {
+        return '可预约'
+      }
+
+      if (this.isClosedSchedule(item)) {
+        return '已关闭预约'
+      }
+
+      return '已过期不可预约'
+    },
+    getScheduleStatusClass(item) {
+      if (this.isAvailableSchedule(item)) {
+        return 'success'
+      }
+
+      if (this.isClosedSchedule(item)) {
+        return 'closed'
+      }
+
+      return 'expired'
     },
     handleFormDateChange(event) {
       this.form.serviceDate = event.detail.value || ''
@@ -229,6 +317,10 @@ export default {
       this.showPopup = true
     },
     openEditPopup(item) {
+      if (!item || !item.id || this.isExpiredSchedule(item)) {
+        return
+      }
+
       this.editingId = item.id
       this.form = {
         serviceDate: item.serviceDate || '',
@@ -240,8 +332,8 @@ export default {
       }
       this.showPopup = true
     },
-    closePopup() {
-      if (this.saving) {
+    closePopup(force = false) {
+      if (!force && this.saving) {
         return
       }
 
@@ -263,6 +355,14 @@ export default {
       if (!this.form.serviceDate) {
         uni.showToast({
           title: '请选择服务日期',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (this.form.serviceDate < this.today) {
+        uni.showToast({
+          title: '不能新增或编辑过期档期',
           icon: 'none'
         })
         return false
@@ -325,14 +425,18 @@ export default {
           title: '保存成功',
           icon: 'success'
         })
-        this.closePopup()
-        await this.fetchScheduleList()
+        this.closePopup(true)
+        await this.fetchScheduleList(false)
       } catch (error) {
       } finally {
         this.saving = false
       }
     },
-    handleDelete(id) {
+    handleDelete(item) {
+      if (!item || !item.id) {
+        return
+      }
+
       uni.showModal({
         title: '提示',
         content: '确认删除该档期吗？',
@@ -342,24 +446,36 @@ export default {
           }
 
           try {
-            await deleteChefSchedule(id)
+            await deleteChefSchedule(item.id)
             uni.showToast({
               title: '删除成功',
               icon: 'success'
             })
-            await this.fetchScheduleList()
+            await this.fetchScheduleList(false)
           } catch (error) {
           }
         }
       })
     },
-    async toggleAvailability(item, event) {
+    async handleToggleAvailability(item) {
+      if (!item || !item.id || this.isExpiredSchedule(item) || this.switchingId) {
+        return
+      }
+
+      this.switchingId = item.id
+
       try {
         await updateChefScheduleAvailability(item.id, {
-          isAvailable: event.detail.value ? 1 : 0
+          isAvailable: Number(item.isAvailable) === 1 ? 0 : 1
         })
-        await this.fetchScheduleList()
+        uni.showToast({
+          title: Number(item.isAvailable) === 1 ? '已关闭预约' : '已开启预约',
+          icon: 'success'
+        })
+        await this.fetchScheduleList(false)
       } catch (error) {
+      } finally {
+        this.switchingId = null
       }
     }
   }
@@ -374,7 +490,7 @@ export default {
   box-sizing: border-box;
 }
 
-.filter-card,
+.toolbar-card,
 .schedule-card,
 .state-card,
 .popup-card {
@@ -383,49 +499,60 @@ export default {
   box-shadow: 0 14rpx 36rpx rgba(28, 39, 31, 0.06);
 }
 
-.filter-card {
+.toolbar-card {
   padding: 28rpx;
 }
 
-.filter-item,
-.form-item {
-  margin-bottom: 20rpx;
+.toolbar-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
 }
 
-.label {
+.toolbar-title {
   display: block;
-  margin-bottom: 12rpx;
-  font-size: 26rpx;
-  color: #4d5d52;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #223128;
 }
 
-.switch-label {
-  margin-bottom: 0;
+.toolbar-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #74807b;
 }
 
-.picker-value,
-.input,
-.textarea {
-  width: 100%;
-  border-radius: 18rpx;
-  background: #f5f7f6;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #1f2329;
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+  margin-top: 24rpx;
 }
 
-.picker-value,
-.input {
-  min-height: 84rpx;
-  padding: 24rpx;
+.summary-item {
+  padding: 20rpx 12rpx;
+  border-radius: 22rpx;
+  background: #f8faf9;
+  text-align: center;
 }
 
-.textarea {
-  min-height: 180rpx;
-  padding: 24rpx;
+.summary-value {
+  display: block;
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #2f8f55;
 }
 
-.query-btn,
+.summary-label {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #6c7872;
+}
+
 .add-btn,
 .ghost-btn,
 .danger-btn,
@@ -437,16 +564,12 @@ export default {
   font-size: 28rpx;
 }
 
-.query-btn,
 .add-btn,
 .primary-btn {
+  min-width: 180rpx;
+  margin: 0;
   background: #2f8f55;
   color: #ffffff;
-}
-
-.add-btn {
-  width: 100%;
-  margin-top: 24rpx;
 }
 
 .state-card {
@@ -460,8 +583,14 @@ export default {
   color: #74807b;
 }
 
-.schedule-card {
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
   margin-top: 24rpx;
+}
+
+.schedule-card {
   padding: 28rpx;
 }
 
@@ -486,6 +615,27 @@ export default {
   color: #738078;
 }
 
+.status-tag {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+}
+
+.status-tag.success {
+  background: #edf8f1;
+  color: #2f8f55;
+}
+
+.status-tag.closed {
+  background: #eef2f7;
+  color: #5b6675;
+}
+
+.status-tag.expired {
+  background: #fff1f1;
+  color: #d14a4a;
+}
+
 .row {
   display: flex;
   justify-content: space-between;
@@ -499,9 +649,11 @@ export default {
 }
 
 .row-value {
+  max-width: 70%;
   font-size: 26rpx;
   color: #1f2329;
   text-align: right;
+  line-height: 1.6;
 }
 
 .actions,
@@ -553,13 +705,49 @@ export default {
   color: #223128;
 }
 
+.form-item {
+  margin-bottom: 20rpx;
+}
+
+.label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  color: #4d5d52;
+}
+
+.switch-label {
+  margin-bottom: 0;
+}
+
+.picker-value,
+.input,
+.textarea {
+  width: 100%;
+  border-radius: 18rpx;
+  background: #f5f7f6;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: #1f2329;
+}
+
+.picker-value,
+.input {
+  min-height: 84rpx;
+  padding: 24rpx;
+}
+
+.textarea {
+  min-height: 180rpx;
+  padding: 24rpx;
+}
+
 .switch-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.query-btn::after,
 .add-btn::after,
 .ghost-btn::after,
 .danger-btn::after,

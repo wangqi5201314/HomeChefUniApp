@@ -4,6 +4,10 @@ export function getMyChefSchedule(params) {
   return request.get('/api/chef/schedule/my', params)
 }
 
+export function getMySchedule(params) {
+  return getMyChefSchedule(params)
+}
+
 export function createChefSchedule(data) {
   return request.post('/api/chef/schedule', data)
 }
@@ -21,6 +25,7 @@ export function updateChefScheduleAvailability(id, data) {
 }
 
 export default {
+  getMySchedule,
   getMyChefSchedule,
   createChefSchedule,
   updateChefSchedule,
