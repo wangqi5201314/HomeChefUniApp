@@ -59,6 +59,12 @@
       }
     },
     {
+      "path": "pages/ai/index",
+      "style": {
+        "navigationBarTitleText": "小嘉AI"
+      }
+    },
+    {
       "path": "pages/pay/result",
       "style": {
         "navigationBarTitleText": "支付结果"
@@ -124,6 +130,12 @@
         "text": "订单",
         "iconPath": "static/order.png",
         "selectedIconPath": "static/order-active.png"
+      },
+      {
+        "pagePath": "pages/ai/index",
+        "text": "小嘉AI",
+        "iconPath": "static/AI.png",
+        "selectedIconPath": "static/AI-active.png"
       },
       {
         "pagePath": "pages/mine/index",

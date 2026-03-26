@@ -5,6 +5,7 @@ export const USER_TYPE_KEY = 'user_type'
 export const ADMIN_ID_KEY = 'admin_id'
 export const CHEF_ID_KEY = 'chef_id'
 export const CHEF_INFO_KEY = 'chef_info'
+export const AI_CHAT_HISTORY_KEY = 'xiaojia_ai_chat_history'
 
 export function getToken() {
   return uni.getStorageSync(TOKEN_KEY) || ''
@@ -90,6 +91,10 @@ export function removeChefInfo() {
   uni.removeStorageSync(CHEF_INFO_KEY)
 }
 
+export function removeAiChatHistory() {
+  uni.removeStorageSync(AI_CHAT_HISTORY_KEY)
+}
+
 export function clearAuth() {
   removeToken()
   removeUserInfo()
@@ -98,6 +103,7 @@ export function clearAuth() {
   removeAdminId()
   removeChefId()
   removeChefInfo()
+  removeAiChatHistory()
 }
 
 export default {
@@ -122,5 +128,6 @@ export default {
   getChefInfo,
   setChefInfo,
   removeChefInfo,
+  removeAiChatHistory,
   clearAuth
 }

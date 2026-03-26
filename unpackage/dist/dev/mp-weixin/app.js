@@ -11,6 +11,7 @@ if (!Math) {
   "./pages/order/confirm.js";
   "./pages/order/list.js";
   "./pages/order/detail.js";
+  "./pages/ai/index.js";
   "./pages/pay/result.js";
   "./pages/review/create.js";
   "./pages/review/list.js";

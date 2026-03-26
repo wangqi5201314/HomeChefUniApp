@@ -9,6 +9,7 @@
     "pages/order/confirm",
     "pages/order/list",
     "pages/order/detail",
+    "pages/ai/index",
     "pages/pay/result",
     "pages/review/create",
     "pages/review/list",
@@ -58,6 +59,12 @@
         "text": "订单",
         "iconPath": "static/order.png",
         "selectedIconPath": "static/order-active.png"
+      },
+      {
+        "pagePath": "pages/ai/index",
+        "text": "小嘉AI",
+        "iconPath": "static/AI.png",
+        "selectedIconPath": "static/AI-active.png"
       },
       {
         "pagePath": "pages/mine/index",
