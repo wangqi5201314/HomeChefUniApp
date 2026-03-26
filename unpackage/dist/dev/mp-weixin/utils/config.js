@@ -1,5 +1,5 @@
 "use strict";
-const BASE_URL = "http://10.152.238.91:8080";
+const BASE_URL = "http://localhost:8080";
 const TOKEN_KEY = "user_token";
 const USER_INFO_KEY = "user_info";
 const LOGIN_PAGE = "/pages/login/index";

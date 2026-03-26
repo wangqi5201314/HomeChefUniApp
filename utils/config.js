@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://10.152.238.91:8080'
+export const BASE_URL = 'http://localhost:8080'
 export const API_PREFIX = '/api'
 export const TOKEN_KEY = 'user_token'
 export const USER_INFO_KEY = 'user_info'
