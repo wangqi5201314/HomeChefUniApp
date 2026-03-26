@@ -5,7 +5,7 @@
       indicator-dots
       autoplay
       circular
-      :interval="2000"
+      :interval="3000"
       :duration="500"
     >
       <swiper-item
@@ -16,6 +16,34 @@
         <image class="banner-image" :src="item" mode="aspectFill" />
       </swiper-item>
     </swiper>
+
+    <view class="intro-card">
+      <view class="intro-header">
+        <text class="intro-title">精选上门私厨</text>
+        <text class="intro-tag">严选服务</text>
+      </view>
+      <text class="intro-text">挑选擅长菜系、服务经验和评分都更适合你的厨师，预约上门做饭更省心。</text>
+      <view class="feature-list">
+        <view class="feature-item">
+          <view class="feature-icon">
+            <text class="iconfont feature-iconfont icon-shicai"></text>
+          </view>
+          <text class="feature-label">新鲜食材</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon">
+            <text class="iconfont feature-iconfont icon-chushi"></text>
+          </view>
+          <text class="feature-label">经验厨师</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon">
+            <text class="iconfont feature-iconfont icon-shangmen"></text>
+          </view>
+          <text class="feature-label">上门便捷</text>
+        </view>
+      </view>
+    </view>
 
     <view class="search-bar">
       <input
@@ -190,6 +218,92 @@ export default {
 .banner-image {
   width: 100%;
   height: 100%;
+}
+
+.intro-card {
+  margin-bottom: 24rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #fff7f0 0%, #fff1e6 100%);
+  box-shadow: 0 10rpx 28rpx rgba(217, 108, 58, 0.08);
+}
+
+.intro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14rpx;
+}
+
+.intro-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2a2d33;
+}
+
+.intro-tag {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(217, 108, 58, 0.12);
+  font-size: 22rpx;
+  color: #c76335;
+}
+
+.intro-text {
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #6a7280;
+}
+
+.feature-list {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
+  background: rgba(217, 108, 58, 0.12);
+}
+
+.iconfont {
+  font-style: normal;
+}
+
+.feature-iconfont {
+  font-size: 30rpx;
+  color: #c76335;
+  line-height: 1;
+}
+
+.icon-shicai::before {
+  content: '🥬';
+}
+
+.icon-chushi::before {
+  content: '👨‍🍳';
+}
+
+.icon-shangmen::before {
+  content: '🏠';
+}
+
+.feature-label {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #666f7c;
 }
 
 .search-bar {
