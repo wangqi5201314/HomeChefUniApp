@@ -1,5 +1,22 @@
 <template>
   <view class="page">
+    <swiper
+      class="banner-swiper"
+      indicator-dots
+      autoplay
+      circular
+      :interval="2000"
+      :duration="500"
+    >
+      <swiper-item
+        v-for="item in bannerList"
+        :key="item"
+        class="banner-item"
+      >
+        <image class="banner-image" :src="item" mode="aspectFill" />
+      </swiper-item>
+    </swiper>
+
     <view class="search-bar">
       <input
         v-model="searchName"
@@ -70,6 +87,11 @@ export default {
   name: 'HomePage',
   data() {
     return {
+      bannerList: [
+        '/static/dish1.png',
+        '/static/dish2.png',
+        '/static/dish3.png'
+      ],
       searchName: '',
       chefList: [],
       loading: false
@@ -150,6 +172,24 @@ export default {
   padding: 24rpx;
   background: #f6f7fb;
   box-sizing: border-box;
+}
+
+.banner-swiper {
+  height: 320rpx;
+  margin-bottom: 24rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+  box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.08);
+}
+
+.banner-item {
+  width: 100%;
+  height: 100%;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
 }
 
 .search-bar {

@@ -5,6 +5,21 @@
   background: #f6f7fb;
   box-sizing: border-box;
 }
+.banner-swiper.data-v-4978fed5 {
+  height: 320rpx;
+  margin-bottom: 24rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+  box-shadow: 0 12rpx 32rpx rgba(32, 37, 43, 0.08);
+}
+.banner-item.data-v-4978fed5 {
+  width: 100%;
+  height: 100%;
+}
+.banner-image.data-v-4978fed5 {
+  width: 100%;
+  height: 100%;
+}
 .search-bar.data-v-4978fed5 {
   display: flex;
   align-items: center;

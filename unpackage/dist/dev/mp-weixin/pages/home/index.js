@@ -5,6 +5,11 @@ const _sfc_main = {
   name: "HomePage",
   data() {
     return {
+      bannerList: [
+        "/static/dish1.png",
+        "/static/dish2.png",
+        "/static/dish3.png"
+      ],
       searchName: "",
       chefList: [],
       loading: false
@@ -74,15 +79,21 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
-    b: $data.searchName,
-    c: common_vendor.o(($event) => $data.searchName = $event.detail.value),
-    d: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
-    e: $data.loading && !$data.chefList.length
+    a: common_vendor.f($data.bannerList, (item, k0, i0) => {
+      return {
+        a: item,
+        b: item
+      };
+    }),
+    b: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
+    c: $data.searchName,
+    d: common_vendor.o(($event) => $data.searchName = $event.detail.value),
+    e: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
+    f: $data.loading && !$data.chefList.length
   }, $data.loading && !$data.chefList.length ? {} : !$data.loading && $data.chefList.length === 0 ? {} : common_vendor.e({
-    g: $data.loading
+    h: $data.loading
   }, $data.loading ? {} : {}, {
-    h: common_vendor.f($data.chefList, (item, k0, i0) => {
+    i: common_vendor.f($data.chefList, (item, k0, i0) => {
       return common_vendor.e({
         a: item.avatar
       }, item.avatar ? {
@@ -100,7 +111,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   }), {
-    f: !$data.loading && $data.chefList.length === 0
+    g: !$data.loading && $data.chefList.length === 0
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-4978fed5"]]);
