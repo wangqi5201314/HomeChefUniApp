@@ -4,6 +4,7 @@ const api_address = require("../../api/address.js");
 const api_chef = require("../../api/chef.js");
 const api_order = require("../../api/order.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const USER_ID_KEY = "user_id";
 const SELECTED_ADDRESS_KEY = "selected_address";
 const FIXED_TOTAL_AMOUNT = 299;
@@ -124,6 +125,7 @@ const _sfc_main = {
     this.consumeSelectedAddress();
   },
   methods: {
+    formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     async loadPageData() {
       if (!this.userId) {
         this.loading = false;
@@ -306,8 +308,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     l: common_vendor.t($options.chefServiceModeText),
     m: common_vendor.t($data.orderInfo.serviceDate || "-"),
     n: common_vendor.t($data.orderInfo.timeSlot || "-"),
-    o: common_vendor.t($data.orderInfo.serviceStartTime || "-"),
-    p: common_vendor.t($data.orderInfo.serviceEndTime || "-"),
+    o: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceStartTime)),
+    p: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceEndTime)),
     q: $data.form.peopleCount,
     r: common_vendor.o(($event) => $data.form.peopleCount = $event.detail.value),
     s: $data.form.tastePreference,

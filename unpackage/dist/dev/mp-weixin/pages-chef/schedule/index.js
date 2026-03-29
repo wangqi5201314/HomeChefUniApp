@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_chefSchedule = require("../../api/chef-schedule.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 function formatDate(date) {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -99,11 +100,7 @@ const _sfc_main = {
       }
     },
     formatDateTime(dateTime) {
-      if (!dateTime) {
-        return "-";
-      }
-      const text = String(dateTime);
-      return text.includes("T") ? text.replace("T", " ") : text;
+      return utils_scheduleTime.formatScheduleDateTime(dateTime);
     },
     isExpiredSchedule(item) {
       return !item || item.serviceDate < this.today;

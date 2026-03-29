@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_order = require("../../api/order.js");
 const api_pay = require("../../api/pay.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const _sfc_main = {
   name: "OrderDetailPage",
   data() {
@@ -82,6 +83,7 @@ const _sfc_main = {
     }
   },
   methods: {
+    formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     async loadOrderDetail() {
       this.loading = true;
       try {
@@ -199,8 +201,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.t($data.orderDetail.createdAt || "-"),
     g: common_vendor.t($data.orderDetail.serviceDate || "-"),
     h: common_vendor.t($data.orderDetail.timeSlot || "-"),
-    i: common_vendor.t($data.orderDetail.serviceStartTime || "-"),
-    j: common_vendor.t($data.orderDetail.serviceEndTime || "-"),
+    i: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceStartTime)),
+    j: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceEndTime)),
     k: common_vendor.t($data.orderDetail.chefId || "-"),
     l: common_vendor.t($data.orderDetail.addressId || "-"),
     m: common_vendor.t($data.orderDetail.peopleCount || "-"),

@@ -140,6 +140,7 @@ import {
   updateChefSchedule,
   updateChefScheduleAvailability
 } from '../../api/chef-schedule'
+import { formatScheduleDateTime } from '../../utils/schedule-time'
 
 function formatDate(date) {
   const year = date.getFullYear()
@@ -249,12 +250,7 @@ export default {
       }
     },
     formatDateTime(dateTime) {
-      if (!dateTime) {
-        return '-'
-      }
-
-      const text = String(dateTime)
-      return text.includes('T') ? text.replace('T', ' ') : text
+      return formatScheduleDateTime(dateTime)
     },
     isExpiredSchedule(item) {
       return !item || item.serviceDate < this.today

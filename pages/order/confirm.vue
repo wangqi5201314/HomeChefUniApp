@@ -53,11 +53,11 @@
         </view>
         <view class="info-line">
           <text class="info-label">开始时间</text>
-          <text class="info-value">{{ orderInfo.serviceStartTime || '-' }}</text>
+          <text class="info-value">{{ formatScheduleDateTime(orderInfo.serviceStartTime) }}</text>
         </view>
         <view class="info-line">
           <text class="info-label">结束时间</text>
-          <text class="info-value">{{ orderInfo.serviceEndTime || '-' }}</text>
+          <text class="info-value">{{ formatScheduleDateTime(orderInfo.serviceEndTime) }}</text>
         </view>
       </view>
 
@@ -174,6 +174,7 @@ import { getDefaultUserAddress } from '../../api/address'
 import { getChefDetail } from '../../api/chef'
 import { createOrder } from '../../api/order'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
+import { formatScheduleDateTime } from '../../utils/schedule-time'
 
 const USER_ID_KEY = 'user_id'
 const SELECTED_ADDRESS_KEY = 'selected_address'
@@ -305,6 +306,7 @@ export default {
     this.consumeSelectedAddress()
   },
   methods: {
+    formatScheduleDateTime,
     async loadPageData() {
       if (!this.userId) {
         this.loading = false

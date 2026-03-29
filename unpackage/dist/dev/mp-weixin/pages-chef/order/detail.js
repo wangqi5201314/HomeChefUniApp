@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chefOrder = require("../../api/chef-order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const _sfc_main = {
   name: "ChefOrderDetailPage",
   data() {
@@ -60,6 +61,7 @@ const _sfc_main = {
     this.fetchOrderDetail();
   },
   methods: {
+    formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     async fetchOrderDetail() {
       if (!this.orderId) {
         common_vendor.index.showToast({
@@ -174,8 +176,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.t($data.orderDetail.orderNo || "-"),
     g: common_vendor.t($data.orderDetail.serviceDate || "-"),
     h: common_vendor.t($data.orderDetail.timeSlot || "-"),
-    i: common_vendor.t($data.orderDetail.serviceStartTime || "-"),
-    j: common_vendor.t($data.orderDetail.serviceEndTime || "-"),
+    i: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceStartTime)),
+    j: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceEndTime)),
     k: common_vendor.t($options.formatPeopleCount($data.orderDetail.peopleCount)),
     l: common_vendor.t($data.orderDetail.tastePreference || "-"),
     m: common_vendor.t($data.orderDetail.tabooFood || "-"),

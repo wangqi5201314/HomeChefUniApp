@@ -5,6 +5,7 @@ const api_review = require("../../api/review.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const utils_chefStatus = require("../../utils/chef-status.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const _sfc_main = {
   name: "ChefDetailPage",
   data() {
@@ -32,7 +33,7 @@ const _sfc_main = {
       if (!this.selectedSchedule) {
         return "请选择一个可预约档期";
       }
-      return `${this.selectedSchedule.serviceDate} ${this.selectedSchedule.timeSlot} ${this.selectedSchedule.startTime}-${this.selectedSchedule.endTime}`;
+      return `${this.selectedSchedule.timeSlot || ""} ${utils_scheduleTime.formatScheduleDateTime(this.selectedSchedule.startTime)} - ${utils_scheduleTime.formatScheduleDateTime(this.selectedSchedule.endTime)}`.trim();
     },
     serviceModeText() {
       if (this.chef.serviceModeDesc) {
@@ -72,6 +73,7 @@ const _sfc_main = {
     this.loadPageData();
   },
   methods: {
+    formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     async loadPageData() {
       this.loading = true;
       try {
@@ -190,8 +192,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return {
         a: common_vendor.t(item.serviceDate),
         b: common_vendor.t(item.timeSlot),
-        c: common_vendor.t(item.startTime),
-        d: common_vendor.t(item.endTime),
+        c: common_vendor.t($options.formatScheduleDateTime(item.startTime)),
+        d: common_vendor.t($options.formatScheduleDateTime(item.endTime)),
         e: item.id,
         f: $data.selectedScheduleId === item.id ? 1 : "",
         g: common_vendor.o(($event) => $options.selectSchedule(item), item.id)

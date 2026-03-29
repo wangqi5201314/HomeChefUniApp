@@ -59,7 +59,7 @@
           <view v-for="item in availableScheduleList" :key="item.id" class="schedule-item" :class="{ active: selectedScheduleId === item.id }" @click="selectSchedule(item)">
             <text class="schedule-date">{{ item.serviceDate }}</text>
             <text class="schedule-time">{{ item.timeSlot }}</text>
-            <text class="schedule-range">{{ item.startTime }} - {{ item.endTime }}</text>
+            <text class="schedule-range">{{ formatScheduleDateTime(item.startTime) }} - {{ formatScheduleDateTime(item.endTime) }}</text>
           </view>
         </view>
         <text v-else class="empty-inline">暂无可预约档期</text>
@@ -114,6 +114,7 @@ import { getChefReviewList } from '../../api/review'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { getChefCertStatusText } from '../../utils/chef-cert-status'
 import { getChefStatusText } from '../../utils/chef-status'
+import { formatScheduleDateTime } from '../../utils/schedule-time'
 
 export default {
   name: 'ChefDetailPage',
@@ -142,7 +143,7 @@ export default {
       if (!this.selectedSchedule) {
         return '请选择一个可预约档期'
       }
-      return `${this.selectedSchedule.serviceDate} ${this.selectedSchedule.timeSlot} ${this.selectedSchedule.startTime}-${this.selectedSchedule.endTime}`
+      return `${this.selectedSchedule.timeSlot || ''} ${formatScheduleDateTime(this.selectedSchedule.startTime)} - ${formatScheduleDateTime(this.selectedSchedule.endTime)}`.trim()
     },
     serviceModeText() {
       if (this.chef.serviceModeDesc) {
@@ -182,6 +183,7 @@ export default {
     this.loadPageData()
   },
   methods: {
+    formatScheduleDateTime,
     async loadPageData() {
       this.loading = true
       try {
