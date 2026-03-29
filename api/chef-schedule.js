@@ -24,11 +24,16 @@ export function updateChefScheduleAvailability(id, data) {
   return request.post(`/api/chef/schedule/${id}/availability`, data)
 }
 
+export function disableExpiredChefSchedule() {
+  return request.post('/api/chef/schedule/disable-expired')
+}
+
 export default {
   getMySchedule,
   getMyChefSchedule,
   createChefSchedule,
   updateChefSchedule,
   deleteChefSchedule,
-  updateChefScheduleAvailability
+  updateChefScheduleAvailability,
+  disableExpiredChefSchedule
 }

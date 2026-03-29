@@ -18,8 +18,12 @@ function deleteChefSchedule(id) {
 function updateChefScheduleAvailability(id, data) {
   return api_request.request.post(`/api/chef/schedule/${id}/availability`, data);
 }
+function disableExpiredChefSchedule() {
+  return api_request.request.post("/api/chef/schedule/disable-expired");
+}
 exports.createChefSchedule = createChefSchedule;
 exports.deleteChefSchedule = deleteChefSchedule;
+exports.disableExpiredChefSchedule = disableExpiredChefSchedule;
 exports.getMyChefSchedule = getMyChefSchedule;
 exports.getMySchedule = getMySchedule;
 exports.updateChefSchedule = updateChefSchedule;

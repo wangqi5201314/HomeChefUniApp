@@ -68,13 +68,21 @@ const _sfc_main = {
       return "暂无档期";
     }
   },
-  onShow() {
-    this.fetchScheduleList(false);
+  async onShow() {
+    await this.initializePageData();
   },
   onPullDownRefresh() {
     this.fetchScheduleList(true);
   },
   methods: {
+    async initializePageData() {
+      this.loading = true;
+      try {
+        await api_chefSchedule.disableExpiredChefSchedule();
+      } catch (error) {
+      }
+      await this.fetchScheduleList(false);
+    },
     async fetchScheduleList(fromPullDown = false) {
       if (!fromPullDown) {
         this.loading = true;
