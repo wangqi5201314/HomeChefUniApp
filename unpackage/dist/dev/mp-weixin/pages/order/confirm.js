@@ -5,6 +5,7 @@ const api_chef = require("../../api/chef.js");
 const api_order = require("../../api/order.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
+const utils_timeSlot = require("../../utils/time-slot.js");
 const USER_ID_KEY = "user_id";
 const SELECTED_ADDRESS_KEY = "selected_address";
 const FIXED_TOTAL_AMOUNT = 299;
@@ -104,13 +105,16 @@ const _sfc_main = {
       const currentValue = Number(this.form.ingredientMode);
       const matched = this.ingredientModeOptions.find((item) => item.value === currentValue);
       return matched ? matched.label : "请选择食材模式";
+    },
+    timeSlotText() {
+      return utils_timeSlot.getTimeSlotText(this.orderInfo.timeSlot);
     }
   },
   onLoad(options) {
     this.userId = common_vendor.index.getStorageSync(USER_ID_KEY) || "";
     this.orderInfo.chefId = options && options.chefId ? options.chefId : "";
     this.orderInfo.serviceDate = options && options.serviceDate ? decodeURIComponent(options.serviceDate) : "";
-    this.orderInfo.timeSlot = options && options.timeSlot ? decodeURIComponent(options.timeSlot) : "";
+    this.orderInfo.timeSlot = utils_timeSlot.normalizeTimeSlot(options && options.timeSlot ? decodeURIComponent(options.timeSlot) : "");
     this.orderInfo.serviceStartTime = this.normalizeServiceTime(
       options && options.serviceStartTime ? decodeURIComponent(options.serviceStartTime) : "",
       this.orderInfo.serviceDate
@@ -126,6 +130,7 @@ const _sfc_main = {
   },
   methods: {
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
+    getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async loadPageData() {
       if (!this.userId) {
         this.loading = false;
@@ -212,7 +217,7 @@ const _sfc_main = {
         });
         return false;
       }
-      if (!this.orderInfo.serviceDate || !this.orderInfo.timeSlot || !this.orderInfo.serviceStartTime || !this.orderInfo.serviceEndTime) {
+      if (!this.orderInfo.serviceDate || !utils_timeSlot.isValidTimeSlot(this.orderInfo.timeSlot) || !this.orderInfo.serviceStartTime || !this.orderInfo.serviceEndTime) {
         common_vendor.index.showToast({
           title: "服务时间信息不完整",
           icon: "none"
@@ -241,7 +246,7 @@ const _sfc_main = {
         chefId: Number(this.orderInfo.chefId),
         addressId: this.selectedAddress.id,
         serviceDate: this.orderInfo.serviceDate,
-        timeSlot: this.orderInfo.timeSlot,
+        timeSlot: utils_timeSlot.normalizeTimeSlot(this.orderInfo.timeSlot),
         serviceStartTime: this.orderInfo.serviceStartTime,
         serviceEndTime: this.orderInfo.serviceEndTime,
         peopleCount: Number(this.form.peopleCount),
@@ -307,7 +312,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     k: common_vendor.t($data.chef.specialtyCuisine || "-"),
     l: common_vendor.t($options.chefServiceModeText),
     m: common_vendor.t($data.orderInfo.serviceDate || "-"),
-    n: common_vendor.t($data.orderInfo.timeSlot || "-"),
+    n: common_vendor.t($options.timeSlotText),
     o: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceStartTime)),
     p: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceEndTime)),
     q: $data.form.peopleCount,

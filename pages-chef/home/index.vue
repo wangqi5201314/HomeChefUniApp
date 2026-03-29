@@ -96,7 +96,7 @@
 
             <view class="order-info">
               <text class="order-line">服务日期：{{ item.serviceDate || '-' }}</text>
-              <text class="order-line">时间段：{{ item.timeSlot || '-' }}</text>
+              <text class="order-line">时间段：{{ getTimeSlotText(item.timeSlot) }}</text>
               <text class="order-line">人数：{{ formatPeopleCount(item.peopleCount) }}</text>
               <text class="order-line">联系人：{{ item.contactName || '-' }}</text>
               <text class="order-line">地址：{{ item.fullAddress || '-' }}</text>
@@ -161,6 +161,7 @@ import { setChefInfo } from '../../utils/auth'
 import { getChefCertStatusText } from '../../utils/chef-cert-status'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
+import { getTimeSlotText } from '../../utils/time-slot'
 
 const QUICK_ACTIONS = [
   {
@@ -240,6 +241,7 @@ export default {
     this.loadWorkbench(true)
   },
   methods: {
+    getTimeSlotText,
     async loadWorkbench(fromPullDown = false) {
       if (!fromPullDown) {
         this.loading = true

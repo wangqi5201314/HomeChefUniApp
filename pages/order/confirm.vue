@@ -49,7 +49,7 @@
         </view>
         <view class="info-line">
           <text class="info-label">时间段</text>
-          <text class="info-value">{{ orderInfo.timeSlot || '-' }}</text>
+          <text class="info-value">{{ timeSlotText }}</text>
         </view>
         <view class="info-line">
           <text class="info-label">开始时间</text>
@@ -175,6 +175,7 @@ import { getChefDetail } from '../../api/chef'
 import { createOrder } from '../../api/order'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { getTimeSlotText, isValidTimeSlot, normalizeTimeSlot } from '../../utils/time-slot'
 
 const USER_ID_KEY = 'user_id'
 const SELECTED_ADDRESS_KEY = 'selected_address'
@@ -284,13 +285,16 @@ export default {
       const currentValue = Number(this.form.ingredientMode)
       const matched = this.ingredientModeOptions.find((item) => item.value === currentValue)
       return matched ? matched.label : '请选择食材模式'
+    },
+    timeSlotText() {
+      return getTimeSlotText(this.orderInfo.timeSlot)
     }
   },
   onLoad(options) {
     this.userId = uni.getStorageSync(USER_ID_KEY) || ''
     this.orderInfo.chefId = options && options.chefId ? options.chefId : ''
     this.orderInfo.serviceDate = options && options.serviceDate ? decodeURIComponent(options.serviceDate) : ''
-    this.orderInfo.timeSlot = options && options.timeSlot ? decodeURIComponent(options.timeSlot) : ''
+    this.orderInfo.timeSlot = normalizeTimeSlot(options && options.timeSlot ? decodeURIComponent(options.timeSlot) : '')
     this.orderInfo.serviceStartTime = this.normalizeServiceTime(
       options && options.serviceStartTime ? decodeURIComponent(options.serviceStartTime) : '',
       this.orderInfo.serviceDate
@@ -307,6 +311,7 @@ export default {
   },
   methods: {
     formatScheduleDateTime,
+    getTimeSlotText,
     async loadPageData() {
       if (!this.userId) {
         this.loading = false
@@ -405,7 +410,7 @@ export default {
         return false
       }
 
-      if (!this.orderInfo.serviceDate || !this.orderInfo.timeSlot || !this.orderInfo.serviceStartTime || !this.orderInfo.serviceEndTime) {
+      if (!this.orderInfo.serviceDate || !isValidTimeSlot(this.orderInfo.timeSlot) || !this.orderInfo.serviceStartTime || !this.orderInfo.serviceEndTime) {
         uni.showToast({
           title: '服务时间信息不完整',
           icon: 'none'
@@ -437,7 +442,7 @@ export default {
         chefId: Number(this.orderInfo.chefId),
         addressId: this.selectedAddress.id,
         serviceDate: this.orderInfo.serviceDate,
-        timeSlot: this.orderInfo.timeSlot,
+        timeSlot: normalizeTimeSlot(this.orderInfo.timeSlot),
         serviceStartTime: this.orderInfo.serviceStartTime,
         serviceEndTime: this.orderInfo.serviceEndTime,
         peopleCount: Number(this.form.peopleCount),

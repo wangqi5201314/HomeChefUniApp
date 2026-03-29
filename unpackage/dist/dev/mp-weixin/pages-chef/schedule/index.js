@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chefSchedule = require("../../api/chef-schedule.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
+const utils_timeSlot = require("../../utils/time-slot.js");
 function formatDate(date) {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -59,6 +60,18 @@ const _sfc_main = {
     displayScheduleList() {
       return this.allScheduleList;
     },
+    timeSlotRange() {
+      return utils_timeSlot.TIME_SLOT_OPTIONS.map((item) => item.label);
+    },
+    timeSlotIndex() {
+      const currentValue = utils_timeSlot.normalizeTimeSlot(this.form.timeSlot);
+      const index = utils_timeSlot.TIME_SLOT_OPTIONS.findIndex((item) => item.value === currentValue);
+      return index >= 0 ? index : 0;
+    },
+    timeSlotText() {
+      const currentValue = utils_timeSlot.normalizeTimeSlot(this.form.timeSlot);
+      return currentValue ? utils_timeSlot.getTimeSlotText(currentValue) : "请选择时段";
+    },
     availableScheduleCount() {
       return this.allScheduleList.filter((item) => this.isAvailableSchedule(item)).length;
     },
@@ -90,7 +103,10 @@ const _sfc_main = {
       }
       try {
         const data = await api_chefSchedule.getMySchedule();
-        const list = Array.isArray(data) ? data.slice().sort(compareScheduleDesc) : [];
+        const list = Array.isArray(data) ? data.map((item) => ({
+          ...item,
+          timeSlot: utils_timeSlot.normalizeTimeSlot(item.timeSlot)
+        })).sort(compareScheduleDesc) : [];
         this.allScheduleList = list;
       } catch (error) {
         this.allScheduleList = [];
@@ -147,6 +163,11 @@ const _sfc_main = {
     handleFormDateChange(event) {
       this.form.serviceDate = event.detail.value || "";
     },
+    handleTimeSlotChange(event) {
+      const index = Number(event.detail.value);
+      const selected = utils_timeSlot.TIME_SLOT_OPTIONS[index];
+      this.form.timeSlot = selected ? selected.value : "";
+    },
     handleStartClockChange(event) {
       this.form.startClock = event.detail.value || "";
     },
@@ -162,6 +183,7 @@ const _sfc_main = {
       this.form = {
         ...getDefaultForm(),
         serviceDate: formatDate(now),
+        timeSlot: "",
         startClock: formatTime(now),
         endClock: "20:00"
       };
@@ -174,7 +196,7 @@ const _sfc_main = {
       this.editingId = item.id;
       this.form = {
         serviceDate: item.serviceDate || "",
-        timeSlot: item.timeSlot || "",
+        timeSlot: utils_timeSlot.normalizeTimeSlot(item.timeSlot),
         startClock: parseClock(item.startTime),
         endClock: parseClock(item.endTime),
         isAvailable: Number(item.isAvailable) === 1 ? 1 : 0,
@@ -193,7 +215,7 @@ const _sfc_main = {
     buildPayload() {
       return {
         serviceDate: this.form.serviceDate,
-        timeSlot: this.form.timeSlot.trim(),
+        timeSlot: utils_timeSlot.normalizeTimeSlot(this.form.timeSlot),
         startTime: toDateTime(this.form.serviceDate, this.form.startClock),
         endTime: toDateTime(this.form.serviceDate, this.form.endClock),
         isAvailable: Number(this.form.isAvailable) === 1 ? 1 : 0,
@@ -215,9 +237,9 @@ const _sfc_main = {
         });
         return false;
       }
-      if (!payload.timeSlot) {
+      if (!utils_timeSlot.isValidTimeSlot(payload.timeSlot)) {
         common_vendor.index.showToast({
-          title: "请输入时段",
+          title: "请选择时段",
           icon: "none"
         });
         return false;
@@ -312,7 +334,8 @@ const _sfc_main = {
       } finally {
         this.switchingId = null;
       }
-    }
+    },
+    getTimeSlotText: utils_timeSlot.getTimeSlotText
   }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -328,7 +351,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     h: common_vendor.f($options.displayScheduleList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.serviceDate || "-"),
-        b: common_vendor.t(item.timeSlot || "-"),
+        b: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
         c: common_vendor.t($options.getScheduleStatusText(item)),
         d: common_vendor.n($options.getScheduleStatusClass(item)),
         e: common_vendor.t($options.formatDateTime(item.startTime)),
@@ -363,26 +386,28 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     k: common_vendor.t($data.form.serviceDate || "请选择服务日期"),
     l: $data.form.serviceDate,
     m: common_vendor.o((...args) => $options.handleFormDateChange && $options.handleFormDateChange(...args)),
-    n: $data.form.timeSlot,
-    o: common_vendor.o(($event) => $data.form.timeSlot = $event.detail.value),
-    p: common_vendor.t($data.form.startClock || "请选择开始时间"),
-    q: $data.form.startClock,
-    r: common_vendor.o((...args) => $options.handleStartClockChange && $options.handleStartClockChange(...args)),
-    s: common_vendor.t($data.form.endClock || "请选择结束时间"),
-    t: $data.form.endClock,
-    v: common_vendor.o((...args) => $options.handleEndClockChange && $options.handleEndClockChange(...args)),
-    w: Number($data.form.isAvailable) === 1,
-    x: common_vendor.o((...args) => $options.handleFormSwitchChange && $options.handleFormSwitchChange(...args)),
-    y: $data.form.remark,
-    z: common_vendor.o(($event) => $data.form.remark = $event.detail.value),
-    A: $data.saving,
-    B: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args)),
+    n: common_vendor.t($options.timeSlotText),
+    o: $options.timeSlotRange,
+    p: $options.timeSlotIndex,
+    q: common_vendor.o((...args) => $options.handleTimeSlotChange && $options.handleTimeSlotChange(...args)),
+    r: common_vendor.t($data.form.startClock || "请选择开始时间"),
+    s: $data.form.startClock,
+    t: common_vendor.o((...args) => $options.handleStartClockChange && $options.handleStartClockChange(...args)),
+    v: common_vendor.t($data.form.endClock || "请选择结束时间"),
+    w: $data.form.endClock,
+    x: common_vendor.o((...args) => $options.handleEndClockChange && $options.handleEndClockChange(...args)),
+    y: Number($data.form.isAvailable) === 1,
+    z: common_vendor.o((...args) => $options.handleFormSwitchChange && $options.handleFormSwitchChange(...args)),
+    A: $data.form.remark,
+    B: common_vendor.o(($event) => $data.form.remark = $event.detail.value),
     C: $data.saving,
-    D: $data.saving,
-    E: common_vendor.o((...args) => $options.submitSchedule && $options.submitSchedule(...args)),
-    F: common_vendor.o(() => {
+    D: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args)),
+    E: $data.saving,
+    F: $data.saving,
+    G: common_vendor.o((...args) => $options.submitSchedule && $options.submitSchedule(...args)),
+    H: common_vendor.o(() => {
     }),
-    G: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args))
+    I: common_vendor.o((...args) => $options.closePopup && $options.closePopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-09c466c6"]]);

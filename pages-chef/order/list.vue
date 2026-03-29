@@ -43,7 +43,7 @@
           </view>
           <view class="info-row">
             <text class="label">时间段</text>
-            <text class="value">{{ item.timeSlot || '-' }}</text>
+            <text class="value">{{ getTimeSlotText(item.timeSlot) }}</text>
           </view>
           <view class="info-row">
             <text class="label">人数</text>
@@ -72,6 +72,7 @@
 import ChefTabbar from '../../components/chef-tabbar.vue'
 import { getChefOrderList } from '../../api/chef-order'
 import { CHEF_ORDER_STATUS_TABS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
+import { getTimeSlotText } from '../../utils/time-slot'
 
 export default {
   name: 'ChefOrderListPage',
@@ -98,6 +99,7 @@ export default {
     }
   },
   methods: {
+    getTimeSlotText,
     async fetchOrderList(showLoading = true) {
       if (showLoading) {
         this.loading = true

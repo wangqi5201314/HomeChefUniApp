@@ -38,7 +38,7 @@
         <view class="card-head">
           <view>
             <text class="date-text">{{ item.serviceDate || '-' }}</text>
-            <text class="time-slot">{{ item.timeSlot || '-' }}</text>
+            <text class="time-slot">{{ getTimeSlotText(item.timeSlot) }}</text>
           </view>
           <text class="status-tag" :class="getScheduleStatusClass(item)">
             {{ getScheduleStatusText(item) }}
@@ -95,7 +95,9 @@
 
         <view class="form-item">
           <text class="label">时段</text>
-          <input v-model="form.timeSlot" class="input" placeholder="请输入时段，例如 dinner" />
+          <picker :range="timeSlotRange" :value="timeSlotIndex" @change="handleTimeSlotChange">
+            <view class="picker-value">{{ timeSlotText }}</view>
+          </picker>
         </view>
 
         <view class="form-item">
@@ -141,6 +143,7 @@ import {
   updateChefScheduleAvailability
 } from '../../api/chef-schedule'
 import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { TIME_SLOT_OPTIONS, getTimeSlotText, isValidTimeSlot, normalizeTimeSlot } from '../../utils/time-slot'
 
 function formatDate(date) {
   const year = date.getFullYear()
@@ -206,6 +209,18 @@ export default {
     displayScheduleList() {
       return this.allScheduleList
     },
+    timeSlotRange() {
+      return TIME_SLOT_OPTIONS.map((item) => item.label)
+    },
+    timeSlotIndex() {
+      const currentValue = normalizeTimeSlot(this.form.timeSlot)
+      const index = TIME_SLOT_OPTIONS.findIndex((item) => item.value === currentValue)
+      return index >= 0 ? index : 0
+    },
+    timeSlotText() {
+      const currentValue = normalizeTimeSlot(this.form.timeSlot)
+      return currentValue ? getTimeSlotText(currentValue) : '请选择时段'
+    },
     availableScheduleCount() {
       return this.allScheduleList.filter((item) => this.isAvailableSchedule(item)).length
     },
@@ -240,7 +255,14 @@ export default {
 
       try {
         const data = await getMySchedule()
-        const list = Array.isArray(data) ? data.slice().sort(compareScheduleDesc) : []
+        const list = Array.isArray(data)
+          ? data
+            .map((item) => ({
+              ...item,
+              timeSlot: normalizeTimeSlot(item.timeSlot)
+            }))
+            .sort(compareScheduleDesc)
+          : []
         this.allScheduleList = list
       } catch (error) {
         this.allScheduleList = []
@@ -303,6 +325,11 @@ export default {
     handleFormDateChange(event) {
       this.form.serviceDate = event.detail.value || ''
     },
+    handleTimeSlotChange(event) {
+      const index = Number(event.detail.value)
+      const selected = TIME_SLOT_OPTIONS[index]
+      this.form.timeSlot = selected ? selected.value : ''
+    },
     handleStartClockChange(event) {
       this.form.startClock = event.detail.value || ''
     },
@@ -318,6 +345,7 @@ export default {
       this.form = {
         ...getDefaultForm(),
         serviceDate: formatDate(now),
+        timeSlot: '',
         startClock: formatTime(now),
         endClock: '20:00'
       }
@@ -331,7 +359,7 @@ export default {
       this.editingId = item.id
       this.form = {
         serviceDate: item.serviceDate || '',
-        timeSlot: item.timeSlot || '',
+        timeSlot: normalizeTimeSlot(item.timeSlot),
         startClock: parseClock(item.startTime),
         endClock: parseClock(item.endTime),
         isAvailable: Number(item.isAvailable) === 1 ? 1 : 0,
@@ -351,7 +379,7 @@ export default {
     buildPayload() {
       return {
         serviceDate: this.form.serviceDate,
-        timeSlot: this.form.timeSlot.trim(),
+        timeSlot: normalizeTimeSlot(this.form.timeSlot),
         startTime: toDateTime(this.form.serviceDate, this.form.startClock),
         endTime: toDateTime(this.form.serviceDate, this.form.endClock),
         isAvailable: Number(this.form.isAvailable) === 1 ? 1 : 0,
@@ -375,9 +403,9 @@ export default {
         return false
       }
 
-      if (!payload.timeSlot) {
+      if (!isValidTimeSlot(payload.timeSlot)) {
         uni.showToast({
-          title: '请输入时段',
+          title: '请选择时段',
           icon: 'none'
         })
         return false
@@ -484,7 +512,8 @@ export default {
       } finally {
         this.switchingId = null
       }
-    }
+    },
+    getTimeSlotText
   }
 }
 </script>

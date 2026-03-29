@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_order = require("../../api/order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_timeSlot = require("../../utils/time-slot.js");
 const USER_ID_KEY = "user_id";
 const _sfc_main = {
   name: "OrderListPage",
@@ -25,6 +26,7 @@ const _sfc_main = {
     });
   },
   methods: {
+    getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async fetchOrderList(options = {}) {
       const { fromPullDownRefresh = false } = options;
       if (!this.userId) {
@@ -115,7 +117,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.t($options.getStatusLabel(item.orderStatus)),
         c: common_vendor.n($options.getStatusClass(item.orderStatus)),
         d: common_vendor.t(item.serviceDate || "-"),
-        e: common_vendor.t(item.timeSlot || "-"),
+        e: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
         f: common_vendor.t($options.formatAmount(item.payAmount)),
         g: common_vendor.t(item.contactName || "-"),
         h: common_vendor.t(item.contactPhone || "-"),

@@ -58,7 +58,7 @@
         <view v-if="availableScheduleList.length" class="schedule-list">
           <view v-for="item in availableScheduleList" :key="item.id" class="schedule-item" :class="{ active: selectedScheduleId === item.id }" @click="selectSchedule(item)">
             <text class="schedule-date">{{ item.serviceDate }}</text>
-            <text class="schedule-time">{{ item.timeSlot }}</text>
+            <text class="schedule-time">{{ getTimeSlotText(item.timeSlot) }}</text>
             <text class="schedule-range">{{ formatScheduleDateTime(item.startTime) }} - {{ formatScheduleDateTime(item.endTime) }}</text>
             <text v-if="item.remark" class="schedule-remark">备注：{{ item.remark }}</text>
           </view>
@@ -116,6 +116,7 @@ import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { getChefCertStatusText } from '../../utils/chef-cert-status'
 import { getChefStatusText } from '../../utils/chef-status'
 import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { getTimeSlotText, normalizeTimeSlot } from '../../utils/time-slot'
 
 export default {
   name: 'ChefDetailPage',
@@ -144,7 +145,7 @@ export default {
       if (!this.selectedSchedule) {
         return '请选择一个可预约档期'
       }
-      return `${this.selectedSchedule.timeSlot || ''} ${formatScheduleDateTime(this.selectedSchedule.startTime)} - ${formatScheduleDateTime(this.selectedSchedule.endTime)}`.trim()
+      return `${getTimeSlotText(this.selectedSchedule.timeSlot)} ${formatScheduleDateTime(this.selectedSchedule.startTime)} - ${formatScheduleDateTime(this.selectedSchedule.endTime)}`.trim()
     },
     serviceModeText() {
       if (this.chef.serviceModeDesc) {
@@ -185,6 +186,7 @@ export default {
   },
   methods: {
     formatScheduleDateTime,
+    getTimeSlotText,
     async loadPageData() {
       this.loading = true
       try {
@@ -195,7 +197,14 @@ export default {
           getChefReviewList(this.chefId)
         ])
         this.chef = chefData || {}
-        this.availableScheduleList = Array.isArray(scheduleData) ? scheduleData.filter((item) => item && (item.isAvailable === 1 || item.isAvailable === true)) : []
+        this.availableScheduleList = Array.isArray(scheduleData)
+          ? scheduleData
+            .filter((item) => item && (item.isAvailable === 1 || item.isAvailable === true))
+            .map((item) => ({
+              ...item,
+              timeSlot: normalizeTimeSlot(item.timeSlot)
+            }))
+          : []
         this.reviewList = Array.isArray(reviewData) ? reviewData : []
         if (this.availableScheduleList.length) {
           this.selectSchedule(this.availableScheduleList[0])

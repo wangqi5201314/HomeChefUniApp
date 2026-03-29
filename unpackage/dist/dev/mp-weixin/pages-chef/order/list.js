@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chefOrder = require("../../api/chef-order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_timeSlot = require("../../utils/time-slot.js");
 const ChefTabbar = () => "../../components/chef-tabbar.js";
 const _sfc_main = {
   name: "ChefOrderListPage",
@@ -28,6 +29,7 @@ const _sfc_main = {
     }
   },
   methods: {
+    getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async fetchOrderList(showLoading = true) {
       if (showLoading) {
         this.loading = true;
@@ -99,7 +101,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.t($options.getStatusLabel(item.orderStatus)),
         c: common_vendor.n($options.getStatusClass(item.orderStatus)),
         d: common_vendor.t(item.serviceDate || "-"),
-        e: common_vendor.t(item.timeSlot || "-"),
+        e: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
         f: common_vendor.t($options.formatPeopleCount(item.peopleCount)),
         g: common_vendor.t($options.formatAmount(item.payAmount)),
         h: common_vendor.t(item.contactName || "-"),

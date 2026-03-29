@@ -42,7 +42,7 @@
         </view>
         <view class="info-line">
           <text class="info-label">时间段</text>
-          <text class="info-value">{{ item.timeSlot || '-' }}</text>
+          <text class="info-value">{{ getTimeSlotText(item.timeSlot) }}</text>
         </view>
         <view class="info-line">
           <text class="info-label">订单金额</text>
@@ -83,6 +83,7 @@
 <script>
 import { getOrderList } from '../../api/order'
 import { ORDER_STATUS, USER_ORDER_STATUS_TABS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
+import { getTimeSlotText } from '../../utils/time-slot'
 
 const USER_ID_KEY = 'user_id'
 
@@ -108,6 +109,7 @@ export default {
     })
   },
   methods: {
+    getTimeSlotText,
     async fetchOrderList(options = {}) {
       const { fromPullDownRefresh = false } = options
 

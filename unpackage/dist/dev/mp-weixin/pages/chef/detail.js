@@ -6,6 +6,7 @@ const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const utils_chefStatus = require("../../utils/chef-status.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
+const utils_timeSlot = require("../../utils/time-slot.js");
 const _sfc_main = {
   name: "ChefDetailPage",
   data() {
@@ -33,7 +34,7 @@ const _sfc_main = {
       if (!this.selectedSchedule) {
         return "请选择一个可预约档期";
       }
-      return `${this.selectedSchedule.timeSlot || ""} ${utils_scheduleTime.formatScheduleDateTime(this.selectedSchedule.startTime)} - ${utils_scheduleTime.formatScheduleDateTime(this.selectedSchedule.endTime)}`.trim();
+      return `${utils_timeSlot.getTimeSlotText(this.selectedSchedule.timeSlot)} ${utils_scheduleTime.formatScheduleDateTime(this.selectedSchedule.startTime)} - ${utils_scheduleTime.formatScheduleDateTime(this.selectedSchedule.endTime)}`.trim();
     },
     serviceModeText() {
       if (this.chef.serviceModeDesc) {
@@ -74,6 +75,7 @@ const _sfc_main = {
   },
   methods: {
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
+    getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async loadPageData() {
       this.loading = true;
       try {
@@ -84,7 +86,10 @@ const _sfc_main = {
           api_review.getChefReviewList(this.chefId)
         ]);
         this.chef = chefData || {};
-        this.availableScheduleList = Array.isArray(scheduleData) ? scheduleData.filter((item) => item && (item.isAvailable === 1 || item.isAvailable === true)) : [];
+        this.availableScheduleList = Array.isArray(scheduleData) ? scheduleData.filter((item) => item && (item.isAvailable === 1 || item.isAvailable === true)).map((item) => ({
+          ...item,
+          timeSlot: utils_timeSlot.normalizeTimeSlot(item.timeSlot)
+        })) : [];
         this.reviewList = Array.isArray(reviewData) ? reviewData : [];
         if (this.availableScheduleList.length) {
           this.selectSchedule(this.availableScheduleList[0]);
@@ -191,7 +196,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     r: common_vendor.f($data.availableScheduleList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.serviceDate),
-        b: common_vendor.t(item.timeSlot),
+        b: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
         c: common_vendor.t($options.formatScheduleDateTime(item.startTime)),
         d: common_vendor.t($options.formatScheduleDateTime(item.endTime)),
         e: item.remark

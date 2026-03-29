@@ -7,6 +7,7 @@ const utils_auth = require("../../utils/auth.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_timeSlot = require("../../utils/time-slot.js");
 const ChefTabbar = () => "../../components/chef-tabbar.js";
 const QUICK_ACTIONS = [
   {
@@ -85,6 +86,7 @@ const _sfc_main = {
     this.loadWorkbench(true);
   },
   methods: {
+    getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async loadWorkbench(fromPullDown = false) {
       if (!fromPullDown) {
         this.loading = true;
@@ -321,7 +323,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.t($options.getStatusLabel(item.orderStatus)),
         c: common_vendor.n($options.getStatusClass(item.orderStatus)),
         d: common_vendor.t(item.serviceDate || "-"),
-        e: common_vendor.t(item.timeSlot || "-"),
+        e: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
         f: common_vendor.t($options.formatPeopleCount(item.peopleCount)),
         g: common_vendor.t(item.contactName || "-"),
         h: common_vendor.t(item.fullAddress || "-"),

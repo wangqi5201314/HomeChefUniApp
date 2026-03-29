@@ -21,7 +21,7 @@
       <view class="detail-card">
         <text class="section-title">服务信息</text>
         <view class="row"><text class="label">服务日期</text><text class="value">{{ orderDetail.serviceDate || '-' }}</text></view>
-        <view class="row"><text class="label">时间段</text><text class="value">{{ orderDetail.timeSlot || '-' }}</text></view>
+        <view class="row"><text class="label">时间段</text><text class="value">{{ getTimeSlotText(orderDetail.timeSlot) }}</text></view>
         <view class="row"><text class="label">开始时间</text><text class="value">{{ formatScheduleDateTime(orderDetail.serviceStartTime) }}</text></view>
         <view class="row"><text class="label">结束时间</text><text class="value">{{ formatScheduleDateTime(orderDetail.serviceEndTime) }}</text></view>
         <view class="row"><text class="label">服务人数</text><text class="value">{{ formatPeopleCount(orderDetail.peopleCount) }}</text></view>
@@ -131,6 +131,7 @@ import {
 } from '../../api/chef-order'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { getTimeSlotText } from '../../utils/time-slot'
 
 export default {
   name: 'ChefOrderDetailPage',
@@ -201,6 +202,7 @@ export default {
   },
   methods: {
     formatScheduleDateTime,
+    getTimeSlotText,
     async fetchOrderDetail() {
       if (!this.orderId) {
         uni.showToast({

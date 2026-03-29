@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_chefOrder = require("../../api/chef-order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
+const utils_timeSlot = require("../../utils/time-slot.js");
 const _sfc_main = {
   name: "ChefOrderDetailPage",
   data() {
@@ -62,6 +63,7 @@ const _sfc_main = {
   },
   methods: {
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
+    getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async fetchOrderDetail() {
       if (!this.orderId) {
         common_vendor.index.showToast({
@@ -175,7 +177,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.n($options.statusClass),
     f: common_vendor.t($data.orderDetail.orderNo || "-"),
     g: common_vendor.t($data.orderDetail.serviceDate || "-"),
-    h: common_vendor.t($data.orderDetail.timeSlot || "-"),
+    h: common_vendor.t($options.getTimeSlotText($data.orderDetail.timeSlot)),
     i: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceStartTime)),
     j: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceEndTime)),
     k: common_vendor.t($options.formatPeopleCount($data.orderDetail.peopleCount)),

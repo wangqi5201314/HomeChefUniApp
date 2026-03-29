@@ -20,7 +20,7 @@
       <view class="section-card">
         <text class="section-title">服务信息</text>
         <view class="info-line"><text class="info-label">服务日期</text><text class="info-value">{{ orderDetail.serviceDate || '-' }}</text></view>
-        <view class="info-line"><text class="info-label">时间段</text><text class="info-value">{{ orderDetail.timeSlot || '-' }}</text></view>
+        <view class="info-line"><text class="info-label">时间段</text><text class="info-value">{{ getTimeSlotText(orderDetail.timeSlot) }}</text></view>
         <view class="info-line"><text class="info-label">开始时间</text><text class="info-value">{{ formatScheduleDateTime(orderDetail.serviceStartTime) }}</text></view>
         <view class="info-line"><text class="info-label">结束时间</text><text class="info-value">{{ formatScheduleDateTime(orderDetail.serviceEndTime) }}</text></view>
         <view class="info-line"><text class="info-label">厨师 ID</text><text class="info-value">{{ orderDetail.chefId || '-' }}</text></view>
@@ -122,6 +122,7 @@ import { cancelOrder, getOrderDetail } from '../../api/order'
 import { createPayment, mockPaymentSuccess, refundPayment } from '../../api/pay'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { getTimeSlotText } from '../../utils/time-slot'
 
 export default {
   name: 'OrderDetailPage',
@@ -207,6 +208,7 @@ export default {
   },
   methods: {
     formatScheduleDateTime,
+    getTimeSlotText,
     async loadOrderDetail() {
       this.loading = true
       try {
