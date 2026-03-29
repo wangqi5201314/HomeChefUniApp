@@ -178,6 +178,21 @@ function parseClock(dateTime) {
   return match ? match[1] : ''
 }
 
+function parseScheduleDateTime(dateTime) {
+  if (!dateTime) {
+    return null
+  }
+
+  const normalizedText = String(dateTime).replace(' ', 'T')
+  const parsedTime = new Date(normalizedText)
+
+  if (Number.isNaN(parsedTime.getTime())) {
+    return null
+  }
+
+  return parsedTime
+}
+
 function compareScheduleDesc(a, b) {
   const aTime = `${a.serviceDate || ''} ${parseClock(a.startTime) || '00:00'}`
   const bTime = `${b.serviceDate || ''} ${parseClock(b.startTime) || '00:00'}`
@@ -275,13 +290,30 @@ export default {
       return formatScheduleDateTime(dateTime)
     },
     isExpiredSchedule(item) {
-      return !item || item.serviceDate < this.today
+      if (!item) {
+        return true
+      }
+
+      if (item.serviceDate < this.today) {
+        return true
+      }
+
+      if (item.serviceDate > this.today) {
+        return false
+      }
+
+      const endTime = parseScheduleDateTime(item.endTime)
+      if (!endTime) {
+        return false
+      }
+
+      return endTime.getTime() <= Date.now()
     },
     isAvailableSchedule(item) {
-      return !!item && item.serviceDate >= this.today && Number(item.isAvailable) === 1
+      return !!item && !this.isExpiredSchedule(item) && Number(item.isAvailable) === 1
     },
     isClosedSchedule(item) {
-      return !!item && item.serviceDate >= this.today && Number(item.isAvailable) !== 1
+      return !!item && !this.isExpiredSchedule(item) && Number(item.isAvailable) !== 1
     },
     canOperate(item) {
       return !!item && !this.isExpiredSchedule(item)
