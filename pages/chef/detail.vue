@@ -79,6 +79,16 @@
             </view>
             <text class="review-content">{{ item.content || '用户未填写评价内容' }}</text>
             <text class="review-time">{{ item.createdAt || '-' }}</text>
+            <view v-if="parseImageUrls(item.imageUrls).length" class="review-image-list">
+              <image
+                v-for="(url, index) in parseImageUrls(item.imageUrls)"
+                :key="`${item.id}-${index}`"
+                class="review-image"
+                :src="url"
+                mode="aspectFill"
+                @click="previewImages(parseImageUrls(item.imageUrls), index)"
+              />
+            </view>
             <view v-if="item.replyContent" class="reply-box">
               <text class="reply-text">厨师回复：{{ item.replyContent }}</text>
             </view>
@@ -226,6 +236,21 @@ export default {
     goAllReviews() {
       uni.navigateTo({ url: `/pages/review/chef-list?chefId=${this.chefId}` })
     },
+    parseImageUrls(imageUrls) {
+      if (!imageUrls) {
+        return []
+      }
+      return String(imageUrls)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    },
+    previewImages(urls, currentIndex) {
+      uni.previewImage({
+        urls,
+        current: urls[currentIndex]
+      })
+    },
     getNameInitial(name) {
       return name ? String(name).slice(0, 1) : '厨'
     },
@@ -285,6 +310,8 @@ export default {
 .review-user { font-size: 28rpx; font-weight: 600; color: #1f2329; }
 .review-score, .review-time { font-size: 24rpx; color: #8a8f99; }
 .review-content { display: block; margin-top: 16rpx; font-size: 28rpx; line-height: 1.6; color: #4f5662; }
+.review-image-list { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 18rpx; }
+.review-image { width: 180rpx; height: 180rpx; border-radius: 16rpx; background: #f3f4f6; }
 .reply-box { margin-top: 16rpx; padding: 16rpx 20rpx; border-radius: 16rpx; background: #ffffff; }
 .reply-text { font-size: 26rpx; line-height: 1.6; color: #68707d; }
 .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 20rpx; padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, 0.98); box-shadow: 0 -8rpx 24rpx rgba(32, 37, 43, 0.06); box-sizing: border-box; }

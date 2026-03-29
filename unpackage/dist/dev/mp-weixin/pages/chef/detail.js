@@ -126,6 +126,18 @@ const _sfc_main = {
     goAllReviews() {
       common_vendor.index.navigateTo({ url: `/pages/review/chef-list?chefId=${this.chefId}` });
     },
+    parseImageUrls(imageUrls) {
+      if (!imageUrls) {
+        return [];
+      }
+      return String(imageUrls).split(",").map((item) => item.trim()).filter(Boolean);
+    },
+    previewImages(urls, currentIndex) {
+      common_vendor.index.previewImage({
+        urls,
+        current: urls[currentIndex]
+      });
+    },
     getNameInitial(name) {
       return name ? String(name).slice(0, 1) : "厨";
     },
@@ -198,11 +210,21 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.t($options.formatPlain(item.overallScore)),
         c: common_vendor.t(item.content || "用户未填写评价内容"),
         d: common_vendor.t(item.createdAt || "-"),
-        e: item.replyContent
-      }, item.replyContent ? {
-        f: common_vendor.t(item.replyContent)
+        e: $options.parseImageUrls(item.imageUrls).length
+      }, $options.parseImageUrls(item.imageUrls).length ? {
+        f: common_vendor.f($options.parseImageUrls(item.imageUrls), (url, index, i1) => {
+          return {
+            a: `${item.id}-${index}`,
+            b: url,
+            c: common_vendor.o(($event) => $options.previewImages($options.parseImageUrls(item.imageUrls), index), `${item.id}-${index}`)
+          };
+        })
       } : {}, {
-        g: item.id
+        g: item.replyContent
+      }, item.replyContent ? {
+        h: common_vendor.t(item.replyContent)
+      } : {}, {
+        i: item.id
       });
     })
   } : {}), {
