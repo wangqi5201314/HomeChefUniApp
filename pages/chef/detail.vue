@@ -60,6 +60,7 @@
             <text class="schedule-date">{{ item.serviceDate }}</text>
             <text class="schedule-time">{{ item.timeSlot }}</text>
             <text class="schedule-range">{{ formatScheduleDateTime(item.startTime) }} - {{ formatScheduleDateTime(item.endTime) }}</text>
+            <text v-if="item.remark" class="schedule-remark">备注：{{ item.remark }}</text>
           </view>
         </view>
         <text v-else class="empty-inline">暂无可预约档期</text>
@@ -303,9 +304,10 @@ export default {
 .schedule-list { display: flex; flex-direction: column; gap: 18rpx; }
 .schedule-item { padding: 24rpx; border: 2rpx solid #eceff4; border-radius: 20rpx; background: #fafbfc; }
 .schedule-item.active { border-color: #d96c3a; background: #fff6f1; }
-.schedule-date, .schedule-time, .schedule-range { display: block; }
+.schedule-date, .schedule-time, .schedule-range, .schedule-remark { display: block; }
 .schedule-date { font-size: 30rpx; font-weight: 600; color: #1f2329; }
 .schedule-time, .schedule-range { margin-top: 10rpx; font-size: 26rpx; color: #68707d; }
+.schedule-remark { margin-top: 10rpx; font-size: 24rpx; line-height: 1.6; color: #8a8f99; }
 .review-list { display: flex; flex-direction: column; gap: 20rpx; }
 .review-item { padding: 24rpx; border-radius: 20rpx; background: #f8f9fb; }
 .review-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
