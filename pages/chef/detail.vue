@@ -20,6 +20,7 @@
             <text class="summary">厨师状态：{{ chefStatusText }}</text>
             <text class="summary">擅长菜系：{{ chef.specialtyCuisine || '-' }}</text>
             <text class="summary">服务模式：{{ serviceModeText }}</text>
+            <text class="summary">服务位置：{{ chefServiceLocationText }}</text>
           </view>
         </view>
 
@@ -173,6 +174,10 @@ export default {
         return getChefStatusText(this.chef.status)
       }
       return '未知状态'
+    },
+    chefServiceLocationText() {
+      const location = this.getChefServiceLocation(this.chef)
+      return location || '暂未设置'
     }
   },
   onLoad(options) {
@@ -188,6 +193,52 @@ export default {
     formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
+    getChefServiceLocation(chef) {
+      if (!chef) {
+        return ''
+      }
+
+      const nestedLocation = chef.activeServiceLocation || chef.serviceLocation || chef.currentServiceLocation || {}
+      const locationName =
+        nestedLocation.locationName ||
+        chef.activeServiceLocationName ||
+        chef.serviceLocationName ||
+        chef.locationName ||
+        ''
+      const province =
+        nestedLocation.province ||
+        chef.activeServiceProvince ||
+        chef.serviceLocationProvince ||
+        chef.serviceProvince ||
+        ''
+      const city =
+        nestedLocation.city ||
+        chef.activeServiceCity ||
+        chef.serviceLocationCity ||
+        chef.serviceCity ||
+        ''
+      const district =
+        nestedLocation.district ||
+        chef.activeServiceDistrict ||
+        chef.serviceLocationDistrict ||
+        chef.serviceDistrict ||
+        ''
+      const town =
+        nestedLocation.town ||
+        chef.activeServiceTown ||
+        chef.serviceLocationTown ||
+        chef.serviceTown ||
+        ''
+      const detailAddress =
+        nestedLocation.detailAddress ||
+        chef.activeServiceDetailAddress ||
+        chef.serviceLocationDetailAddress ||
+        chef.serviceDetailAddress ||
+        ''
+
+      const address = [province, city, district, town, detailAddress].filter(Boolean).join('')
+      return [locationName, address].filter(Boolean).join(' · ')
+    },
     getReviewUserName(item) {
       if (!item) {
         return '-'

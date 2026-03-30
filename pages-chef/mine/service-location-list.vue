@@ -205,12 +205,15 @@ export default {
 }
 
 .add-btn {
-  min-width: 196rpx;
+  min-width: 236rpx;
   height: 80rpx;
   line-height: 80rpx;
+  padding: 0 26rpx;
   border-radius: 999rpx;
   background: #2f8f55;
-  font-size: 28rpx;
+  font-size: 26rpx;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .add-btn::after,

@@ -33,7 +33,7 @@
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" @click="goPage('/pages-chef/mine/service-location-list')">
-        <text class="menu-text">服务位置管理</text>
+        <text class="menu-text">服务位置</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" @click="goPage('/pages-chef/review/list')">

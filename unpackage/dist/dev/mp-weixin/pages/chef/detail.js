@@ -62,6 +62,10 @@ const _sfc_main = {
         return utils_chefStatus.getChefStatusText(this.chef.status);
       }
       return "未知状态";
+    },
+    chefServiceLocationText() {
+      const location = this.getChefServiceLocation(this.chef);
+      return location || "暂未设置";
     }
   },
   onLoad(options) {
@@ -77,6 +81,20 @@ const _sfc_main = {
     formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
+    getChefServiceLocation(chef) {
+      if (!chef) {
+        return "";
+      }
+      const nestedLocation = chef.activeServiceLocation || chef.serviceLocation || chef.currentServiceLocation || {};
+      const locationName = nestedLocation.locationName || chef.activeServiceLocationName || chef.serviceLocationName || chef.locationName || "";
+      const province = nestedLocation.province || chef.activeServiceProvince || chef.serviceLocationProvince || chef.serviceProvince || "";
+      const city = nestedLocation.city || chef.activeServiceCity || chef.serviceLocationCity || chef.serviceCity || "";
+      const district = nestedLocation.district || chef.activeServiceDistrict || chef.serviceLocationDistrict || chef.serviceDistrict || "";
+      const town = nestedLocation.town || chef.activeServiceTown || chef.serviceLocationTown || chef.serviceTown || "";
+      const detailAddress = nestedLocation.detailAddress || chef.activeServiceDetailAddress || chef.serviceLocationDetailAddress || chef.serviceDetailAddress || "";
+      const address = [province, city, district, town, detailAddress].filter(Boolean).join("");
+      return [locationName, address].filter(Boolean).join(" · ");
+    },
     getReviewUserName(item) {
       if (!item) {
         return "-";
@@ -184,23 +202,24 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.t($options.chefStatusText),
     h: common_vendor.t($data.chef.specialtyCuisine || "-"),
     i: common_vendor.t($options.serviceModeText),
-    j: common_vendor.t($data.chef.introduction || "暂无介绍"),
-    k: common_vendor.t($options.formatValue($data.chef.yearsOfExperience, "年")),
-    l: common_vendor.t($options.formatPlain($data.chef.ratingAvg)),
-    m: common_vendor.t($options.formatPlain($data.chef.orderCount)),
-    n: common_vendor.t($options.certStatusText),
-    o: $options.tagList.length
+    j: common_vendor.t($options.chefServiceLocationText),
+    k: common_vendor.t($data.chef.introduction || "暂无介绍"),
+    l: common_vendor.t($options.formatValue($data.chef.yearsOfExperience, "年")),
+    m: common_vendor.t($options.formatPlain($data.chef.ratingAvg)),
+    n: common_vendor.t($options.formatPlain($data.chef.orderCount)),
+    o: common_vendor.t($options.certStatusText),
+    p: $options.tagList.length
   }, $options.tagList.length ? {
-    p: common_vendor.f($options.tagList, (tag, index, i0) => {
+    q: common_vendor.f($options.tagList, (tag, index, i0) => {
       return {
         a: common_vendor.t(tag),
         b: index
       };
     })
   } : {}, {
-    q: $data.availableScheduleList.length
+    r: $data.availableScheduleList.length
   }, $data.availableScheduleList.length ? {
-    r: common_vendor.f($data.availableScheduleList, (item, k0, i0) => {
+    s: common_vendor.f($data.availableScheduleList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.serviceDate),
         b: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
@@ -216,13 +235,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}, {
-    s: $data.reviewList.length > $options.displayReviewList.length
+    t: $data.reviewList.length > $options.displayReviewList.length
   }, $data.reviewList.length > $options.displayReviewList.length ? {
-    t: common_vendor.o((...args) => $options.goAllReviews && $options.goAllReviews(...args))
+    v: common_vendor.o((...args) => $options.goAllReviews && $options.goAllReviews(...args))
   } : {}, {
-    v: $options.displayReviewList.length
+    w: $options.displayReviewList.length
   }, $options.displayReviewList.length ? {
-    w: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
+    x: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : $options.getReviewUserName(item)),
         b: common_vendor.t($options.formatPlain(item.overallScore)),
@@ -246,8 +265,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}), {
-    x: common_vendor.t($options.selectedScheduleText),
-    y: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
+    y: common_vendor.t($options.selectedScheduleText),
+    z: common_vendor.o((...args) => $options.handleBook && $options.handleBook(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b9a9a594"]]);

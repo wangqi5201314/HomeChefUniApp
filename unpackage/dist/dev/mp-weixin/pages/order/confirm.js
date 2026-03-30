@@ -72,6 +72,9 @@ const _sfc_main = {
       }
       return "暂未设置";
     },
+    chefServiceLocationText() {
+      return this.getChefServiceLocation(this.chef) || "";
+    },
     chefServiceModeValue() {
       return Number(this.chef.serviceMode);
     },
@@ -139,6 +142,20 @@ const _sfc_main = {
   methods: {
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
+    getChefServiceLocation(chef) {
+      if (!chef) {
+        return "";
+      }
+      const nestedLocation = chef.activeServiceLocation || chef.serviceLocation || chef.currentServiceLocation || {};
+      const locationName = nestedLocation.locationName || chef.activeServiceLocationName || chef.serviceLocationName || chef.locationName || "";
+      const province = nestedLocation.province || chef.activeServiceProvince || chef.serviceLocationProvince || chef.serviceProvince || "";
+      const city = nestedLocation.city || chef.activeServiceCity || chef.serviceLocationCity || chef.serviceCity || "";
+      const district = nestedLocation.district || chef.activeServiceDistrict || chef.serviceLocationDistrict || chef.serviceDistrict || "";
+      const town = nestedLocation.town || chef.activeServiceTown || chef.serviceLocationTown || chef.serviceTown || "";
+      const detailAddress = nestedLocation.detailAddress || chef.activeServiceDetailAddress || chef.serviceLocationDetailAddress || chef.serviceDetailAddress || "";
+      const address = [province, city, district, town, detailAddress].filter(Boolean).join("");
+      return [locationName, address].filter(Boolean).join(" · ");
+    },
     async loadPageData() {
       if (!this.userId) {
         this.loading = false;
@@ -353,7 +370,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     f: common_vendor.o((...args) => $options.goSelectAddress && $options.goSelectAddress(...args)),
     g: common_vendor.t($options.serviceRadiusText),
-    h: common_vendor.t($options.fullAddress || "暂未选择服务地址"),
+    h: common_vendor.t($options.chefServiceLocationText || "暂未设置服务位置"),
     i: $data.chef.avatar
   }, $data.chef.avatar ? {
     j: $data.chef.avatar
