@@ -11,7 +11,7 @@
     <view v-else class="review-list">
       <view v-for="item in reviewList" :key="item.id" class="review-card">
         <view class="review-head">
-          <text class="review-user">{{ item.isAnonymous === 1 ? '匿名用户' : `用户${item.userId}` }}</text>
+          <text class="review-user">{{ item.isAnonymous === 1 ? '匿名用户' : getReviewUserName(item) }}</text>
           <text class="review-score">评分 {{ formatPlain(item.overallScore) }}</text>
         </view>
 
@@ -73,6 +73,13 @@ export default {
   },
   methods: {
     formatFullDateTime,
+    getReviewUserName(item) {
+      if (!item) {
+        return '-'
+      }
+
+      return item.nickname || item.userNickname || item.userName || item.username || item.realName || item.name || `用户${item.userId}`
+    },
     async loadReviewList() {
       this.loading = true
 

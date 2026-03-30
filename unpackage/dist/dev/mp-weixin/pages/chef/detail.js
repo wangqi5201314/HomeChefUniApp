@@ -77,6 +77,12 @@ const _sfc_main = {
     formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
+    getReviewUserName(item) {
+      if (!item) {
+        return "-";
+      }
+      return item.nickname || item.userNickname || item.userName || item.username || item.realName || item.name || `用户${item.userId}`;
+    },
     async loadPageData() {
       this.loading = true;
       try {
@@ -218,7 +224,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $options.displayReviewList.length ? {
     w: common_vendor.f($options.displayReviewList, (item, k0, i0) => {
       return common_vendor.e({
-        a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : `用户${item.userId}`),
+        a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : $options.getReviewUserName(item)),
         b: common_vendor.t($options.formatPlain(item.overallScore)),
         c: common_vendor.t(item.content || "用户未填写评价内容"),
         d: common_vendor.t($options.formatFullDateTime(item.createdAt)),

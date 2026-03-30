@@ -75,7 +75,7 @@
         <view v-if="displayReviewList.length" class="review-list">
           <view v-for="item in displayReviewList" :key="item.id" class="review-item">
             <view class="review-head">
-              <text class="review-user">{{ item.isAnonymous === 1 ? '匿名用户' : `用户${item.userId}` }}</text>
+              <text class="review-user">{{ item.isAnonymous === 1 ? '匿名用户' : getReviewUserName(item) }}</text>
               <text class="review-score">评分 {{ formatPlain(item.overallScore) }}</text>
             </view>
             <text class="review-content">{{ item.content || '用户未填写评价内容' }}</text>
@@ -188,6 +188,13 @@ export default {
     formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
+    getReviewUserName(item) {
+      if (!item) {
+        return '-'
+      }
+
+      return item.nickname || item.userNickname || item.userName || item.username || item.realName || item.name || `用户${item.userId}`
+    },
     async loadPageData() {
       this.loading = true
       try {
