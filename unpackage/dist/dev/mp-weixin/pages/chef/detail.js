@@ -64,8 +64,7 @@ const _sfc_main = {
       return "未知状态";
     },
     chefServiceLocationText() {
-      const location = this.getChefServiceLocation(this.chef);
-      return location || "暂未设置";
+      return this.chef.serviceAreaText || "暂未设置服务地址";
     }
   },
   onLoad(options) {
@@ -81,20 +80,6 @@ const _sfc_main = {
     formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
-    getChefServiceLocation(chef) {
-      if (!chef) {
-        return "";
-      }
-      const nestedLocation = chef.activeServiceLocation || chef.serviceLocation || chef.currentServiceLocation || {};
-      const locationName = nestedLocation.locationName || chef.activeServiceLocationName || chef.serviceLocationName || chef.locationName || "";
-      const province = nestedLocation.province || chef.activeServiceProvince || chef.serviceLocationProvince || chef.serviceProvince || "";
-      const city = nestedLocation.city || chef.activeServiceCity || chef.serviceLocationCity || chef.serviceCity || "";
-      const district = nestedLocation.district || chef.activeServiceDistrict || chef.serviceLocationDistrict || chef.serviceDistrict || "";
-      const town = nestedLocation.town || chef.activeServiceTown || chef.serviceLocationTown || chef.serviceTown || "";
-      const detailAddress = nestedLocation.detailAddress || chef.activeServiceDetailAddress || chef.serviceLocationDetailAddress || chef.serviceDetailAddress || "";
-      const address = [province, city, district, town, detailAddress].filter(Boolean).join("");
-      return [locationName, address].filter(Boolean).join(" · ");
-    },
     getReviewUserName(item) {
       if (!item) {
         return "-";

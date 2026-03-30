@@ -30,8 +30,12 @@
           <text class="info-value">{{ serviceRadiusText }}</text>
         </view>
         <view class="range-block">
-          <text class="range-block-label">厨师服务地址</text>
-          <text class="range-block-value">{{ chefServiceLocationText || '暂未设置服务位置' }}</text>
+          <text class="range-block-label">当前用户地址</text>
+          <text class="range-block-value">{{ fullAddress || '暂未选择服务地址' }}</text>
+        </view>
+        <view class="range-block">
+          <text class="range-block-label">厨师当前服务地址</text>
+          <text class="range-block-value">{{ chefServiceLocationText }}</text>
         </view>
         <view class="range-tip-card">
           <text class="range-tip-main">实际是否可预约以后端服务范围校验为准</text>
@@ -269,7 +273,7 @@ export default {
       return '暂未设置'
     },
     chefServiceLocationText() {
-      return this.getChefServiceLocation(this.chef) || ''
+      return this.chef.serviceAreaText || '暂未设置服务地址'
     },
     chefServiceModeValue() {
       return Number(this.chef.serviceMode)
@@ -343,52 +347,6 @@ export default {
   methods: {
     formatScheduleDateTime,
     getTimeSlotText,
-    getChefServiceLocation(chef) {
-      if (!chef) {
-        return ''
-      }
-
-      const nestedLocation = chef.activeServiceLocation || chef.serviceLocation || chef.currentServiceLocation || {}
-      const locationName =
-        nestedLocation.locationName ||
-        chef.activeServiceLocationName ||
-        chef.serviceLocationName ||
-        chef.locationName ||
-        ''
-      const province =
-        nestedLocation.province ||
-        chef.activeServiceProvince ||
-        chef.serviceLocationProvince ||
-        chef.serviceProvince ||
-        ''
-      const city =
-        nestedLocation.city ||
-        chef.activeServiceCity ||
-        chef.serviceLocationCity ||
-        chef.serviceCity ||
-        ''
-      const district =
-        nestedLocation.district ||
-        chef.activeServiceDistrict ||
-        chef.serviceLocationDistrict ||
-        chef.serviceDistrict ||
-        ''
-      const town =
-        nestedLocation.town ||
-        chef.activeServiceTown ||
-        chef.serviceLocationTown ||
-        chef.serviceTown ||
-        ''
-      const detailAddress =
-        nestedLocation.detailAddress ||
-        chef.activeServiceDetailAddress ||
-        chef.serviceLocationDetailAddress ||
-        chef.serviceDetailAddress ||
-        ''
-
-      const address = [province, city, district, town, detailAddress].filter(Boolean).join('')
-      return [locationName, address].filter(Boolean).join(' · ')
-    },
     async loadPageData() {
       if (!this.userId) {
         this.loading = false

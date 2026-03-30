@@ -73,7 +73,7 @@ const _sfc_main = {
       return "暂未设置";
     },
     chefServiceLocationText() {
-      return this.getChefServiceLocation(this.chef) || "";
+      return this.chef.serviceAreaText || "暂未设置服务地址";
     },
     chefServiceModeValue() {
       return Number(this.chef.serviceMode);
@@ -142,20 +142,6 @@ const _sfc_main = {
   methods: {
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
-    getChefServiceLocation(chef) {
-      if (!chef) {
-        return "";
-      }
-      const nestedLocation = chef.activeServiceLocation || chef.serviceLocation || chef.currentServiceLocation || {};
-      const locationName = nestedLocation.locationName || chef.activeServiceLocationName || chef.serviceLocationName || chef.locationName || "";
-      const province = nestedLocation.province || chef.activeServiceProvince || chef.serviceLocationProvince || chef.serviceProvince || "";
-      const city = nestedLocation.city || chef.activeServiceCity || chef.serviceLocationCity || chef.serviceCity || "";
-      const district = nestedLocation.district || chef.activeServiceDistrict || chef.serviceLocationDistrict || chef.serviceDistrict || "";
-      const town = nestedLocation.town || chef.activeServiceTown || chef.serviceLocationTown || chef.serviceTown || "";
-      const detailAddress = nestedLocation.detailAddress || chef.activeServiceDetailAddress || chef.serviceLocationDetailAddress || chef.serviceDetailAddress || "";
-      const address = [province, city, district, town, detailAddress].filter(Boolean).join("");
-      return [locationName, address].filter(Boolean).join(" · ");
-    },
     async loadPageData() {
       if (!this.userId) {
         this.loading = false;
@@ -370,52 +356,53 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     f: common_vendor.o((...args) => $options.goSelectAddress && $options.goSelectAddress(...args)),
     g: common_vendor.t($options.serviceRadiusText),
-    h: common_vendor.t($options.chefServiceLocationText || "暂未设置服务位置"),
-    i: $data.chef.avatar
-  }, $data.chef.avatar ? {
+    h: common_vendor.t($options.fullAddress || "暂未选择服务地址"),
+    i: common_vendor.t($options.chefServiceLocationText),
     j: $data.chef.avatar
+  }, $data.chef.avatar ? {
+    k: $data.chef.avatar
   } : {
-    k: common_vendor.t($options.getNameInitial($data.chef.name))
+    l: common_vendor.t($options.getNameInitial($data.chef.name))
   }, {
-    l: common_vendor.t($data.chef.name || "未命名厨师"),
-    m: common_vendor.t($data.chef.specialtyCuisine || "-"),
-    n: common_vendor.t($options.chefServiceModeText),
-    o: common_vendor.t($data.orderInfo.serviceDate || "-"),
-    p: common_vendor.t($options.timeSlotText),
-    q: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceStartTime)),
-    r: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceEndTime)),
-    s: $data.form.peopleCount,
-    t: common_vendor.o(($event) => $data.form.peopleCount = $event.detail.value),
-    v: $data.form.tastePreference,
-    w: common_vendor.o(($event) => $data.form.tastePreference = $event.detail.value),
-    x: $data.form.tabooFood,
-    y: common_vendor.o(($event) => $data.form.tabooFood = $event.detail.value),
-    z: $data.form.specialRequirement,
-    A: common_vendor.o(($event) => $data.form.specialRequirement = $event.detail.value),
-    B: $options.canSelectIngredientMode
+    m: common_vendor.t($data.chef.name || "未命名厨师"),
+    n: common_vendor.t($data.chef.specialtyCuisine || "-"),
+    o: common_vendor.t($options.chefServiceModeText),
+    p: common_vendor.t($data.orderInfo.serviceDate || "-"),
+    q: common_vendor.t($options.timeSlotText),
+    r: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceStartTime)),
+    s: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceEndTime)),
+    t: $data.form.peopleCount,
+    v: common_vendor.o(($event) => $data.form.peopleCount = $event.detail.value),
+    w: $data.form.tastePreference,
+    x: common_vendor.o(($event) => $data.form.tastePreference = $event.detail.value),
+    y: $data.form.tabooFood,
+    z: common_vendor.o(($event) => $data.form.tabooFood = $event.detail.value),
+    A: $data.form.specialRequirement,
+    B: common_vendor.o(($event) => $data.form.specialRequirement = $event.detail.value),
+    C: $options.canSelectIngredientMode
   }, $options.canSelectIngredientMode ? {
-    C: common_vendor.t($options.ingredientModeText),
-    D: $options.ingredientModeRange,
-    E: $options.ingredientModeIndex,
-    F: common_vendor.o((...args) => $options.handleIngredientModeChange && $options.handleIngredientModeChange(...args))
+    D: common_vendor.t($options.ingredientModeText),
+    E: $options.ingredientModeRange,
+    F: $options.ingredientModeIndex,
+    G: common_vendor.o((...args) => $options.handleIngredientModeChange && $options.handleIngredientModeChange(...args))
   } : {
-    G: common_vendor.t($options.ingredientModeText)
+    H: common_vendor.t($options.ingredientModeText)
   }, {
-    H: !$options.canSelectIngredientMode
+    I: !$options.canSelectIngredientMode
   }, !$options.canSelectIngredientMode ? {} : {}, {
-    I: $data.form.ingredientList,
-    J: common_vendor.o(($event) => $data.form.ingredientList = $event.detail.value),
-    K: common_vendor.t($data.selectedAddress.contactName || "-"),
-    L: common_vendor.t($data.selectedAddress.contactPhone || "-"),
-    M: common_vendor.t($data.totalAmount),
-    N: common_vendor.t($data.discountAmount),
-    O: common_vendor.t($data.payAmount)
+    J: $data.form.ingredientList,
+    K: common_vendor.o(($event) => $data.form.ingredientList = $event.detail.value),
+    L: common_vendor.t($data.selectedAddress.contactName || "-"),
+    M: common_vendor.t($data.selectedAddress.contactPhone || "-"),
+    N: common_vendor.t($data.totalAmount),
+    O: common_vendor.t($data.discountAmount),
+    P: common_vendor.t($data.payAmount)
   }), {
-    P: common_vendor.t($data.payAmount),
-    Q: common_vendor.t($data.submitting ? "提交中..." : "提交订单"),
-    R: $data.submitting,
+    Q: common_vendor.t($data.payAmount),
+    R: common_vendor.t($data.submitting ? "提交中..." : "提交订单"),
     S: $data.submitting,
-    T: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
+    T: $data.submitting,
+    U: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-324e7894"]]);
