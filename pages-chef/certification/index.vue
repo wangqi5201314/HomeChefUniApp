@@ -107,6 +107,7 @@ export default {
       skipNextOnShowReload: false,
       saving: false,
       uploadingKey: '',
+      hasCertificationRecord: false,
       form: createDefaultForm(),
       chefInfo: {},
       uploadFields: [
@@ -119,6 +120,10 @@ export default {
   },
   computed: {
     certStatusText() {
+      if (!this.hasCertificationRecord) {
+        return '待上传'
+      }
+
       if (this.chefInfo.certStatusDesc) {
         return this.chefInfo.certStatusDesc
       }
@@ -130,6 +135,10 @@ export default {
       return '未知状态'
     },
     certStatusTip() {
+      if (!this.hasCertificationRecord) {
+        return '当前还没有提交认证资料，请先上传相关证书照片并提交。'
+      }
+
       const status = Number(this.chefInfo.certStatus)
 
       if (status === 2) {
@@ -204,6 +213,16 @@ export default {
           getCurrentChefProfile()
         ])
 
+        this.hasCertificationRecord = Boolean(
+          certificationData && (
+            certificationData.realName ||
+            certificationData.idCardNo ||
+            certificationData.healthCertUrl ||
+            certificationData.skillCertUrl ||
+            certificationData.serviceCertUrl ||
+            certificationData.advancedCertUrl
+          )
+        )
         this.form = {
           ...createDefaultForm(),
           ...(certificationData || {})
@@ -211,6 +230,8 @@ export default {
         this.chefInfo = chefData || {}
         setChefInfo(this.chefInfo)
       } catch (error) {
+        this.hasCertificationRecord = false
+        this.form = createDefaultForm()
       } finally {
         this.loaded = true
       }
@@ -261,6 +282,8 @@ export default {
           serviceCertUrl: this.form.serviceCertUrl || '',
           advancedCertUrl: this.form.advancedCertUrl || ''
         })
+
+        this.hasCertificationRecord = true
 
         uni.showToast({
           title: '提交成功',

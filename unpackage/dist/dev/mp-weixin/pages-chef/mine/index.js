@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_chefCertification = require("../../api/chef-certification.js");
 const api_chefProfile = require("../../api/chef-profile.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
@@ -12,7 +13,8 @@ const _sfc_main = {
   },
   data() {
     return {
-      chefInfo: {}
+      chefInfo: {},
+      hasCertificationRecord: true
     };
   },
   computed: {
@@ -20,6 +22,9 @@ const _sfc_main = {
       return this.chefInfo.name ? String(this.chefInfo.name).slice(0, 1) : "厨";
     },
     certStatusText() {
+      if (!this.hasCertificationRecord) {
+        return "待上传";
+      }
       if (this.chefInfo.certStatusDesc) {
         return this.chefInfo.certStatusDesc;
       }
@@ -48,10 +53,17 @@ const _sfc_main = {
   methods: {
     async loadChefInfo() {
       try {
-        const data = await api_chefProfile.getCurrentChefProfile();
-        this.chefInfo = data || {};
+        const [chefData, certificationData] = await Promise.all([
+          api_chefProfile.getCurrentChefProfile(),
+          api_chefCertification.getChefCertification()
+        ]);
+        this.chefInfo = chefData || {};
+        this.hasCertificationRecord = Boolean(
+          certificationData && (certificationData.realName || certificationData.idCardNo || certificationData.healthCertUrl || certificationData.skillCertUrl || certificationData.serviceCertUrl || certificationData.advancedCertUrl)
+        );
         utils_auth.setChefInfo(this.chefInfo);
       } catch (error) {
+        this.hasCertificationRecord = true;
       }
     },
     formatValue(value) {

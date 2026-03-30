@@ -40,6 +40,7 @@ const _sfc_main = {
       skipNextOnShowReload: false,
       saving: false,
       uploadingKey: "",
+      hasCertificationRecord: false,
       form: createDefaultForm(),
       chefInfo: {},
       uploadFields: [
@@ -52,6 +53,9 @@ const _sfc_main = {
   },
   computed: {
     certStatusText() {
+      if (!this.hasCertificationRecord) {
+        return "待上传";
+      }
       if (this.chefInfo.certStatusDesc) {
         return this.chefInfo.certStatusDesc;
       }
@@ -61,6 +65,9 @@ const _sfc_main = {
       return "未知状态";
     },
     certStatusTip() {
+      if (!this.hasCertificationRecord) {
+        return "当前还没有提交认证资料，请先上传相关证书照片并提交。";
+      }
       const status = Number(this.chefInfo.certStatus);
       if (status === 2) {
         return "认证已被拒绝，请检查资料后重新提交。";
@@ -125,6 +132,9 @@ const _sfc_main = {
           api_chefCertification.getChefCertification(),
           api_chefProfile.getCurrentChefProfile()
         ]);
+        this.hasCertificationRecord = Boolean(
+          certificationData && (certificationData.realName || certificationData.idCardNo || certificationData.healthCertUrl || certificationData.skillCertUrl || certificationData.serviceCertUrl || certificationData.advancedCertUrl)
+        );
         this.form = {
           ...createDefaultForm(),
           ...certificationData || {}
@@ -132,6 +142,8 @@ const _sfc_main = {
         this.chefInfo = chefData || {};
         utils_auth.setChefInfo(this.chefInfo);
       } catch (error) {
+        this.hasCertificationRecord = false;
+        this.form = createDefaultForm();
       } finally {
         this.loaded = true;
       }
@@ -175,6 +187,7 @@ const _sfc_main = {
           serviceCertUrl: this.form.serviceCertUrl || "",
           advancedCertUrl: this.form.advancedCertUrl || ""
         });
+        this.hasCertificationRecord = true;
         common_vendor.index.showToast({
           title: "提交成功",
           icon: "success"

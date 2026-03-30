@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import { getChefCertification } from '../../api/chef-certification'
 import ChefTabbar from '../../components/chef-tabbar.vue'
 import { getCurrentChefProfile } from '../../api/chef-profile'
 import { clearAuth, getChefInfo, setChefInfo } from '../../utils/auth'
@@ -66,7 +67,8 @@ export default {
   },
   data() {
     return {
-      chefInfo: {}
+      chefInfo: {},
+      hasCertificationRecord: true
     }
   },
   computed: {
@@ -74,6 +76,10 @@ export default {
       return this.chefInfo.name ? String(this.chefInfo.name).slice(0, 1) : '厨'
     },
     certStatusText() {
+      if (!this.hasCertificationRecord) {
+        return '待上传'
+      }
+
       if (this.chefInfo.certStatusDesc) {
         return this.chefInfo.certStatusDesc
       }
@@ -102,10 +108,25 @@ export default {
   methods: {
     async loadChefInfo() {
       try {
-        const data = await getCurrentChefProfile()
-        this.chefInfo = data || {}
+        const [chefData, certificationData] = await Promise.all([
+          getCurrentChefProfile(),
+          getChefCertification()
+        ])
+
+        this.chefInfo = chefData || {}
+        this.hasCertificationRecord = Boolean(
+          certificationData && (
+            certificationData.realName ||
+            certificationData.idCardNo ||
+            certificationData.healthCertUrl ||
+            certificationData.skillCertUrl ||
+            certificationData.serviceCertUrl ||
+            certificationData.advancedCertUrl
+          )
+        )
         setChefInfo(this.chefInfo)
       } catch (error) {
+        this.hasCertificationRecord = true
       }
     },
     formatValue(value) {
