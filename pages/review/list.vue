@@ -24,7 +24,7 @@
 
         <view class="meta-row">
           <text class="meta-text">{{ item.isAnonymous === 1 ? '匿名评价' : '实名评价' }}</text>
-          <text class="meta-text">评价时间：{{ item.createdAt || '-' }}</text>
+          <text class="meta-text">评价时间：{{ formatFullDateTime(item.createdAt) }}</text>
         </view>
 
         <view class="content-block">
@@ -49,7 +49,7 @@
         <view v-if="item.replyContent" class="reply-card">
           <text class="reply-title">厨师回复</text>
           <text class="reply-content">{{ item.replyContent }}</text>
-          <text class="reply-time">回复时间：{{ item.replyAt || '-' }}</text>
+          <text class="reply-time">回复时间：{{ formatFullDateTime(item.replyAt) }}</text>
         </view>
       </view>
     </view>
@@ -58,6 +58,7 @@
 
 <script>
 import { getMyReviewList } from '../../api/review'
+import { formatFullDateTime } from '../../utils/schedule-time'
 
 const USER_ID_KEY = 'user_id'
 
@@ -75,6 +76,7 @@ export default {
     this.loadReviewList()
   },
   methods: {
+    formatFullDateTime,
     async loadReviewList() {
       if (!this.userId) {
         this.loading = false

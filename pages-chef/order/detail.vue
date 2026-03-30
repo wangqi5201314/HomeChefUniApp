@@ -32,7 +32,7 @@
         <view class="row"><text class="label">口味偏好</text><text class="value">{{ orderDetail.tastePreference || '-' }}</text></view>
         <view class="row"><text class="label">忌口信息</text><text class="value">{{ orderDetail.tabooFood || '-' }}</text></view>
         <view class="row"><text class="label">特殊要求</text><text class="value">{{ orderDetail.specialRequirement || '-' }}</text></view>
-        <view class="row"><text class="label">食材模式</text><text class="value">{{ orderDetail.ingredientMode || '-' }}</text></view>
+        <view class="row"><text class="label">食材模式</text><text class="value">{{ getIngredientModeText(orderDetail.ingredientMode) }}</text></view>
         <view class="row"><text class="label">食材清单</text><text class="value">{{ orderDetail.ingredientList || '-' }}</text></view>
       </view>
 
@@ -50,7 +50,7 @@
         <text class="section-title">费用信息</text>
         <view class="row"><text class="label">订单金额</text><text class="value">￥{{ formatAmount(orderDetail.totalAmount) }}</text></view>
         <view class="row"><text class="label">实付金额</text><text class="value highlight">￥{{ formatAmount(orderDetail.payAmount) }}</text></view>
-        <view class="row"><text class="label">创建时间</text><text class="value">{{ orderDetail.createdAt || '-' }}</text></view>
+        <view class="row"><text class="label">创建时间</text><text class="value">{{ formatFullDateTime(orderDetail.createdAt) }}</text></view>
       </view>
 
       <view class="footer-actions">
@@ -89,8 +89,9 @@
         >
           完成服务
         </button>
-        <view v-if="showStatusNotice" class="status-note">
-          {{ statusNoticeText }}
+        <view v-if="showStatusNotice" class="status-panel" :class="statusPanelClass">
+          <text class="status-panel-label">{{ statusPanelLabel }}</text>
+          <text class="status-panel-text">{{ statusNoticeText }}</text>
         </view>
         <button class="back-btn" :disabled="actionLoading" @click="backToList">返回订单列表</button>
       </view>
@@ -130,8 +131,13 @@ import {
   startChefOrder
 } from '../../api/chef-order'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
-import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { formatFullDateTime, formatScheduleDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText } from '../../utils/time-slot'
+
+const INGREDIENT_MODE_TEXT_MAP = {
+  1: '用户自备食材',
+  2: '平台协同采购'
+}
 
 export default {
   name: 'ChefOrderDetailPage',
@@ -194,6 +200,36 @@ export default {
       }
 
       return ''
+    },
+    statusPanelLabel() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.WAIT_PAY) {
+        return '订单进度'
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return '当前状态'
+      }
+
+      if (status === ORDER_STATUS.REJECTED || status === ORDER_STATUS.CANCELLED || status === ORDER_STATUS.REFUNDED) {
+        return '处理结果'
+      }
+
+      return '状态提示'
+    },
+    statusPanelClass() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.WAIT_PAY) {
+        return 'status-panel--pending'
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return 'status-panel--success'
+      }
+
+      return 'status-panel--danger'
     }
   },
   onLoad(options) {
@@ -201,8 +237,18 @@ export default {
     this.fetchOrderDetail()
   },
   methods: {
+    formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
+    getIngredientModeText(value) {
+      const normalizedValue = Number(value)
+
+      if (INGREDIENT_MODE_TEXT_MAP[normalizedValue]) {
+        return INGREDIENT_MODE_TEXT_MAP[normalizedValue]
+      }
+
+      return value || '-'
+    },
     async fetchOrderDetail() {
       if (!this.orderId) {
         uni.showToast({
@@ -485,15 +531,41 @@ export default {
   flex: none;
 }
 
-.status-note {
+.status-panel {
   width: 100%;
-  padding: 22rpx 24rpx;
-  border-radius: 18rpx;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: inset 0 0 0 2rpx #e3e8e4;
-  font-size: 28rpx;
-  color: #4d5d52;
-  text-align: center;
+  padding: 24rpx 26rpx;
+  border-radius: 22rpx;
+  box-sizing: border-box;
+}
+
+.status-panel--pending {
+  background: linear-gradient(135deg, #fff8ef 0%, #fff2de 100%);
+  box-shadow: inset 0 0 0 2rpx rgba(196, 94, 49, 0.12);
+}
+
+.status-panel--success {
+  background: linear-gradient(135deg, #f4fbf6 0%, #eaf7ef 100%);
+  box-shadow: inset 0 0 0 2rpx rgba(47, 143, 85, 0.12);
+}
+
+.status-panel--danger {
+  background: linear-gradient(135deg, #fff6f6 0%, #fdeeee 100%);
+  box-shadow: inset 0 0 0 2rpx rgba(209, 74, 74, 0.12);
+}
+
+.status-panel-label {
+  display: block;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: #7a837d;
+}
+
+.status-panel-text {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #223128;
   box-sizing: border-box;
 }
 

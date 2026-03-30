@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_review = require("../../api/review.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const USER_ID_KEY = "user_id";
 const _sfc_main = {
   name: "ReviewListPage",
@@ -16,6 +17,7 @@ const _sfc_main = {
     this.loadReviewList();
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     async loadReviewList() {
       if (!this.userId) {
         this.loading = false;
@@ -65,7 +67,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.t($options.formatScore(item.skillScore)),
         f: common_vendor.t($options.formatScore(item.environmentScore)),
         g: common_vendor.t(item.isAnonymous === 1 ? "匿名评价" : "实名评价"),
-        h: common_vendor.t(item.createdAt || "-"),
+        h: common_vendor.t($options.formatFullDateTime(item.createdAt)),
         i: common_vendor.t(item.content || "未填写评价内容"),
         j: $options.parseImageUrls(item.imageUrls).length
       }, $options.parseImageUrls(item.imageUrls).length ? {
@@ -80,7 +82,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         l: item.replyContent
       }, item.replyContent ? {
         m: common_vendor.t(item.replyContent),
-        n: common_vendor.t(item.replyAt || "-")
+        n: common_vendor.t($options.formatFullDateTime(item.replyAt))
       } : {}, {
         o: item.id
       });

@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_chefOrder = require("../../api/chef-order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
 const ChefTabbar = () => "../../components/chef-tabbar.js";
 const _sfc_main = {
@@ -29,6 +30,7 @@ const _sfc_main = {
     }
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async fetchOrderList(showLoading = true) {
       if (showLoading) {
@@ -107,7 +109,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         h: common_vendor.t(item.contactName || "-"),
         i: common_vendor.t(item.contactPhone || "-"),
         j: common_vendor.t(item.fullAddress || "-"),
-        k: common_vendor.t(item.createdAt || "-"),
+        k: common_vendor.t($options.formatFullDateTime(item.createdAt)),
         l: item.id,
         m: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
       };

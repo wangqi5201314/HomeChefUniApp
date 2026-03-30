@@ -59,7 +59,7 @@
           <text class="contact-line">联系人：{{ item.contactName || '-' }}</text>
           <text class="contact-line">联系电话：{{ item.contactPhone || '-' }}</text>
           <text class="address">{{ item.fullAddress || '-' }}</text>
-          <text class="contact-line">创建时间：{{ item.createdAt || '-' }}</text>
+          <text class="contact-line">创建时间：{{ formatFullDateTime(item.createdAt) }}</text>
         </view>
       </view>
     </view>
@@ -72,6 +72,7 @@
 import ChefTabbar from '../../components/chef-tabbar.vue'
 import { getChefOrderList } from '../../api/chef-order'
 import { CHEF_ORDER_STATUS_TABS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
+import { formatFullDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText } from '../../utils/time-slot'
 
 export default {
@@ -99,6 +100,7 @@ export default {
     }
   },
   methods: {
+    formatFullDateTime,
     getTimeSlotText,
     async fetchOrderList(showLoading = true) {
       if (showLoading) {

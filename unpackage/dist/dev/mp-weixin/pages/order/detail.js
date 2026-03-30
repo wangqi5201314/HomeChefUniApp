@@ -5,6 +5,10 @@ const api_pay = require("../../api/pay.js");
 const utils_orderStatus = require("../../utils/order-status.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
+const INGREDIENT_MODE_TEXT_MAP = {
+  1: "用户自备食材",
+  2: "平台协同采购"
+};
 const _sfc_main = {
   name: "OrderDetailPage",
   data() {
@@ -84,8 +88,16 @@ const _sfc_main = {
     }
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
+    getIngredientModeText(value) {
+      const normalizedValue = Number(value);
+      if (INGREDIENT_MODE_TEXT_MAP[normalizedValue]) {
+        return INGREDIENT_MODE_TEXT_MAP[normalizedValue];
+      }
+      return value || "-";
+    },
     async loadOrderDetail() {
       this.loading = true;
       try {
@@ -200,90 +212,88 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     c: common_vendor.t($data.orderDetail.orderNo || "-"),
     d: common_vendor.t($options.statusLabel),
     e: common_vendor.n($options.statusClass),
-    f: common_vendor.t($data.orderDetail.createdAt || "-"),
+    f: common_vendor.t($options.formatFullDateTime($data.orderDetail.createdAt)),
     g: common_vendor.t($data.orderDetail.serviceDate || "-"),
     h: common_vendor.t($options.getTimeSlotText($data.orderDetail.timeSlot)),
     i: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceStartTime)),
     j: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceEndTime)),
-    k: common_vendor.t($data.orderDetail.chefId || "-"),
-    l: common_vendor.t($data.orderDetail.addressId || "-"),
-    m: common_vendor.t($data.orderDetail.peopleCount || "-"),
-    n: common_vendor.t($data.orderDetail.tastePreference || "-"),
-    o: common_vendor.t($data.orderDetail.tabooFood || "-"),
-    p: common_vendor.t($data.orderDetail.specialRequirement || "-"),
-    q: common_vendor.t($data.orderDetail.ingredientMode || "-"),
-    r: common_vendor.t($data.orderDetail.ingredientList || "-"),
-    s: common_vendor.t($data.orderDetail.contactName || "-"),
-    t: common_vendor.t($data.orderDetail.contactPhone || "-"),
-    v: common_vendor.t($data.orderDetail.fullAddress || "-"),
-    w: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
-    x: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
-    y: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
+    k: common_vendor.t($data.orderDetail.peopleCount || "-"),
+    l: common_vendor.t($data.orderDetail.tastePreference || "-"),
+    m: common_vendor.t($data.orderDetail.tabooFood || "-"),
+    n: common_vendor.t($data.orderDetail.specialRequirement || "-"),
+    o: common_vendor.t($options.getIngredientModeText($data.orderDetail.ingredientMode)),
+    p: common_vendor.t($data.orderDetail.ingredientList || "-"),
+    q: common_vendor.t($data.orderDetail.contactName || "-"),
+    r: common_vendor.t($data.orderDetail.contactPhone || "-"),
+    s: common_vendor.t($data.orderDetail.fullAddress || "-"),
+    t: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
+    v: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
+    w: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
   }, $data.orderDetail.cancelReason || $data.orderDetail.refundReason ? common_vendor.e({
-    z: $data.orderDetail.cancelReason
+    x: $data.orderDetail.cancelReason
   }, $data.orderDetail.cancelReason ? {
-    A: common_vendor.t($data.orderDetail.cancelReason)
+    y: common_vendor.t($data.orderDetail.cancelReason)
   } : {}, {
-    B: $data.orderDetail.refundReason
+    z: $data.orderDetail.refundReason
   }, $data.orderDetail.refundReason ? {
-    C: common_vendor.t($data.orderDetail.refundReason)
+    A: common_vendor.t($data.orderDetail.refundReason)
   } : {}) : {}), {
     b: !$data.orderDetail.id,
-    D: $options.showActionBar
+    B: $options.showActionBar
   }, $options.showActionBar ? common_vendor.e({
-    E: $options.showCancelButton
+    C: $options.showCancelButton
   }, $options.showCancelButton ? {
-    F: $data.cancelSubmitting,
-    G: $data.cancelSubmitting || $data.paying || $data.refundSubmitting,
-    H: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
+    D: $data.cancelSubmitting,
+    E: $data.cancelSubmitting || $data.paying || $data.refundSubmitting,
+    F: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
   } : {}, {
-    I: $options.showPayButton
+    G: $options.showPayButton
   }, $options.showPayButton ? {
-    J: $data.paying,
-    K: $data.paying || $data.cancelSubmitting || $data.refundSubmitting,
-    L: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
+    H: $data.paying,
+    I: $data.paying || $data.cancelSubmitting || $data.refundSubmitting,
+    J: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
   } : {}, {
-    M: $options.showRefundButton
+    K: $options.showRefundButton
   }, $options.showRefundButton ? {
-    N: $data.refundSubmitting,
-    O: $data.refundSubmitting || $data.paying || $data.cancelSubmitting,
-    P: common_vendor.o((...args) => $options.openRefundPopup && $options.openRefundPopup(...args))
+    L: $data.refundSubmitting,
+    M: $data.refundSubmitting || $data.paying || $data.cancelSubmitting,
+    N: common_vendor.o((...args) => $options.openRefundPopup && $options.openRefundPopup(...args))
   } : {}, {
-    Q: $options.showReviewButton
+    O: $options.showReviewButton
   }, $options.showReviewButton ? {
-    R: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
+    P: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
   } : {}, {
-    S: $options.showStatusNotice
+    Q: $options.showStatusNotice
   }, $options.showStatusNotice ? {
-    T: common_vendor.t($options.statusNoticeText)
+    R: common_vendor.t($options.statusNoticeText)
   } : {}, {
-    U: $options.showBackHomeButton
+    S: $options.showBackHomeButton
   }, $options.showBackHomeButton ? {
-    V: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
+    T: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
   } : {}) : {}, {
-    W: $data.showCancelModal
+    U: $data.showCancelModal
   }, $data.showCancelModal ? {
-    X: $data.cancelReason,
-    Y: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
-    Z: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
-    aa: $data.cancelSubmitting,
-    ab: $data.cancelSubmitting,
-    ac: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
-    ad: common_vendor.o(() => {
+    V: $data.cancelReason,
+    W: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
+    X: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
+    Y: $data.cancelSubmitting,
+    Z: $data.cancelSubmitting,
+    aa: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
+    ab: common_vendor.o(() => {
     }),
-    ae: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+    ac: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
   } : {}, {
-    af: $data.showRefundModal
+    ad: $data.showRefundModal
   }, $data.showRefundModal ? {
-    ag: $data.refundReason,
-    ah: common_vendor.o(($event) => $data.refundReason = $event.detail.value),
-    ai: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args)),
-    aj: $data.refundSubmitting,
-    ak: $data.refundSubmitting,
-    al: common_vendor.o((...args) => $options.submitRefund && $options.submitRefund(...args)),
-    am: common_vendor.o(() => {
+    ae: $data.refundReason,
+    af: common_vendor.o(($event) => $data.refundReason = $event.detail.value),
+    ag: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args)),
+    ah: $data.refundSubmitting,
+    ai: $data.refundSubmitting,
+    aj: common_vendor.o((...args) => $options.submitRefund && $options.submitRefund(...args)),
+    ak: common_vendor.o(() => {
     }),
-    an: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args))
+    al: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-6b23c96c"]]);

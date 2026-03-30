@@ -14,7 +14,7 @@
           <text class="order-no">订单号：{{ orderDetail.orderNo || '-' }}</text>
           <text class="status-tag" :class="statusClass">{{ statusLabel }}</text>
         </view>
-        <text class="hero-time">创建时间：{{ orderDetail.createdAt || '-' }}</text>
+        <text class="hero-time">创建时间：{{ formatFullDateTime(orderDetail.createdAt) }}</text>
       </view>
 
       <view class="section-card">
@@ -23,8 +23,6 @@
         <view class="info-line"><text class="info-label">时间段</text><text class="info-value">{{ getTimeSlotText(orderDetail.timeSlot) }}</text></view>
         <view class="info-line"><text class="info-label">开始时间</text><text class="info-value">{{ formatScheduleDateTime(orderDetail.serviceStartTime) }}</text></view>
         <view class="info-line"><text class="info-label">结束时间</text><text class="info-value">{{ formatScheduleDateTime(orderDetail.serviceEndTime) }}</text></view>
-        <view class="info-line"><text class="info-label">厨师 ID</text><text class="info-value">{{ orderDetail.chefId || '-' }}</text></view>
-        <view class="info-line"><text class="info-label">地址 ID</text><text class="info-value">{{ orderDetail.addressId || '-' }}</text></view>
       </view>
 
       <view class="section-card">
@@ -33,7 +31,7 @@
         <view class="info-line"><text class="info-label">口味偏好</text><text class="info-value">{{ orderDetail.tastePreference || '-' }}</text></view>
         <view class="info-line"><text class="info-label">忌口食物</text><text class="info-value">{{ orderDetail.tabooFood || '-' }}</text></view>
         <view class="block-line"><text class="info-label">特殊要求</text><text class="block-value">{{ orderDetail.specialRequirement || '-' }}</text></view>
-        <view class="info-line"><text class="info-label">食材模式</text><text class="info-value">{{ orderDetail.ingredientMode || '-' }}</text></view>
+        <view class="info-line"><text class="info-label">食材模式</text><text class="info-value">{{ getIngredientModeText(orderDetail.ingredientMode) }}</text></view>
         <view class="block-line"><text class="info-label">食材清单</text><text class="block-value">{{ orderDetail.ingredientList || '-' }}</text></view>
       </view>
 
@@ -121,8 +119,13 @@
 import { cancelOrder, getOrderDetail } from '../../api/order'
 import { createPayment, mockPaymentSuccess, refundPayment } from '../../api/pay'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
-import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { formatFullDateTime, formatScheduleDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText } from '../../utils/time-slot'
+
+const INGREDIENT_MODE_TEXT_MAP = {
+  1: '用户自备食材',
+  2: '平台协同采购'
+}
 
 export default {
   name: 'OrderDetailPage',
@@ -207,8 +210,18 @@ export default {
     }
   },
   methods: {
+    formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
+    getIngredientModeText(value) {
+      const normalizedValue = Number(value)
+
+      if (INGREDIENT_MODE_TEXT_MAP[normalizedValue]) {
+        return INGREDIENT_MODE_TEXT_MAP[normalizedValue]
+      }
+
+      return value || '-'
+    },
     async loadOrderDetail() {
       this.loading = true
       try {

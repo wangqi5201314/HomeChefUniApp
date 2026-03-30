@@ -4,6 +4,10 @@ const api_chefOrder = require("../../api/chef-order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
+const INGREDIENT_MODE_TEXT_MAP = {
+  1: "用户自备食材",
+  2: "平台协同采购"
+};
 const _sfc_main = {
   name: "ChefOrderDetailPage",
   data() {
@@ -55,6 +59,29 @@ const _sfc_main = {
         return "已退款";
       }
       return "";
+    },
+    statusPanelLabel() {
+      const status = this.orderDetail.orderStatus;
+      if (status === utils_orderStatus.ORDER_STATUS.WAIT_PAY) {
+        return "订单进度";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return "当前状态";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REJECTED || status === utils_orderStatus.ORDER_STATUS.CANCELLED || status === utils_orderStatus.ORDER_STATUS.REFUNDED) {
+        return "处理结果";
+      }
+      return "状态提示";
+    },
+    statusPanelClass() {
+      const status = this.orderDetail.orderStatus;
+      if (status === utils_orderStatus.ORDER_STATUS.WAIT_PAY) {
+        return "status-panel--pending";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return "status-panel--success";
+      }
+      return "status-panel--danger";
     }
   },
   onLoad(options) {
@@ -62,8 +89,16 @@ const _sfc_main = {
     this.fetchOrderDetail();
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
+    getIngredientModeText(value) {
+      const normalizedValue = Number(value);
+      if (INGREDIENT_MODE_TEXT_MAP[normalizedValue]) {
+        return INGREDIENT_MODE_TEXT_MAP[normalizedValue];
+      }
+      return value || "-";
+    },
     async fetchOrderDetail() {
       if (!this.orderId) {
         common_vendor.index.showToast({
@@ -184,14 +219,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     l: common_vendor.t($data.orderDetail.tastePreference || "-"),
     m: common_vendor.t($data.orderDetail.tabooFood || "-"),
     n: common_vendor.t($data.orderDetail.specialRequirement || "-"),
-    o: common_vendor.t($data.orderDetail.ingredientMode || "-"),
+    o: common_vendor.t($options.getIngredientModeText($data.orderDetail.ingredientMode)),
     p: common_vendor.t($data.orderDetail.ingredientList || "-"),
     q: common_vendor.t($data.orderDetail.contactName || "-"),
     r: common_vendor.t($data.orderDetail.contactPhone || "-"),
     s: common_vendor.t($data.orderDetail.fullAddress || "-"),
     t: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
     v: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
-    w: common_vendor.t($data.orderDetail.createdAt || "-"),
+    w: common_vendor.t($options.formatFullDateTime($data.orderDetail.createdAt)),
     x: $options.showAcceptButton
   }, $options.showAcceptButton ? {
     y: $data.actionLoading,
@@ -217,24 +252,26 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     M: $options.showStatusNotice
   }, $options.showStatusNotice ? {
-    N: common_vendor.t($options.statusNoticeText)
+    N: common_vendor.t($options.statusPanelLabel),
+    O: common_vendor.t($options.statusNoticeText),
+    P: common_vendor.n($options.statusPanelClass)
   } : {}, {
-    O: $data.actionLoading,
-    P: common_vendor.o((...args) => $options.backToList && $options.backToList(...args))
+    Q: $data.actionLoading,
+    R: common_vendor.o((...args) => $options.backToList && $options.backToList(...args))
   }), {
     b: !$data.orderDetail.id,
-    Q: $data.showRejectPopup
+    S: $data.showRejectPopup
   }, $data.showRejectPopup ? {
-    R: $data.rejectReason,
-    S: common_vendor.o(($event) => $data.rejectReason = $event.detail.value),
-    T: $data.actionLoading,
-    U: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args)),
-    V: $data.actionLoading && $data.pendingAction === "reject",
-    W: $data.actionLoading,
-    X: common_vendor.o((...args) => $options.handleReject && $options.handleReject(...args)),
-    Y: common_vendor.o(() => {
+    T: $data.rejectReason,
+    U: common_vendor.o(($event) => $data.rejectReason = $event.detail.value),
+    V: $data.actionLoading,
+    W: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args)),
+    X: $data.actionLoading && $data.pendingAction === "reject",
+    Y: $data.actionLoading,
+    Z: common_vendor.o((...args) => $options.handleReject && $options.handleReject(...args)),
+    aa: common_vendor.o(() => {
     }),
-    Z: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args))
+    ab: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-f5138f84"]]);

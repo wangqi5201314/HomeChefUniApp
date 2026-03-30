@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_order = require("../../api/order.js");
 const utils_orderStatus = require("../../utils/order-status.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
 const USER_ID_KEY = "user_id";
 const _sfc_main = {
@@ -26,6 +27,7 @@ const _sfc_main = {
     });
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async fetchOrderList(options = {}) {
       const { fromPullDownRefresh = false } = options;
@@ -122,7 +124,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         g: common_vendor.t(item.contactName || "-"),
         h: common_vendor.t(item.contactPhone || "-"),
         i: common_vendor.t(item.fullAddress || "-"),
-        j: common_vendor.t(item.createdAt || "-"),
+        j: common_vendor.t($options.formatFullDateTime(item.createdAt)),
         k: item.orderStatus === $data.ORDER_STATUS.COMPLETED
       }, item.orderStatus === $data.ORDER_STATUS.COMPLETED ? common_vendor.e({
         l: $options.isReviewed(item) === false

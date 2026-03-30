@@ -62,7 +62,7 @@
         </view>
         <view class="info-line">
           <text class="info-label">创建时间</text>
-          <text class="info-value">{{ item.createdAt || '-' }}</text>
+          <text class="info-value">{{ formatFullDateTime(item.createdAt) }}</text>
         </view>
 
         <view v-if="item.orderStatus === ORDER_STATUS.COMPLETED" class="review-row" @click.stop>
@@ -83,6 +83,7 @@
 <script>
 import { getOrderList } from '../../api/order'
 import { ORDER_STATUS, USER_ORDER_STATUS_TABS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
+import { formatFullDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText } from '../../utils/time-slot'
 
 const USER_ID_KEY = 'user_id'
@@ -109,6 +110,7 @@ export default {
     })
   },
   methods: {
+    formatFullDateTime,
     getTimeSlotText,
     async fetchOrderList(options = {}) {
       const { fromPullDownRefresh = false } = options

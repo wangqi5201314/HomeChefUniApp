@@ -24,7 +24,7 @@
 
         <view class="meta-row">
           <text class="meta-text">{{ item.isAnonymous === 1 ? '匿名评价' : '实名评价' }}</text>
-          <text class="meta-text">评价时间：{{ item.createdAt || '-' }}</text>
+          <text class="meta-text">评价时间：{{ formatFullDateTime(item.createdAt) }}</text>
         </view>
 
         <view class="content-block">
@@ -49,7 +49,7 @@
         <view v-if="item.replyContent" class="reply-card">
           <text class="reply-title">我的回复</text>
           <text class="reply-content">{{ item.replyContent }}</text>
-          <text class="reply-time">回复时间：{{ item.replyAt || '-' }}</text>
+          <text class="reply-time">回复时间：{{ formatFullDateTime(item.replyAt) }}</text>
         </view>
 
         <view v-else class="reply-action">
@@ -92,6 +92,7 @@
 <script>
 import { getChefReviewList, replyReview } from '../../api/review'
 import { getChefId, getChefInfo } from '../../utils/auth'
+import { formatFullDateTime } from '../../utils/schedule-time'
 
 export default {
   name: 'ChefReviewListPage',
@@ -113,6 +114,7 @@ export default {
     this.loadReviewList()
   },
   methods: {
+    formatFullDateTime,
     async loadReviewList() {
       if (!this.chefId) {
         this.reviewList = []

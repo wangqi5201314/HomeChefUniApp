@@ -74,6 +74,7 @@ const _sfc_main = {
     this.loadPageData();
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
     async loadPageData() {
@@ -220,7 +221,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : `用户${item.userId}`),
         b: common_vendor.t($options.formatPlain(item.overallScore)),
         c: common_vendor.t(item.content || "用户未填写评价内容"),
-        d: common_vendor.t(item.createdAt || "-"),
+        d: common_vendor.t($options.formatFullDateTime(item.createdAt)),
         e: $options.parseImageUrls(item.imageUrls).length
       }, $options.parseImageUrls(item.imageUrls).length ? {
         f: common_vendor.f($options.parseImageUrls(item.imageUrls), (url, index, i1) => {

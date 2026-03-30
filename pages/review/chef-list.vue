@@ -23,7 +23,7 @@
         </view>
 
         <text class="review-content">{{ item.content || '用户未填写评价内容' }}</text>
-        <text class="review-time">{{ item.createdAt || '-' }}</text>
+        <text class="review-time">{{ formatFullDateTime(item.createdAt) }}</text>
 
         <view v-if="parseImageUrls(item.imageUrls).length" class="image-list">
           <image
@@ -38,7 +38,7 @@
 
         <view v-if="item.replyContent" class="reply-box">
           <text class="reply-text">厨师回复：{{ item.replyContent }}</text>
-          <text v-if="item.replyAt" class="reply-time">回复时间：{{ item.replyAt }}</text>
+          <text v-if="item.replyAt" class="reply-time">回复时间：{{ formatFullDateTime(item.replyAt) }}</text>
         </view>
       </view>
     </view>
@@ -47,6 +47,7 @@
 
 <script>
 import { getChefReviewList } from '../../api/review'
+import { formatFullDateTime } from '../../utils/schedule-time'
 
 export default {
   name: 'ChefReviewListPage',
@@ -71,6 +72,7 @@ export default {
     this.loadReviewList()
   },
   methods: {
+    formatFullDateTime,
     async loadReviewList() {
       this.loading = true
 

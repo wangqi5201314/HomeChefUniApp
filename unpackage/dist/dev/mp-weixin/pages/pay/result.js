@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_pay = require("../../api/pay.js");
 const utils_payStatus = require("../../utils/pay-status.js");
 const utils_refundStatus = require("../../utils/refund-status.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const _sfc_main = {
   name: "PayResultPage",
   data() {
@@ -47,6 +48,7 @@ const _sfc_main = {
     this.loadPayStatus();
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     async loadPayStatus() {
       this.loading = true;
       try {
@@ -87,7 +89,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $options.hasRefundStatus ? {
     j: common_vendor.t($options.refundStatusText)
   } : {}, {
-    k: common_vendor.t($data.payInfo.paidAt || "-"),
+    k: common_vendor.t($options.formatFullDateTime($data.payInfo.paidAt)),
     l: common_vendor.o((...args) => $options.goOrderDetail && $options.goOrderDetail(...args)),
     m: common_vendor.o((...args) => $options.goOrderList && $options.goOrderList(...args))
   }));

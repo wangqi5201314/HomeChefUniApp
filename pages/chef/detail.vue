@@ -79,7 +79,7 @@
               <text class="review-score">评分 {{ formatPlain(item.overallScore) }}</text>
             </view>
             <text class="review-content">{{ item.content || '用户未填写评价内容' }}</text>
-            <text class="review-time">{{ item.createdAt || '-' }}</text>
+            <text class="review-time">{{ formatFullDateTime(item.createdAt) }}</text>
             <view v-if="parseImageUrls(item.imageUrls).length" class="review-image-list">
               <image
                 v-for="(url, index) in parseImageUrls(item.imageUrls)"
@@ -115,7 +115,7 @@ import { getChefReviewList } from '../../api/review'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { getChefCertStatusText } from '../../utils/chef-cert-status'
 import { getChefStatusText } from '../../utils/chef-status'
-import { formatScheduleDateTime } from '../../utils/schedule-time'
+import { formatFullDateTime, formatScheduleDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText, normalizeTimeSlot } from '../../utils/time-slot'
 
 export default {
@@ -185,6 +185,7 @@ export default {
     this.loadPageData()
   },
   methods: {
+    formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
     async loadPageData() {

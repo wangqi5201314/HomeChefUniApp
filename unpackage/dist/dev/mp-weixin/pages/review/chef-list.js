@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_review = require("../../api/review.js");
+const utils_scheduleTime = require("../../utils/schedule-time.js");
 const _sfc_main = {
   name: "ChefReviewListPage",
   data() {
@@ -22,6 +23,7 @@ const _sfc_main = {
     this.loadReviewList();
   },
   methods: {
+    formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     async loadReviewList() {
       this.loading = true;
       try {
@@ -66,7 +68,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.t($options.formatPlain(item.skillScore)),
         f: common_vendor.t($options.formatPlain(item.environmentScore)),
         g: common_vendor.t(item.content || "用户未填写评价内容"),
-        h: common_vendor.t(item.createdAt || "-"),
+        h: common_vendor.t($options.formatFullDateTime(item.createdAt)),
         i: $options.parseImageUrls(item.imageUrls).length
       }, $options.parseImageUrls(item.imageUrls).length ? {
         j: common_vendor.f($options.parseImageUrls(item.imageUrls), (url, index, i1) => {
@@ -82,7 +84,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         l: common_vendor.t(item.replyContent),
         m: item.replyAt
       }, item.replyAt ? {
-        n: common_vendor.t(item.replyAt)
+        n: common_vendor.t($options.formatFullDateTime(item.replyAt))
       } : {}) : {}, {
         o: item.id
       });

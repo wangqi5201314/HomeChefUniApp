@@ -33,7 +33,7 @@
         </view>
         <view class="info-line">
           <text class="info-label">支付时间</text>
-          <text class="info-value">{{ payInfo.paidAt || '-' }}</text>
+          <text class="info-value">{{ formatFullDateTime(payInfo.paidAt) }}</text>
         </view>
       </view>
 
@@ -49,6 +49,7 @@
 import { getPaymentStatus } from '../../api/pay'
 import { getPayStatusText } from '../../utils/pay-status'
 import { getRefundStatusText } from '../../utils/refund-status'
+import { formatFullDateTime } from '../../utils/schedule-time'
 
 export default {
   name: 'PayResultPage',
@@ -94,6 +95,7 @@ export default {
     this.loadPayStatus()
   },
   methods: {
+    formatFullDateTime,
     async loadPayStatus() {
       this.loading = true
       try {
