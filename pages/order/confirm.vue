@@ -21,6 +21,24 @@
         <text v-else class="empty-text">请先选择服务地址</text>
       </view>
 
+      <view class="section-card range-card">
+        <view class="section-head">
+          <text class="section-title">服务范围提示</text>
+        </view>
+        <view class="info-line">
+          <text class="info-label">厨师服务半径</text>
+          <text class="info-value">{{ serviceRadiusText }}</text>
+        </view>
+        <view class="range-block">
+          <text class="range-block-label">当前地址</text>
+          <text class="range-block-value">{{ fullAddress || '暂未选择服务地址' }}</text>
+        </view>
+        <view class="range-tip-card">
+          <text class="range-tip-main">实际是否可预约以后端服务范围校验为准</text>
+          <text class="range-tip-sub">提交订单后，系统将根据厨师服务基准位置和当前地址进行服务范围校验。</text>
+        </view>
+      </view>
+
       <view class="section-card">
         <text class="section-title">厨师信息</text>
         <view class="chef-box">
@@ -234,11 +252,21 @@ export default {
         address.province,
         address.city,
         address.district,
+        address.town,
         address.detailAddress,
         address.doorplate
       ]
         .filter(Boolean)
         .join('')
+    },
+    serviceRadiusText() {
+      const radius = this.chef.serviceRadiusKm
+
+      if (radius === 0 || radius) {
+        return `服务半径 ${radius} km`
+      }
+
+      return '暂未设置'
     },
     chefServiceModeValue() {
       return Number(this.chef.serviceMode)
@@ -426,6 +454,22 @@ export default {
         return false
       }
 
+      if (!this.selectedAddress.contactName) {
+        uni.showToast({
+          title: '联系人不能为空',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (!this.selectedAddress.contactPhone) {
+        uni.showToast({
+          title: '联系电话不能为空',
+          icon: 'none'
+        })
+        return false
+      }
+
       if (Number(this.form.ingredientMode) !== 1 && Number(this.form.ingredientMode) !== 2) {
         uni.showToast({
           title: '请选择正确的食材模式',
@@ -461,6 +505,25 @@ export default {
         payAmount: this.payAmount
       }
     },
+    getOrderErrorMessage(error) {
+      if (!error) {
+        return '下单失败，请稍后重试'
+      }
+
+      if (typeof error === 'string') {
+        return error
+      }
+
+      if (error.message) {
+        return String(error.message)
+      }
+
+      if (error.data && error.data.message) {
+        return String(error.data.message)
+      }
+
+      return '下单失败，请稍后重试'
+    },
     async submitOrder() {
       if (this.submitting || !this.validateForm()) {
         return
@@ -485,6 +548,21 @@ export default {
           }
         }, 300)
       } catch (error) {
+        const message = this.getOrderErrorMessage(error)
+
+        if (message.indexOf('服务范围') >= 0) {
+          uni.showModal({
+            title: '下单失败',
+            content: message,
+            showCancel: false
+          })
+          return
+        }
+
+        uni.showToast({
+          title: message,
+          icon: 'none'
+        })
       } finally {
         this.submitting = false
       }
@@ -528,6 +606,10 @@ export default {
 
 .address-card {
   position: relative;
+}
+
+.range-card {
+  background: linear-gradient(180deg, #fffaf5 0%, #ffffff 100%);
 }
 
 .section-head,
@@ -576,6 +658,50 @@ export default {
   font-size: 28rpx;
   line-height: 1.6;
   color: #4f5662;
+}
+
+.range-block {
+  margin-top: 8rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 18rpx;
+  background: #f8faf9;
+}
+
+.range-block-label {
+  display: block;
+  font-size: 24rpx;
+  color: #8a8f99;
+}
+
+.range-block-value {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #4f5662;
+  word-break: break-all;
+}
+
+.range-tip-card {
+  margin-top: 18rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 18rpx;
+  background: rgba(217, 108, 58, 0.08);
+}
+
+.range-tip-main {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #b45e37;
+}
+
+.range-tip-sub {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #8a6a5d;
 }
 
 .chef-box {

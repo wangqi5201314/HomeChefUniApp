@@ -60,9 +60,17 @@ const _sfc_main = {
         address.province,
         address.city,
         address.district,
+        address.town,
         address.detailAddress,
         address.doorplate
       ].filter(Boolean).join("");
+    },
+    serviceRadiusText() {
+      const radius = this.chef.serviceRadiusKm;
+      if (radius === 0 || radius) {
+        return `服务半径 ${radius} km`;
+      }
+      return "暂未设置";
     },
     chefServiceModeValue() {
       return Number(this.chef.serviceMode);
@@ -231,6 +239,20 @@ const _sfc_main = {
         });
         return false;
       }
+      if (!this.selectedAddress.contactName) {
+        common_vendor.index.showToast({
+          title: "联系人不能为空",
+          icon: "none"
+        });
+        return false;
+      }
+      if (!this.selectedAddress.contactPhone) {
+        common_vendor.index.showToast({
+          title: "联系电话不能为空",
+          icon: "none"
+        });
+        return false;
+      }
       if (Number(this.form.ingredientMode) !== 1 && Number(this.form.ingredientMode) !== 2) {
         common_vendor.index.showToast({
           title: "请选择正确的食材模式",
@@ -265,6 +287,21 @@ const _sfc_main = {
         payAmount: this.payAmount
       };
     },
+    getOrderErrorMessage(error) {
+      if (!error) {
+        return "下单失败，请稍后重试";
+      }
+      if (typeof error === "string") {
+        return error;
+      }
+      if (error.message) {
+        return String(error.message);
+      }
+      if (error.data && error.data.message) {
+        return String(error.data.message);
+      }
+      return "下单失败，请稍后重试";
+    },
     async submitOrder() {
       if (this.submitting || !this.validateForm()) {
         return;
@@ -285,6 +322,19 @@ const _sfc_main = {
           }
         }, 300);
       } catch (error) {
+        const message = this.getOrderErrorMessage(error);
+        if (message.indexOf("服务范围") >= 0) {
+          common_vendor.index.showModal({
+            title: "下单失败",
+            content: message,
+            showCancel: false
+          });
+          return;
+        }
+        common_vendor.index.showToast({
+          title: message,
+          icon: "none"
+        });
       } finally {
         this.submitting = false;
       }
@@ -302,51 +352,53 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.t($options.fullAddress || "暂无地址信息")
   } : {}, {
     f: common_vendor.o((...args) => $options.goSelectAddress && $options.goSelectAddress(...args)),
-    g: $data.chef.avatar
+    g: common_vendor.t($options.serviceRadiusText),
+    h: common_vendor.t($options.fullAddress || "暂未选择服务地址"),
+    i: $data.chef.avatar
   }, $data.chef.avatar ? {
-    h: $data.chef.avatar
+    j: $data.chef.avatar
   } : {
-    i: common_vendor.t($options.getNameInitial($data.chef.name))
+    k: common_vendor.t($options.getNameInitial($data.chef.name))
   }, {
-    j: common_vendor.t($data.chef.name || "未命名厨师"),
-    k: common_vendor.t($data.chef.specialtyCuisine || "-"),
-    l: common_vendor.t($options.chefServiceModeText),
-    m: common_vendor.t($data.orderInfo.serviceDate || "-"),
-    n: common_vendor.t($options.timeSlotText),
-    o: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceStartTime)),
-    p: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceEndTime)),
-    q: $data.form.peopleCount,
-    r: common_vendor.o(($event) => $data.form.peopleCount = $event.detail.value),
-    s: $data.form.tastePreference,
-    t: common_vendor.o(($event) => $data.form.tastePreference = $event.detail.value),
-    v: $data.form.tabooFood,
-    w: common_vendor.o(($event) => $data.form.tabooFood = $event.detail.value),
-    x: $data.form.specialRequirement,
-    y: common_vendor.o(($event) => $data.form.specialRequirement = $event.detail.value),
-    z: $options.canSelectIngredientMode
+    l: common_vendor.t($data.chef.name || "未命名厨师"),
+    m: common_vendor.t($data.chef.specialtyCuisine || "-"),
+    n: common_vendor.t($options.chefServiceModeText),
+    o: common_vendor.t($data.orderInfo.serviceDate || "-"),
+    p: common_vendor.t($options.timeSlotText),
+    q: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceStartTime)),
+    r: common_vendor.t($options.formatScheduleDateTime($data.orderInfo.serviceEndTime)),
+    s: $data.form.peopleCount,
+    t: common_vendor.o(($event) => $data.form.peopleCount = $event.detail.value),
+    v: $data.form.tastePreference,
+    w: common_vendor.o(($event) => $data.form.tastePreference = $event.detail.value),
+    x: $data.form.tabooFood,
+    y: common_vendor.o(($event) => $data.form.tabooFood = $event.detail.value),
+    z: $data.form.specialRequirement,
+    A: common_vendor.o(($event) => $data.form.specialRequirement = $event.detail.value),
+    B: $options.canSelectIngredientMode
   }, $options.canSelectIngredientMode ? {
-    A: common_vendor.t($options.ingredientModeText),
-    B: $options.ingredientModeRange,
-    C: $options.ingredientModeIndex,
-    D: common_vendor.o((...args) => $options.handleIngredientModeChange && $options.handleIngredientModeChange(...args))
+    C: common_vendor.t($options.ingredientModeText),
+    D: $options.ingredientModeRange,
+    E: $options.ingredientModeIndex,
+    F: common_vendor.o((...args) => $options.handleIngredientModeChange && $options.handleIngredientModeChange(...args))
   } : {
-    E: common_vendor.t($options.ingredientModeText)
+    G: common_vendor.t($options.ingredientModeText)
   }, {
-    F: !$options.canSelectIngredientMode
+    H: !$options.canSelectIngredientMode
   }, !$options.canSelectIngredientMode ? {} : {}, {
-    G: $data.form.ingredientList,
-    H: common_vendor.o(($event) => $data.form.ingredientList = $event.detail.value),
-    I: common_vendor.t($data.selectedAddress.contactName || "-"),
-    J: common_vendor.t($data.selectedAddress.contactPhone || "-"),
-    K: common_vendor.t($data.totalAmount),
-    L: common_vendor.t($data.discountAmount),
-    M: common_vendor.t($data.payAmount)
+    I: $data.form.ingredientList,
+    J: common_vendor.o(($event) => $data.form.ingredientList = $event.detail.value),
+    K: common_vendor.t($data.selectedAddress.contactName || "-"),
+    L: common_vendor.t($data.selectedAddress.contactPhone || "-"),
+    M: common_vendor.t($data.totalAmount),
+    N: common_vendor.t($data.discountAmount),
+    O: common_vendor.t($data.payAmount)
   }), {
-    N: common_vendor.t($data.payAmount),
-    O: common_vendor.t($data.submitting ? "提交中..." : "提交订单"),
-    P: $data.submitting,
-    Q: $data.submitting,
-    R: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
+    P: common_vendor.t($data.payAmount),
+    Q: common_vendor.t($data.submitting ? "提交中..." : "提交订单"),
+    R: $data.submitting,
+    S: $data.submitting,
+    T: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-324e7894"]]);
