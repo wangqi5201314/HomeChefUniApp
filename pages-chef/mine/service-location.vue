@@ -1,0 +1,796 @@
+<template>
+  <view class="page">
+    <view v-if="loading && !pageReady" class="state-card">
+      <text class="state-text">服务位置加载中...</text>
+    </view>
+
+    <view v-else>
+      <view class="intro-card">
+        <text class="intro-title">服务位置</text>
+        <text class="intro-text">这里维护的是厨师服务出发地，仅用于系统内部计算服务范围和距离，不对普通用户公开。</text>
+      </view>
+
+      <view class="form-card">
+        <view class="section-head">
+          <text class="section-title">地图搜索</text>
+          <text class="section-tip">搜索地址或点击地图，自动回填服务位置</text>
+        </view>
+
+        <view class="search-bar">
+          <input
+            v-model="searchKeyword"
+            class="search-input"
+            confirm-type="search"
+            placeholder="搜索小区、街道、写字楼等地址"
+            @confirm="handleSearch"
+          />
+          <button class="search-btn" type="primary" size="mini" :loading="searching" @click="handleSearch">
+            搜索
+          </button>
+        </view>
+
+        <scroll-view v-if="searchResults.length" class="search-result-list" scroll-y>
+          <view
+            v-for="(item, index) in searchResults"
+            :key="item.id || `${item.title || 'poi'}-${index}`"
+            class="search-result-item"
+            @click="handleSelectSearchResult(item)"
+          >
+            <text class="result-title">{{ item.title || '未命名地点' }}</text>
+            <text class="result-address">{{ item.address || '暂无详细地址' }}</text>
+          </view>
+        </scroll-view>
+
+        <view class="map-wrapper">
+          <map
+            class="map"
+            :latitude="mapLatitude"
+            :longitude="mapLongitude"
+            :scale="16"
+            :markers="markers"
+            :show-location="true"
+            @tap="handleMapTap"
+          />
+        </view>
+
+        <view class="selected-location">
+          <text class="selected-label">当前选中的服务位置</text>
+          <text class="selected-text">{{ selectedLocationText }}</text>
+        </view>
+      </view>
+
+      <view class="form-card">
+        <text class="section-title">结构化地址</text>
+
+        <view class="form-item">
+          <text class="label">省份</text>
+          <picker class="picker" :range="provinceRange" :value="provinceIndex" @change="handleProvinceChange">
+            <view class="picker-value" :class="{ 'picker-placeholder': !form.province }">
+              {{ form.province || '请选择省份' }}
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">城市</text>
+          <picker class="picker" :range="cityRange" :value="cityIndex" @change="handleCityChange">
+            <view class="picker-value" :class="{ 'picker-placeholder': !form.city }">
+              {{ form.city || '请选择城市' }}
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">区县</text>
+          <picker class="picker" :range="districtRange" :value="districtIndex" @change="handleDistrictChange">
+            <view class="picker-value" :class="{ 'picker-placeholder': !form.district }">
+              {{ form.district || '请选择区县' }}
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">镇/街道</text>
+          <picker class="picker" :range="townRange" :value="townIndex" @change="handleTownChange">
+            <view class="picker-value" :class="{ 'picker-placeholder': !form.town }">
+              {{ form.town || (townOptions.length ? '请选择镇/街道' : '暂无可选镇街') }}
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">详细说明</text>
+          <textarea
+            v-model="form.detailAddress"
+            class="textarea"
+            maxlength="120"
+            placeholder="请输入更具体的位置说明，例如某路口、某楼栋、某园区入口"
+          />
+        </view>
+      </view>
+
+      <view class="bottom-bar">
+        <button class="save-btn" type="primary" :loading="saving" :disabled="saving || loading" @click="handleSubmit">
+          {{ saving ? '保存中...' : '保存服务位置' }}
+        </button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { getChefServiceLocation, saveChefServiceLocation } from '../../api/chef-service-location'
+import { loadProvinceRegion, provinceList } from '../../data/address/regions'
+import { buildLocationPayloadByGeocoder, reverseGeocoder, searchAddress } from '../../utils/tencent-map'
+
+const DEFAULT_LATITUDE = 23.12911
+const DEFAULT_LONGITUDE = 113.264385
+const MARKER_ICON = '/static/service-location-marker.png'
+
+function createDefaultForm() {
+  return {
+    province: '',
+    city: '',
+    district: '',
+    town: '',
+    detailAddress: '',
+    longitude: DEFAULT_LONGITUDE,
+    latitude: DEFAULT_LATITUDE
+  }
+}
+
+export default {
+  name: 'ChefServiceLocationPage',
+  data() {
+    return {
+      pageReady: false,
+      loading: false,
+      saving: false,
+      searching: false,
+      searchKeyword: '',
+      searchResults: [],
+      provinceOptions: provinceList,
+      currentProvinceCode: '',
+      currentProvinceRegion: null,
+      mapLatitude: DEFAULT_LATITUDE,
+      mapLongitude: DEFAULT_LONGITUDE,
+      form: createDefaultForm()
+    }
+  },
+  computed: {
+    selectedLocationText() {
+      const parts = [
+        this.form.province,
+        this.form.city,
+        this.form.district,
+        this.form.town,
+        this.form.detailAddress
+      ].filter(Boolean)
+
+      return parts.length ? parts.join('') : '暂未设置服务位置'
+    },
+    markers() {
+      if (!this.form.latitude || !this.form.longitude) {
+        return []
+      }
+
+      return [
+        {
+          id: 1,
+          latitude: Number(this.form.latitude),
+          longitude: Number(this.form.longitude),
+          width: 34,
+          height: 34,
+          iconPath: MARKER_ICON
+        }
+      ]
+    },
+    provinceRange() {
+      return this.provinceOptions.map((item) => item.name)
+    },
+    provinceIndex() {
+      const index = this.provinceOptions.findIndex((item) => item.name === this.form.province)
+      return index >= 0 ? index : 0
+    },
+    cityOptions() {
+      return this.currentProvinceRegion && Array.isArray(this.currentProvinceRegion.cities)
+        ? this.currentProvinceRegion.cities
+        : []
+    },
+    cityRange() {
+      return this.cityOptions.map((item) => item.name)
+    },
+    cityIndex() {
+      const index = this.cityOptions.findIndex((item) => item.name === this.form.city)
+      return index >= 0 ? index : 0
+    },
+    currentCity() {
+      return this.cityOptions.find((item) => item.name === this.form.city) || this.cityOptions[0] || null
+    },
+    districtOptions() {
+      if (!this.currentCity || !Array.isArray(this.currentCity.districts)) {
+        return []
+      }
+
+      const districtsWithTown = this.currentCity.districts.filter(
+        (item) => Array.isArray(item.towns) && item.towns.length > 0
+      )
+
+      return districtsWithTown.length ? districtsWithTown : this.currentCity.districts
+    },
+    districtRange() {
+      return this.districtOptions.map((item) => item.name)
+    },
+    districtIndex() {
+      const index = this.districtOptions.findIndex((item) => item.name === this.form.district)
+      return index >= 0 ? index : 0
+    },
+    currentDistrict() {
+      return this.districtOptions.find((item) => item.name === this.form.district) || this.districtOptions[0] || null
+    },
+    townOptions() {
+      return this.currentDistrict && Array.isArray(this.currentDistrict.towns)
+        ? this.currentDistrict.towns
+        : []
+    },
+    townRange() {
+      return this.townOptions
+    },
+    townIndex() {
+      const index = this.townOptions.findIndex((item) => item === this.form.town)
+      return index >= 0 ? index : 0
+    }
+  },
+  onLoad() {
+    this.initDefaultRegion()
+    this.pageReady = true
+  },
+  onShow() {
+    this.loadServiceLocation()
+  },
+  methods: {
+    getProvinceByName(name) {
+      return this.provinceOptions.find((item) => item.name === name) || null
+    },
+    loadProvinceData(provinceCode) {
+      if (!provinceCode) {
+        this.currentProvinceCode = ''
+        this.currentProvinceRegion = null
+        return
+      }
+
+      this.currentProvinceCode = String(provinceCode)
+      this.currentProvinceRegion = loadProvinceRegion(this.currentProvinceCode) || {
+        code: this.currentProvinceCode,
+        name: '',
+        cities: []
+      }
+    },
+    applyRegionValues(cityName, districtName, townName) {
+      const city = this.cityOptions.find((item) => item.name === cityName) || this.cityOptions[0] || null
+      this.form.city = city ? city.name : ''
+
+      const districtOptions = city && Array.isArray(city.districts) ? city.districts : []
+      const districtsWithTown = districtOptions.filter(
+        (item) => Array.isArray(item.towns) && item.towns.length > 0
+      )
+      const availableDistricts = districtsWithTown.length ? districtsWithTown : districtOptions
+      const district =
+        availableDistricts.find((item) => item.name === districtName) || availableDistricts[0] || null
+      this.form.district = district ? district.name : ''
+
+      const townOptions = district && Array.isArray(district.towns) ? district.towns : []
+      const exactTown = townOptions.find((item) => item === townName)
+      const fuzzyTown = townOptions.find((item) => townName && (item.includes(townName) || townName.includes(item)))
+      this.form.town = exactTown || fuzzyTown || townOptions[0] || townName || ''
+    },
+    initDefaultRegion() {
+      const firstProvince = this.provinceOptions[0]
+      if (!firstProvince) {
+        return
+      }
+
+      this.form = {
+        ...createDefaultForm(),
+        province: firstProvince.name
+      }
+      this.loadProvinceData(firstProvince.code)
+      this.applyRegionValues('', '', '')
+      this.setMapCenter(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
+    },
+    syncRegionByForm() {
+      const province = this.getProvinceByName(this.form.province) || this.provinceOptions[0] || null
+
+      if (!province) {
+        this.currentProvinceCode = ''
+        this.currentProvinceRegion = null
+        return
+      }
+
+      this.form.province = province.name
+      this.loadProvinceData(province.code)
+      this.applyRegionValues(this.form.city, this.form.district, this.form.town)
+    },
+    setMapCenter(latitude, longitude) {
+      this.mapLatitude = Number(latitude) || DEFAULT_LATITUDE
+      this.mapLongitude = Number(longitude) || DEFAULT_LONGITUDE
+      this.form.latitude = this.mapLatitude
+      this.form.longitude = this.mapLongitude
+    },
+    applyLocationPayload(locationData = {}) {
+      const province = this.getProvinceByName(locationData.province) || this.provinceOptions[0] || null
+
+      if (province) {
+        this.form.province = province.name
+        this.loadProvinceData(province.code)
+        this.applyRegionValues(locationData.city, locationData.district, locationData.town)
+      } else {
+        this.syncRegionByForm()
+      }
+
+      this.form.detailAddress = locationData.detailAddress || ''
+      this.setMapCenter(locationData.latitude, locationData.longitude)
+    },
+    handleProvinceChange(event) {
+      const index = Number(event.detail.value)
+      const province = this.provinceOptions[index]
+
+      if (!province) {
+        return
+      }
+
+      this.form.province = province.name
+      this.loadProvinceData(province.code)
+      this.applyRegionValues('', '', '')
+    },
+    handleCityChange(event) {
+      const index = Number(event.detail.value)
+      const city = this.cityOptions[index]
+
+      if (!city) {
+        return
+      }
+
+      this.applyRegionValues(city.name, '', '')
+    },
+    handleDistrictChange(event) {
+      const index = Number(event.detail.value)
+      const district = this.districtOptions[index]
+
+      if (!district) {
+        return
+      }
+
+      this.applyRegionValues(this.form.city, district.name, '')
+    },
+    handleTownChange(event) {
+      const index = Number(event.detail.value)
+      const town = this.townOptions[index]
+
+      if (!town) {
+        return
+      }
+
+      this.form.town = town
+    },
+    async loadServiceLocation() {
+      this.loading = true
+
+      try {
+        const data = await getChefServiceLocation()
+
+        if (!data || !data.id) {
+          this.initDefaultRegion()
+          return
+        }
+
+        this.form = {
+          province: data.province || '',
+          city: data.city || '',
+          district: data.district || '',
+          town: data.town || '',
+          detailAddress: data.detailAddress || '',
+          longitude: data.longitude === 0 || data.longitude ? Number(data.longitude) : DEFAULT_LONGITUDE,
+          latitude: data.latitude === 0 || data.latitude ? Number(data.latitude) : DEFAULT_LATITUDE
+        }
+        this.setMapCenter(this.form.latitude, this.form.longitude)
+        this.syncRegionByForm()
+      } catch (error) {
+        this.initDefaultRegion()
+      } finally {
+        this.loading = false
+      }
+    },
+    async handleSearch() {
+      const keyword = this.searchKeyword ? String(this.searchKeyword).trim() : ''
+
+      if (!keyword) {
+        uni.showToast({
+          title: '请输入搜索关键词',
+          icon: 'none'
+        })
+        return
+      }
+
+      this.searching = true
+      try {
+        const data = await searchAddress(keyword, {
+          pageSize: 10,
+          region: this.form.city || this.form.province || '',
+          location: {
+            latitude: this.form.latitude,
+            longitude: this.form.longitude
+          }
+        })
+        this.searchResults = Array.isArray(data) ? data : []
+
+        if (!this.searchResults.length) {
+          uni.showToast({
+            title: '未搜索到相关地点',
+            icon: 'none'
+          })
+        }
+      } catch (error) {
+        this.searchResults = []
+      } finally {
+        this.searching = false
+      }
+    },
+    async fillLocationByCoordinate(latitude, longitude, options = {}) {
+      uni.showLoading({
+        title: '定位中...',
+        mask: true
+      })
+
+      try {
+        const geocoderResult = await reverseGeocoder(latitude, longitude)
+        const payload = buildLocationPayloadByGeocoder(geocoderResult, {
+          detailAddress: options.detailAddress,
+          latitude,
+          longitude
+        })
+        this.applyLocationPayload(payload)
+      } catch (error) {
+        if (options.fallback) {
+          this.applyLocationPayload({
+            province: options.fallback.province || '',
+            city: options.fallback.city || '',
+            district: options.fallback.district || '',
+            town: options.fallback.town || '',
+            detailAddress: options.detailAddress || options.fallback.detailAddress || '',
+            latitude,
+            longitude
+          })
+        } else {
+          this.setMapCenter(latitude, longitude)
+        }
+      } finally {
+        uni.hideLoading()
+      }
+    },
+    async handleSelectSearchResult(item) {
+      if (!item) {
+        return
+      }
+
+      this.searchKeyword = item.title || this.searchKeyword
+      this.searchResults = []
+      await this.fillLocationByCoordinate(item.latitude, item.longitude, {
+        detailAddress: item.title || item.address || '',
+        fallback: {
+          province: item.province || '',
+          city: item.city || '',
+          district: item.district || '',
+          town: '',
+          detailAddress: item.title || item.address || ''
+        }
+      })
+    },
+    async handleMapTap(event) {
+      const detail = event && event.detail ? event.detail : {}
+      const latitude = Number(detail.latitude)
+      const longitude = Number(detail.longitude)
+
+      if (!latitude || !longitude) {
+        return
+      }
+
+      await this.fillLocationByCoordinate(latitude, longitude)
+    },
+    validateForm() {
+      if (!this.form.province || !this.form.city || !this.form.district) {
+        uni.showToast({
+          title: '请先选择完整的省市区',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (this.townOptions.length > 0 && !this.form.town) {
+        uni.showToast({
+          title: '请选择镇或街道',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (!this.form.detailAddress.trim()) {
+        uni.showToast({
+          title: '请输入详细说明',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (!this.form.latitude || !this.form.longitude) {
+        uni.showToast({
+          title: '请先通过地图选择服务位置',
+          icon: 'none'
+        })
+        return false
+      }
+
+      return true
+    },
+    buildSubmitPayload() {
+      return {
+        province: this.form.province,
+        city: this.form.city,
+        district: this.form.district,
+        town: this.form.town || '',
+        detailAddress: this.form.detailAddress.trim(),
+        longitude: Number(this.form.longitude),
+        latitude: Number(this.form.latitude)
+      }
+    },
+    async handleSubmit() {
+      if (!this.validateForm() || this.saving) {
+        return
+      }
+
+      this.saving = true
+      try {
+        await saveChefServiceLocation(this.buildSubmitPayload())
+        uni.showToast({
+          title: '保存成功',
+          icon: 'success'
+        })
+        await this.loadServiceLocation()
+      } catch (error) {
+      } finally {
+        this.saving = false
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 180rpx;
+  background:
+    radial-gradient(circle at top right, rgba(47, 143, 85, 0.12), transparent 34%),
+    linear-gradient(180deg, #edf7f0 0%, #f6f7fb 36%, #f6f7fb 100%);
+  box-sizing: border-box;
+}
+
+.state-card,
+.intro-card,
+.form-card {
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14rpx 36rpx rgba(28, 39, 31, 0.06);
+}
+
+.state-card {
+  padding: 96rpx 32rpx;
+  text-align: center;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: #74807b;
+}
+
+.intro-card {
+  padding: 28rpx;
+}
+
+.intro-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.intro-text {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #738078;
+}
+
+.form-card {
+  margin-top: 24rpx;
+  padding: 28rpx;
+}
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #223128;
+}
+
+.section-tip {
+  font-size: 24rpx;
+  color: #7a837d;
+  line-height: 1.6;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 84rpx;
+  padding: 0 24rpx;
+  border-radius: 20rpx;
+  background: #f4f7f5;
+  font-size: 28rpx;
+  color: #1f2329;
+  box-sizing: border-box;
+}
+
+.search-btn {
+  min-width: 132rpx;
+  height: 84rpx;
+  line-height: 84rpx;
+  border: none;
+  border-radius: 20rpx;
+  background: #2f8f55;
+  font-size: 28rpx;
+}
+
+.search-btn::after,
+.save-btn::after {
+  border: none;
+}
+
+.search-result-list {
+  max-height: 320rpx;
+  margin-top: 18rpx;
+  border-radius: 22rpx;
+  background: #f8faf9;
+}
+
+.search-result-item {
+  padding: 22rpx 24rpx;
+  border-bottom: 2rpx solid #edf1ee;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.result-title {
+  display: block;
+  font-size: 28rpx;
+  color: #1f2329;
+}
+
+.result-address {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #7a837d;
+}
+
+.map-wrapper {
+  margin-top: 22rpx;
+  overflow: hidden;
+  border-radius: 24rpx;
+}
+
+.map {
+  width: 100%;
+  height: 420rpx;
+}
+
+.selected-location {
+  margin-top: 20rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 22rpx;
+  background: #f7f9f8;
+}
+
+.selected-label {
+  display: block;
+  font-size: 24rpx;
+  color: #7a837d;
+}
+
+.selected-text {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #1f2329;
+  word-break: break-all;
+}
+
+.form-item {
+  margin-top: 22rpx;
+}
+
+.label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  color: #738078;
+}
+
+.picker-value,
+.textarea {
+  width: 100%;
+  border-radius: 20rpx;
+  background: #f4f7f5;
+  box-sizing: border-box;
+}
+
+.picker-value {
+  min-height: 84rpx;
+  padding: 0 24rpx;
+  line-height: 84rpx;
+  font-size: 28rpx;
+  color: #1f2329;
+}
+
+.picker-placeholder {
+  color: #a0a9a4;
+}
+
+.textarea {
+  height: 180rpx;
+  padding: 22rpx 24rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #1f2329;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 24rpx 28rpx;
+  background: rgba(246, 247, 251, 0.96);
+  backdrop-filter: blur(10rpx);
+  box-sizing: border-box;
+}
+
+.save-btn {
+  width: 100%;
+  height: 92rpx;
+  line-height: 92rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #2f8f55;
+  font-size: 30rpx;
+  color: #ffffff;
+  box-shadow: 0 12rpx 30rpx rgba(47, 143, 85, 0.22);
+}
+</style>

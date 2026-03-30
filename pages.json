@@ -1,4 +1,4 @@
-{
+﻿{
   "pages": [
     {
       "path": "pages/login/index",
@@ -206,6 +206,12 @@
           }
         },
         {
+          "path": "mine/service-location",
+          "style": {
+            "navigationBarTitleText": "服务位置"
+          }
+        },
+        {
           "path": "mine/profile",
           "style": {
             "navigationBarTitleText": "我的资料"
@@ -221,3 +227,5 @@
     }
   ]
 }
+
+

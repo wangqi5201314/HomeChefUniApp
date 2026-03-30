@@ -60,6 +60,9 @@ export function searchAddress(keyword, options = {}) {
           address: item.address || '',
           latitude,
           longitude,
+          province: item.ad_info ? item.ad_info.province || '' : '',
+          city: item.ad_info ? item.ad_info.city || '' : '',
+          district: item.ad_info ? item.ad_info.district || '' : '',
           raw: item
         }
       })
@@ -113,8 +116,30 @@ export function reverseGeocoder(latitude, longitude) {
   })
 }
 
+export function buildLocationPayloadByGeocoder(result, options = {}) {
+  const preferredDetailAddress = options.detailAddress ? String(options.detailAddress).trim() : ''
+  const detailAddress =
+    preferredDetailAddress ||
+    [result.street, result.streetNumber].filter(Boolean).join('') ||
+    result.recommend ||
+    result.rough ||
+    result.address ||
+    ''
+
+  return {
+    province: result.province || '',
+    city: result.city || '',
+    district: result.district || '',
+    town: result.town || '',
+    detailAddress,
+    longitude: Number(result.longitude || options.longitude || 0),
+    latitude: Number(result.latitude || options.latitude || 0)
+  }
+}
+
 export default {
   TENCENT_MAP_KEY,
   searchAddress,
-  reverseGeocoder
+  reverseGeocoder,
+  buildLocationPayloadByGeocoder
 }

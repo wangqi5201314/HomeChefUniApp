@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="page">
     <view class="profile-card">
       <view class="avatar-wrap">
@@ -30,6 +30,10 @@
           <text class="menu-text">认证资料</text>
           <text class="menu-sub">{{ certStatusText }}</text>
         </view>
+        <text class="menu-arrow">›</text>
+      </view>
+      <view class="menu-item" @click="goPage('/pages-chef/mine/service-location')">
+        <text class="menu-text">服务位置</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" @click="goPage('/pages-chef/review/list')">
@@ -251,3 +255,5 @@ export default {
   border: none;
 }
 </style>
+
+
