@@ -28,7 +28,8 @@ if (!Math) {
   "./pages-chef/schedule/index.js";
   "./pages-chef/certification/index.js";
   "./pages-chef/mine/index.js";
-  "./pages-chef/mine/service-location.js";
+  "./pages-chef/mine/service-location-list.js";
+  "./pages-chef/mine/service-location-edit.js";
   "./pages-chef/mine/profile.js";
   "./pages-chef/mine/change-password.js";
 }

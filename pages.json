@@ -206,9 +206,15 @@
           }
         },
         {
-          "path": "mine/service-location",
+          "path": "mine/service-location-list",
           "style": {
-            "navigationBarTitleText": "服务位置"
+            "navigationBarTitleText": "服务位置管理"
+          }
+        },
+        {
+          "path": "mine/service-location-edit",
+          "style": {
+            "navigationBarTitleText": "服务位置编辑"
           }
         },
         {

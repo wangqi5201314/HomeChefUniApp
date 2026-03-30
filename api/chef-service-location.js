@@ -2,6 +2,7 @@ import request from './request'
 
 function normalizeServiceLocationPayload(data = {}) {
   return {
+    locationName: data.locationName ? String(data.locationName).trim() : '',
     province: data.province ? String(data.province).trim() : '',
     city: data.city ? String(data.city).trim() : '',
     district: data.district ? String(data.district).trim() : '',
@@ -18,15 +19,35 @@ function normalizeServiceLocationPayload(data = {}) {
   }
 }
 
-export function getChefServiceLocation() {
-  return request.get('/api/chef/service-location/me')
+export function getChefServiceLocationList() {
+  return request.get('/api/chef/service-location/list')
 }
 
-export function saveChefServiceLocation(data) {
-  return request.post('/api/chef/service-location/me', normalizeServiceLocationPayload(data))
+export function getChefServiceLocationDetail(id) {
+  return request.get(`/api/chef/service-location/${id}`)
+}
+
+export function createChefServiceLocation(data) {
+  return request.post('/api/chef/service-location', normalizeServiceLocationPayload(data))
+}
+
+export function updateChefServiceLocation(id, data) {
+  return request.put(`/api/chef/service-location/${id}`, normalizeServiceLocationPayload(data))
+}
+
+export function deleteChefServiceLocation(id) {
+  return request.del(`/api/chef/service-location/${id}`)
+}
+
+export function activateChefServiceLocation(id) {
+  return request.post(`/api/chef/service-location/${id}/activate`)
 }
 
 export default {
-  getChefServiceLocation,
-  saveChefServiceLocation
+  getChefServiceLocationList,
+  getChefServiceLocationDetail,
+  createChefServiceLocation,
+  updateChefServiceLocation,
+  deleteChefServiceLocation,
+  activateChefServiceLocation
 }

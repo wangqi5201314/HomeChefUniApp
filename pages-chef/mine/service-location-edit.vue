@@ -6,14 +6,26 @@
 
     <view v-else>
       <view class="intro-card">
-        <text class="intro-title">服务位置</text>
-        <text class="intro-text">这里维护的是厨师服务出发地，仅用于系统内部计算服务范围和距离，不对普通用户公开。</text>
+        <text class="intro-title">{{ pageTitle }}</text>
+        <text class="intro-text">服务位置仅用于系统内部判断服务范围和距离，不会作为家庭住址对外展示。</text>
+      </view>
+
+      <view class="form-card">
+        <view class="form-item first-item">
+          <text class="label">位置名称</text>
+          <input
+            v-model="form.locationName"
+            class="input"
+            maxlength="20"
+            placeholder="例如：家、工作室、大学城服务点"
+          />
+        </view>
       </view>
 
       <view class="form-card">
         <view class="section-head">
           <text class="section-title">地图搜索</text>
-          <text class="section-tip">搜索地址或点击地图，自动回填服务位置</text>
+          <text class="section-tip">搜索地址或点击地图，可自动回填结构化地址和坐标。</text>
         </view>
 
         <view class="search-bar">
@@ -99,7 +111,7 @@
         </view>
 
         <view class="form-item">
-          <text class="label">详细说明</text>
+          <text class="label">详细地址</text>
           <textarea
             v-model="form.detailAddress"
             class="textarea"
@@ -119,7 +131,11 @@
 </template>
 
 <script>
-import { getChefServiceLocation, saveChefServiceLocation } from '../../api/chef-service-location'
+import {
+  createChefServiceLocation,
+  getChefServiceLocationDetail,
+  updateChefServiceLocation
+} from '../../api/chef-service-location'
 import { loadProvinceRegion, provinceList } from '../../data/address/regions'
 import { buildLocationPayloadByGeocoder, reverseGeocoder, searchAddress } from '../../utils/tencent-map'
 
@@ -129,6 +145,7 @@ const MARKER_ICON = '/static/service-location-marker.png'
 
 function createDefaultForm() {
   return {
+    locationName: '',
     province: '',
     city: '',
     district: '',
@@ -140,9 +157,10 @@ function createDefaultForm() {
 }
 
 export default {
-  name: 'ChefServiceLocationPage',
+  name: 'ChefServiceLocationEditPage',
   data() {
     return {
+      id: '',
       pageReady: false,
       loading: false,
       saving: false,
@@ -158,6 +176,9 @@ export default {
     }
   },
   computed: {
+    pageTitle() {
+      return this.id ? '编辑服务位置' : '新增服务位置'
+    },
     selectedLocationText() {
       const parts = [
         this.form.province,
@@ -241,12 +262,18 @@ export default {
       return index >= 0 ? index : 0
     }
   },
-  onLoad() {
+  onLoad(options) {
+    this.id = options && options.id ? String(options.id) : ''
+    uni.setNavigationBarTitle({
+      title: this.pageTitle
+    })
+
     this.initDefaultRegion()
     this.pageReady = true
-  },
-  onShow() {
-    this.loadServiceLocation()
+
+    if (this.id) {
+      this.loadLocationDetail()
+    }
   },
   methods: {
     getProvinceByName(name) {
@@ -292,6 +319,7 @@ export default {
 
       this.form = {
         ...createDefaultForm(),
+        locationName: this.form.locationName || '',
         province: firstProvince.name
       }
       this.loadProvinceData(firstProvince.code)
@@ -330,6 +358,28 @@ export default {
 
       this.form.detailAddress = locationData.detailAddress || ''
       this.setMapCenter(locationData.latitude, locationData.longitude)
+    },
+    async loadLocationDetail() {
+      this.loading = true
+
+      try {
+        const data = await getChefServiceLocationDetail(this.id)
+        this.form = {
+          locationName: data.locationName || '',
+          province: data.province || '',
+          city: data.city || '',
+          district: data.district || '',
+          town: data.town || '',
+          detailAddress: data.detailAddress || '',
+          longitude: data.longitude === 0 || data.longitude ? Number(data.longitude) : DEFAULT_LONGITUDE,
+          latitude: data.latitude === 0 || data.latitude ? Number(data.latitude) : DEFAULT_LATITUDE
+        }
+        this.setMapCenter(this.form.latitude, this.form.longitude)
+        this.syncRegionByForm()
+      } catch (error) {
+      } finally {
+        this.loading = false
+      }
     },
     handleProvinceChange(event) {
       const index = Number(event.detail.value)
@@ -372,34 +422,6 @@ export default {
       }
 
       this.form.town = town
-    },
-    async loadServiceLocation() {
-      this.loading = true
-
-      try {
-        const data = await getChefServiceLocation()
-
-        if (!data || !data.id) {
-          this.initDefaultRegion()
-          return
-        }
-
-        this.form = {
-          province: data.province || '',
-          city: data.city || '',
-          district: data.district || '',
-          town: data.town || '',
-          detailAddress: data.detailAddress || '',
-          longitude: data.longitude === 0 || data.longitude ? Number(data.longitude) : DEFAULT_LONGITUDE,
-          latitude: data.latitude === 0 || data.latitude ? Number(data.latitude) : DEFAULT_LATITUDE
-        }
-        this.setMapCenter(this.form.latitude, this.form.longitude)
-        this.syncRegionByForm()
-      } catch (error) {
-        this.initDefaultRegion()
-      } finally {
-        this.loading = false
-      }
     },
     async handleSearch() {
       const keyword = this.searchKeyword ? String(this.searchKeyword).trim() : ''
@@ -456,7 +478,7 @@ export default {
             province: options.fallback.province || '',
             city: options.fallback.city || '',
             district: options.fallback.district || '',
-            town: options.fallback.town || '',
+            town: '',
             detailAddress: options.detailAddress || options.fallback.detailAddress || '',
             latitude,
             longitude
@@ -481,7 +503,6 @@ export default {
           province: item.province || '',
           city: item.city || '',
           district: item.district || '',
-          town: '',
           detailAddress: item.title || item.address || ''
         }
       })
@@ -498,6 +519,14 @@ export default {
       await this.fillLocationByCoordinate(latitude, longitude)
     },
     validateForm() {
+      if (!this.form.locationName.trim()) {
+        uni.showToast({
+          title: '请输入位置名称',
+          icon: 'none'
+        })
+        return false
+      }
+
       if (!this.form.province || !this.form.city || !this.form.district) {
         uni.showToast({
           title: '请先选择完整的省市区',
@@ -516,7 +545,7 @@ export default {
 
       if (!this.form.detailAddress.trim()) {
         uni.showToast({
-          title: '请输入详细说明',
+          title: '请输入详细地址',
           icon: 'none'
         })
         return false
@@ -534,6 +563,7 @@ export default {
     },
     buildSubmitPayload() {
       return {
+        locationName: this.form.locationName.trim(),
         province: this.form.province,
         city: this.form.city,
         district: this.form.district,
@@ -550,12 +580,22 @@ export default {
 
       this.saving = true
       try {
-        await saveChefServiceLocation(this.buildSubmitPayload())
+        if (this.id) {
+          await updateChefServiceLocation(this.id, this.buildSubmitPayload())
+        } else {
+          await createChefServiceLocation(this.buildSubmitPayload())
+        }
+
         uni.showToast({
           title: '保存成功',
           icon: 'success'
         })
-        await this.loadServiceLocation()
+
+        setTimeout(() => {
+          uni.navigateBack({
+            delta: 1
+          })
+        }, 300)
       } catch (error) {
       } finally {
         this.saving = false
@@ -636,6 +676,53 @@ export default {
   line-height: 1.6;
 }
 
+.first-item {
+  margin-top: 0;
+}
+
+.form-item {
+  margin-top: 22rpx;
+}
+
+.label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  color: #738078;
+}
+
+.input,
+.picker-value,
+.textarea,
+.search-input {
+  width: 100%;
+  border-radius: 20rpx;
+  background: #f4f7f5;
+  box-sizing: border-box;
+}
+
+.input,
+.picker-value,
+.search-input {
+  min-height: 84rpx;
+  padding: 0 24rpx;
+  line-height: 84rpx;
+  font-size: 28rpx;
+  color: #1f2329;
+}
+
+.textarea {
+  height: 180rpx;
+  padding: 22rpx 24rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #1f2329;
+}
+
+.picker-placeholder {
+  color: #a0a9a4;
+}
+
 .search-bar {
   display: flex;
   align-items: center;
@@ -643,22 +730,15 @@ export default {
   margin-top: 24rpx;
 }
 
-.search-input {
-  flex: 1;
-  height: 84rpx;
-  padding: 0 24rpx;
-  border-radius: 20rpx;
-  background: #f4f7f5;
-  font-size: 28rpx;
-  color: #1f2329;
-  box-sizing: border-box;
+.search-btn,
+.save-btn {
+  border: none;
 }
 
 .search-btn {
   min-width: 132rpx;
   height: 84rpx;
   line-height: 84rpx;
-  border: none;
   border-radius: 20rpx;
   background: #2f8f55;
   font-size: 28rpx;
@@ -732,45 +812,6 @@ export default {
   word-break: break-all;
 }
 
-.form-item {
-  margin-top: 22rpx;
-}
-
-.label {
-  display: block;
-  margin-bottom: 12rpx;
-  font-size: 26rpx;
-  color: #738078;
-}
-
-.picker-value,
-.textarea {
-  width: 100%;
-  border-radius: 20rpx;
-  background: #f4f7f5;
-  box-sizing: border-box;
-}
-
-.picker-value {
-  min-height: 84rpx;
-  padding: 0 24rpx;
-  line-height: 84rpx;
-  font-size: 28rpx;
-  color: #1f2329;
-}
-
-.picker-placeholder {
-  color: #a0a9a4;
-}
-
-.textarea {
-  height: 180rpx;
-  padding: 22rpx 24rpx;
-  font-size: 28rpx;
-  line-height: 1.6;
-  color: #1f2329;
-}
-
 .bottom-bar {
   position: fixed;
   left: 0;
@@ -786,7 +827,6 @@ export default {
   width: 100%;
   height: 92rpx;
   line-height: 92rpx;
-  border: none;
   border-radius: 999rpx;
   background: #2f8f55;
   font-size: 30rpx;

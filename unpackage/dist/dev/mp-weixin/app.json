@@ -31,7 +31,8 @@
         "schedule/index",
         "certification/index",
         "mine/index",
-        "mine/service-location",
+        "mine/service-location-list",
+        "mine/service-location-edit",
         "mine/profile",
         "mine/change-password"
       ]
