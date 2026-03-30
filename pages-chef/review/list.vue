@@ -11,7 +11,7 @@
     <view v-else class="review-list">
       <view v-for="item in reviewList" :key="item.id" class="review-card">
         <view class="card-head">
-          <text class="order-text">订单号：{{ item.orderId || '-' }}</text>
+          <text class="order-text">订单号：{{ item.orderNo || item.orderId || '-' }}</text>
           <text class="score-text">综合评分 {{ formatScore(item.overallScore) }}</text>
         </view>
 
@@ -23,7 +23,7 @@
         </view>
 
         <view class="meta-row">
-          <text class="meta-text">{{ item.isAnonymous === 1 ? '匿名评价' : '实名评价' }}</text>
+          <text class="meta-text">{{ item.isAnonymous === 1 ? '匿名用户' : getReviewUserName(item) }}</text>
           <text class="meta-text">评价时间：{{ formatFullDateTime(item.createdAt) }}</text>
         </view>
 
@@ -115,6 +115,13 @@ export default {
   },
   methods: {
     formatFullDateTime,
+    getReviewUserName(item) {
+      if (!item) {
+        return '-'
+      }
+
+      return item.nickname || item.userNickname || item.userName || item.username || item.realName || item.name || `用户${item.userId}`
+    },
     async loadReviewList() {
       if (!this.chefId) {
         this.reviewList = []

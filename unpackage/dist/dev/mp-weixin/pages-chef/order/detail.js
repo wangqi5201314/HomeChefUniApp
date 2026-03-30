@@ -1,6 +1,8 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_chefOrder = require("../../api/chef-order.js");
+const api_review = require("../../api/review.js");
+const utils_auth = require("../../utils/auth.js");
 const utils_orderStatus = require("../../utils/order-status.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
@@ -17,9 +19,14 @@ const _sfc_main = {
       actionLoading: false,
       pendingAction: "",
       orderId: "",
+      chefId: "",
       orderDetail: {},
+      orderReview: null,
+      reviewReplyContent: "",
+      reviewReplying: false,
       showRejectPopup: false,
-      rejectReason: ""
+      rejectReason: "",
+      showReviewPopup: false
     };
   },
   computed: {
@@ -37,6 +44,9 @@ const _sfc_main = {
     },
     showFinishButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.IN_SERVICE;
+    },
+    showViewReviewButton() {
+      return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED && Boolean(this.orderReview && this.orderReview.id);
     },
     showStatusNotice() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.WAIT_PAY || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REJECTED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.CANCELLED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REFUNDED;
@@ -86,18 +96,83 @@ const _sfc_main = {
   },
   onLoad(options) {
     this.orderId = options && options.id ? options.id : "";
+    const cachedChefInfo = utils_auth.getChefInfo();
+    this.chefId = utils_auth.getChefId() || cachedChefInfo && cachedChefInfo.id || "";
     this.fetchOrderDetail();
   },
   methods: {
     formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     formatScheduleDateTime: utils_scheduleTime.formatScheduleDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
+    formatScore(value) {
+      if (value === 0) {
+        return "0";
+      }
+      return value || "-";
+    },
     getIngredientModeText(value) {
       const normalizedValue = Number(value);
       if (INGREDIENT_MODE_TEXT_MAP[normalizedValue]) {
         return INGREDIENT_MODE_TEXT_MAP[normalizedValue];
       }
       return value || "-";
+    },
+    getReviewUserName(item) {
+      if (!item) {
+        return "-";
+      }
+      return item.nickname || item.userNickname || item.userName || item.username || item.realName || item.name || `用户${item.userId}`;
+    },
+    parseImageUrls(imageUrls) {
+      if (!imageUrls) {
+        return [];
+      }
+      return String(imageUrls).split(",").map((item) => item.trim()).filter(Boolean);
+    },
+    previewImages(urls, currentIndex) {
+      common_vendor.index.previewImage({
+        urls,
+        current: urls[currentIndex]
+      });
+    },
+    resolveChefId() {
+      return this.orderDetail.chefId || this.chefId || "";
+    },
+    findOrderReview(reviewList) {
+      if (!Array.isArray(reviewList) || !reviewList.length) {
+        return null;
+      }
+      const currentOrderId = this.orderDetail.id ? String(this.orderDetail.id) : "";
+      const currentOrderNo = this.orderDetail.orderNo ? String(this.orderDetail.orderNo) : "";
+      return reviewList.find((item) => {
+        if (!item) {
+          return false;
+        }
+        const itemOrderId = item.orderId ? String(item.orderId) : "";
+        const itemOrderNo = item.orderNo ? String(item.orderNo) : "";
+        return currentOrderId && itemOrderId === currentOrderId || currentOrderNo && itemOrderNo === currentOrderNo;
+      }) || null;
+    },
+    async fetchOrderReview() {
+      const chefId = this.resolveChefId();
+      if (!chefId || !this.orderDetail.id || this.orderDetail.orderStatus !== utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        this.orderReview = null;
+        this.reviewReplyContent = "";
+        this.showReviewPopup = false;
+        return;
+      }
+      try {
+        const data = await api_review.getChefReviewList(chefId);
+        this.orderReview = this.findOrderReview(Array.isArray(data) ? data : []);
+        this.reviewReplyContent = "";
+        if (!this.orderReview) {
+          this.showReviewPopup = false;
+        }
+      } catch (error) {
+        this.orderReview = null;
+        this.reviewReplyContent = "";
+        this.showReviewPopup = false;
+      }
     },
     async fetchOrderDetail() {
       if (!this.orderId) {
@@ -111,8 +186,15 @@ const _sfc_main = {
       try {
         const data = await api_chefOrder.getChefOrderDetail(this.orderId);
         this.orderDetail = data || {};
+        if (this.orderDetail && this.orderDetail.chefId) {
+          this.chefId = this.orderDetail.chefId;
+        }
+        await this.fetchOrderReview();
       } catch (error) {
         this.orderDetail = {};
+        this.orderReview = null;
+        this.reviewReplyContent = "";
+        this.showReviewPopup = false;
       } finally {
         this.loading = false;
       }
@@ -175,6 +257,47 @@ const _sfc_main = {
     closeRejectPopup() {
       this.showRejectPopup = false;
       this.rejectReason = "";
+    },
+    openReviewPopup() {
+      if (!this.showViewReviewButton) {
+        return;
+      }
+      this.reviewReplyContent = "";
+      this.showReviewPopup = true;
+    },
+    closeReviewPopup() {
+      if (this.reviewReplying) {
+        return;
+      }
+      this.reviewReplyContent = "";
+      this.showReviewPopup = false;
+    },
+    async submitOrderReviewReply() {
+      if (!this.orderReview || !this.orderReview.id || this.reviewReplying) {
+        return;
+      }
+      const replyContent = this.reviewReplyContent.trim();
+      if (!replyContent) {
+        common_vendor.index.showToast({
+          title: "请输入回复内容",
+          icon: "none"
+        });
+        return;
+      }
+      this.reviewReplying = true;
+      try {
+        await api_review.replyReview(this.orderReview.id, {
+          replyContent
+        });
+        common_vendor.index.showToast({
+          title: "回复成功",
+          icon: "success"
+        });
+        await this.fetchOrderReview();
+      } catch (error) {
+      } finally {
+        this.reviewReplying = false;
+      }
     },
     backToList() {
       const pages = getCurrentPages();
@@ -256,23 +379,66 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     O: common_vendor.t($options.statusNoticeText),
     P: common_vendor.n($options.statusPanelClass)
   } : {}, {
-    Q: $data.actionLoading,
-    R: common_vendor.o((...args) => $options.backToList && $options.backToList(...args))
+    Q: $options.showViewReviewButton
+  }, $options.showViewReviewButton ? {
+    R: $data.actionLoading,
+    S: common_vendor.o((...args) => $options.openReviewPopup && $options.openReviewPopup(...args))
+  } : {}, {
+    T: $data.actionLoading,
+    U: common_vendor.o((...args) => $options.backToList && $options.backToList(...args))
   }), {
     b: !$data.orderDetail.id,
-    S: $data.showRejectPopup
+    V: $data.showRejectPopup
   }, $data.showRejectPopup ? {
-    T: $data.rejectReason,
-    U: common_vendor.o(($event) => $data.rejectReason = $event.detail.value),
-    V: $data.actionLoading,
-    W: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args)),
-    X: $data.actionLoading && $data.pendingAction === "reject",
+    W: $data.rejectReason,
+    X: common_vendor.o(($event) => $data.rejectReason = $event.detail.value),
     Y: $data.actionLoading,
-    Z: common_vendor.o((...args) => $options.handleReject && $options.handleReject(...args)),
-    aa: common_vendor.o(() => {
+    Z: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args)),
+    aa: $data.actionLoading && $data.pendingAction === "reject",
+    ab: $data.actionLoading,
+    ac: common_vendor.o((...args) => $options.handleReject && $options.handleReject(...args)),
+    ad: common_vendor.o(() => {
     }),
-    ab: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args))
-  } : {});
+    ae: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args))
+  } : {}, {
+    af: $data.showReviewPopup && $data.orderReview && $data.orderReview.id
+  }, $data.showReviewPopup && $data.orderReview && $data.orderReview.id ? common_vendor.e({
+    ag: common_vendor.t($options.formatScore($data.orderReview.overallScore)),
+    ah: common_vendor.t($data.orderReview.isAnonymous === 1 ? "匿名用户" : $options.getReviewUserName($data.orderReview)),
+    ai: common_vendor.t($options.formatFullDateTime($data.orderReview.createdAt)),
+    aj: common_vendor.t($options.formatScore($data.orderReview.dishScore)),
+    ak: common_vendor.t($options.formatScore($data.orderReview.serviceScore)),
+    al: common_vendor.t($options.formatScore($data.orderReview.skillScore)),
+    am: common_vendor.t($options.formatScore($data.orderReview.environmentScore)),
+    an: common_vendor.t($data.orderReview.content || "用户未填写评价内容"),
+    ao: $options.parseImageUrls($data.orderReview.imageUrls).length
+  }, $options.parseImageUrls($data.orderReview.imageUrls).length ? {
+    ap: common_vendor.f($options.parseImageUrls($data.orderReview.imageUrls), (url, index, i0) => {
+      return {
+        a: `${$data.orderReview.id}-${index}`,
+        b: url,
+        c: common_vendor.o(($event) => $options.previewImages($options.parseImageUrls($data.orderReview.imageUrls), index), `${$data.orderReview.id}-${index}`)
+      };
+    })
+  } : {}, {
+    aq: $data.orderReview.replyContent
+  }, $data.orderReview.replyContent ? common_vendor.e({
+    ar: common_vendor.t($data.orderReview.replyContent),
+    as: $data.orderReview.replyAt
+  }, $data.orderReview.replyAt ? {
+    at: common_vendor.t($options.formatFullDateTime($data.orderReview.replyAt))
+  } : {}) : {
+    av: $data.reviewReplyContent,
+    aw: common_vendor.o(($event) => $data.reviewReplyContent = $event.detail.value),
+    ax: $data.reviewReplying,
+    ay: $data.reviewReplying,
+    az: common_vendor.o((...args) => $options.submitOrderReviewReply && $options.submitOrderReviewReply(...args))
+  }, {
+    aA: common_vendor.o((...args) => $options.closeReviewPopup && $options.closeReviewPopup(...args)),
+    aB: common_vendor.o(() => {
+    }),
+    aC: common_vendor.o((...args) => $options.closeReviewPopup && $options.closeReviewPopup(...args))
+  }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-f5138f84"]]);
 wx.createPage(MiniProgramPage);

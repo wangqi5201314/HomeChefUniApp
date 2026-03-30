@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="page">
     <view v-if="loading" class="state-card">
       <text class="state-text">订单详情加载中...</text>
@@ -93,6 +93,14 @@
           <text class="status-panel-label">{{ statusPanelLabel }}</text>
           <text class="status-panel-text">{{ statusNoticeText }}</text>
         </view>
+        <button
+          v-if="showViewReviewButton"
+          class="ghost-btn full-btn"
+          :disabled="actionLoading"
+          @click="openReviewPopup"
+        >
+          查看本单评价
+        </button>
         <button class="back-btn" :disabled="actionLoading" @click="backToList">返回订单列表</button>
       </view>
     </view>
@@ -119,6 +127,66 @@
         </view>
       </view>
     </view>
+    <view v-if="showReviewPopup && orderReview && orderReview.id" class="popup-mask" @click="closeReviewPopup">
+      <view class="popup-card review-popup-card" @click.stop>
+        <view class="review-popup-head">
+          <text class="popup-title">本单评价</text>
+          <text class="review-popup-score">综合评分 {{ formatScore(orderReview.overallScore) }}</text>
+        </view>
+        <view class="review-meta">
+          <text class="review-meta-text">{{ orderReview.isAnonymous === 1 ? '匿名用户' : getReviewUserName(orderReview) }}</text>
+          <text class="review-meta-text">{{ formatFullDateTime(orderReview.createdAt) }}</text>
+        </view>
+        <view class="review-score-row">
+          <text class="review-score-item">菜品 {{ formatScore(orderReview.dishScore) }}</text>
+          <text class="review-score-item">服务 {{ formatScore(orderReview.serviceScore) }}</text>
+          <text class="review-score-item">技能 {{ formatScore(orderReview.skillScore) }}</text>
+          <text class="review-score-item">环境 {{ formatScore(orderReview.environmentScore) }}</text>
+        </view>
+        <view class="review-block">
+          <text class="review-block-title">评价内容</text>
+          <text class="review-block-content">{{ orderReview.content || '用户未填写评价内容' }}</text>
+        </view>
+        <view v-if="parseImageUrls(orderReview.imageUrls).length" class="review-block">
+          <text class="review-block-title">评价图片</text>
+          <view class="review-image-list">
+            <image
+              v-for="(url, index) in parseImageUrls(orderReview.imageUrls)"
+              :key="`${orderReview.id}-${index}`"
+              class="review-image"
+              :src="url"
+              mode="aspectFill"
+              @click="previewImages(parseImageUrls(orderReview.imageUrls), index)"
+            />
+          </view>
+        </view>
+        <view v-if="orderReview.replyContent" class="review-reply-card">
+          <text class="review-block-title">我的回复</text>
+          <text class="review-block-content">{{ orderReview.replyContent }}</text>
+          <text v-if="orderReview.replyAt" class="review-meta-text review-reply-time">回复时间：{{ formatFullDateTime(orderReview.replyAt) }}</text>
+        </view>
+        <view v-else class="review-reply-card">
+          <text class="review-block-title">回复评价</text>
+          <textarea
+            v-model="reviewReplyContent"
+            class="popup-textarea review-reply-textarea"
+            maxlength="300"
+            placeholder="请输入回复内容"
+          />
+          <view class="review-reply-actions">
+            <button
+              class="primary-btn popup-btn"
+              :loading="reviewReplying"
+              :disabled="reviewReplying"
+              @click="submitOrderReviewReply"
+            >
+              提交回复
+            </button>
+          </view>
+        </view>
+        <button class="back-btn review-close-btn" @click="closeReviewPopup">关闭</button>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -130,6 +198,8 @@ import {
   rejectChefOrder,
   startChefOrder
 } from '../../api/chef-order'
+import { getChefReviewList, replyReview } from '../../api/review'
+import { getChefId, getChefInfo } from '../../utils/auth'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 import { formatFullDateTime, formatScheduleDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText } from '../../utils/time-slot'
@@ -148,9 +218,14 @@ export default {
       actionLoading: false,
       pendingAction: '',
       orderId: '',
+      chefId: '',
       orderDetail: {},
+      orderReview: null,
+      reviewReplyContent: '',
+      reviewReplying: false,
       showRejectPopup: false,
-      rejectReason: ''
+      rejectReason: '',
+      showReviewPopup: false
     }
   },
   computed: {
@@ -168,6 +243,9 @@ export default {
     },
     showFinishButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.IN_SERVICE
+    },
+    showViewReviewButton() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED && Boolean(this.orderReview && this.orderReview.id)
     },
     showStatusNotice() {
       return this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY ||
@@ -234,12 +312,21 @@ export default {
   },
   onLoad(options) {
     this.orderId = options && options.id ? options.id : ''
+    const cachedChefInfo = getChefInfo()
+    this.chefId = getChefId() || (cachedChefInfo && cachedChefInfo.id) || ''
     this.fetchOrderDetail()
   },
   methods: {
     formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
+    formatScore(value) {
+      if (value === 0) {
+        return '0'
+      }
+
+      return value || '-'
+    },
     getIngredientModeText(value) {
       const normalizedValue = Number(value)
 
@@ -248,6 +335,75 @@ export default {
       }
 
       return value || '-'
+    },
+    getReviewUserName(item) {
+      if (!item) {
+        return '-'
+      }
+
+      return item.nickname || item.userNickname || item.userName || item.username || item.realName || item.name || `用户${item.userId}`
+    },
+    parseImageUrls(imageUrls) {
+      if (!imageUrls) {
+        return []
+      }
+
+      return String(imageUrls)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    },
+    previewImages(urls, currentIndex) {
+      uni.previewImage({
+        urls,
+        current: urls[currentIndex]
+      })
+    },
+    resolveChefId() {
+      return this.orderDetail.chefId || this.chefId || ''
+    },
+    findOrderReview(reviewList) {
+      if (!Array.isArray(reviewList) || !reviewList.length) {
+        return null
+      }
+
+      const currentOrderId = this.orderDetail.id ? String(this.orderDetail.id) : ''
+      const currentOrderNo = this.orderDetail.orderNo ? String(this.orderDetail.orderNo) : ''
+
+      return reviewList.find((item) => {
+        if (!item) {
+          return false
+        }
+
+        const itemOrderId = item.orderId ? String(item.orderId) : ''
+        const itemOrderNo = item.orderNo ? String(item.orderNo) : ''
+
+        return (currentOrderId && itemOrderId === currentOrderId) ||
+          (currentOrderNo && itemOrderNo === currentOrderNo)
+      }) || null
+    },
+    async fetchOrderReview() {
+      const chefId = this.resolveChefId()
+
+      if (!chefId || !this.orderDetail.id || this.orderDetail.orderStatus !== ORDER_STATUS.COMPLETED) {
+        this.orderReview = null
+        this.reviewReplyContent = ''
+        this.showReviewPopup = false
+        return
+      }
+
+      try {
+        const data = await getChefReviewList(chefId)
+        this.orderReview = this.findOrderReview(Array.isArray(data) ? data : [])
+        this.reviewReplyContent = ''
+        if (!this.orderReview) {
+          this.showReviewPopup = false
+        }
+      } catch (error) {
+        this.orderReview = null
+        this.reviewReplyContent = ''
+        this.showReviewPopup = false
+      }
     },
     async fetchOrderDetail() {
       if (!this.orderId) {
@@ -262,8 +418,15 @@ export default {
       try {
         const data = await getChefOrderDetail(this.orderId)
         this.orderDetail = data || {}
+        if (this.orderDetail && this.orderDetail.chefId) {
+          this.chefId = this.orderDetail.chefId
+        }
+        await this.fetchOrderReview()
       } catch (error) {
         this.orderDetail = {}
+        this.orderReview = null
+        this.reviewReplyContent = ''
+        this.showReviewPopup = false
       } finally {
         this.loading = false
       }
@@ -331,6 +494,51 @@ export default {
     closeRejectPopup() {
       this.showRejectPopup = false
       this.rejectReason = ''
+    },
+    openReviewPopup() {
+      if (!this.showViewReviewButton) {
+        return
+      }
+
+      this.reviewReplyContent = ''
+      this.showReviewPopup = true
+    },
+    closeReviewPopup() {
+      if (this.reviewReplying) {
+        return
+      }
+
+      this.reviewReplyContent = ''
+      this.showReviewPopup = false
+    },
+    async submitOrderReviewReply() {
+      if (!this.orderReview || !this.orderReview.id || this.reviewReplying) {
+        return
+      }
+
+      const replyContent = this.reviewReplyContent.trim()
+      if (!replyContent) {
+        uni.showToast({
+          title: '请输入回复内容',
+          icon: 'none'
+        })
+        return
+      }
+
+      this.reviewReplying = true
+      try {
+        await replyReview(this.orderReview.id, {
+          replyContent
+        })
+        uni.showToast({
+          title: '回复成功',
+          icon: 'success'
+        })
+        await this.fetchOrderReview()
+      } catch (error) {
+      } finally {
+        this.reviewReplying = false
+      }
     },
     backToList() {
       const pages = getCurrentPages()
@@ -569,6 +777,90 @@ export default {
   box-sizing: border-box;
 }
 
+.review-popup-card {
+  max-height: 84vh;
+  overflow-y: auto;
+}
+.review-popup-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+.review-popup-score {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #d96c3a;
+}
+.review-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  margin-top: 20rpx;
+}
+.review-meta-text {
+  font-size: 24rpx;
+  color: #7a837d;
+  line-height: 1.6;
+}
+.review-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx 20rpx;
+  margin-top: 22rpx;
+}
+.review-score-item {
+  font-size: 26rpx;
+  color: #223128;
+}
+.review-block,
+.review-reply-card {
+  margin-top: 24rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 22rpx;
+  background: #f7f9f8;
+}
+.review-block-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #223128;
+}
+.review-block-content {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #1f2329;
+}
+.review-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.review-image {
+  width: 176rpx;
+  height: 176rpx;
+  border-radius: 18rpx;
+  background: #eef2ef;
+}
+.review-reply-time {
+  display: block;
+  margin-top: 12rpx;
+}
+.review-reply-textarea {
+  height: 180rpx;
+  margin-top: 16rpx;
+}
+.review-reply-actions {
+  display: flex;
+  margin-top: 20rpx;
+}
+.review-close-btn {
+  margin-top: 28rpx;
+}
 .primary-btn::after,
 .ghost-btn::after,
 .back-btn::after,
@@ -628,3 +920,4 @@ export default {
   flex: 1;
 }
 </style>
+

@@ -100,9 +100,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     k: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/change-password")),
     l: common_vendor.t($options.certStatusText),
     m: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
-    n: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
-    o: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args)),
-    p: common_vendor.p({
+    n: common_vendor.o(($event) => $options.goPage("/pages-chef/review/list")),
+    o: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
+    p: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args)),
+    q: common_vendor.p({
       current: "mine"
     })
   });
