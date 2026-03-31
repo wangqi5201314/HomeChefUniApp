@@ -53,7 +53,7 @@ const _sfc_main = {
   },
   computed: {
     certStatusText() {
-      if (!this.hasCertificationRecord) {
+      if (!this.hasCertificationRecord || Number(this.chefInfo.certStatus) === 3) {
         return "待上传";
       }
       if (this.chefInfo.certStatusDesc) {
@@ -65,7 +65,7 @@ const _sfc_main = {
       return "未知状态";
     },
     certStatusTip() {
-      if (!this.hasCertificationRecord) {
+      if (!this.hasCertificationRecord || Number(this.chefInfo.certStatus) === 3) {
         return "当前还没有提交认证资料，请先上传相关证书照片并提交。";
       }
       const status = Number(this.chefInfo.certStatus);

@@ -22,7 +22,7 @@ const _sfc_main = {
       return this.chefInfo.name ? String(this.chefInfo.name).slice(0, 1) : "厨";
     },
     certStatusText() {
-      if (!this.hasCertificationRecord) {
+      if (!this.hasCertificationRecord || Number(this.chefInfo.certStatus) === 3) {
         return "待上传";
       }
       if (this.chefInfo.certStatusDesc) {
