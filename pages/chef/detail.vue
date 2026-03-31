@@ -112,6 +112,7 @@
 
 <script>
 import { getChefDetail, getChefSchedule } from '../../api/chef'
+import { disableExpiredChefScheduleByChefSilently } from '../../api/chef-schedule'
 import { getChefReviewList } from '../../api/review'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { getChefCertStatusText } from '../../utils/chef-cert-status'
@@ -203,6 +204,10 @@ export default {
       this.loading = true
       try {
         const dateRange = this.getNextSevenDaysRange()
+        try {
+          await disableExpiredChefScheduleByChefSilently(this.chefId)
+        } catch (error) {
+        }
         const [chefData, scheduleData, reviewData] = await Promise.all([
           getChefDetail(this.chefId),
           getChefSchedule(this.chefId, dateRange),

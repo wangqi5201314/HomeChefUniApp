@@ -10,10 +10,14 @@
     >
       <swiper-item
         v-for="item in bannerList"
-        :key="item"
+        :key="item.title"
         class="banner-item"
       >
-        <image class="banner-image" :src="item" mode="aspectFill" />
+        <view class="banner-panel" :class="item.themeClass">
+          <text class="banner-kicker">{{ item.kicker }}</text>
+          <text class="banner-title">{{ item.title }}</text>
+          <text class="banner-desc">{{ item.desc }}</text>
+        </view>
       </swiper-item>
     </swiper>
 
@@ -196,9 +200,24 @@ export default {
   data() {
     return {
       bannerList: [
-        '/static/dish1.png',
-        '/static/dish2.png',
-        '/static/dish3.png'
+        {
+          kicker: '同城精选',
+          title: '上门私厨 更省心',
+          desc: '按地址、时段和食材模式智能推荐更合适的厨师。',
+          themeClass: 'banner-theme-warm'
+        },
+        {
+          kicker: '预约灵活',
+          title: '早餐午餐晚餐都可约',
+          desc: '支持按日期和时间段筛选，快速找到可服务档期。',
+          themeClass: 'banner-theme-fresh'
+        },
+        {
+          kicker: '安心下单',
+          title: '评分、订单量、距离一目了然',
+          desc: '结合服务半径和当前地址，挑选更适合你的厨师。',
+          themeClass: 'banner-theme-sun'
+        }
       ],
       userId: '',
       loading: false,
@@ -469,9 +488,60 @@ export default {
   height: 100%;
 }
 
-.banner-image {
+.banner-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   width: 100%;
   height: 100%;
+  padding: 32rpx 30rpx;
+  box-sizing: border-box;
+}
+
+.banner-theme-warm {
+  background:
+    radial-gradient(circle at 80% 22%, rgba(255, 255, 255, 0.35), transparent 18%),
+    linear-gradient(135deg, #d96c3a 0%, #f29a52 52%, #ffd4a8 100%);
+}
+
+.banner-theme-fresh {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.34), transparent 18%),
+    linear-gradient(135deg, #2f8f55 0%, #6dc38a 52%, #d7f0dc 100%);
+}
+
+.banner-theme-sun {
+  background:
+    radial-gradient(circle at 78% 26%, rgba(255, 255, 255, 0.36), transparent 18%),
+    linear-gradient(135deg, #385170 0%, #5f86a8 52%, #f6d9a2 100%);
+}
+
+.banner-kicker,
+.banner-title,
+.banner-desc {
+  display: block;
+  color: #ffffff;
+}
+
+.banner-kicker {
+  font-size: 24rpx;
+  letter-spacing: 4rpx;
+  opacity: 0.88;
+}
+
+.banner-title {
+  margin-top: 14rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.banner-desc {
+  margin-top: 14rpx;
+  max-width: 78%;
+  font-size: 24rpx;
+  line-height: 1.7;
+  opacity: 0.92;
 }
 
 .intro-card,

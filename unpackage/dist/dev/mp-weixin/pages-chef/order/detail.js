@@ -45,8 +45,16 @@ const _sfc_main = {
     showFinishButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.IN_SERVICE;
     },
+    showNavigateButton() {
+      return this.hasValidServiceCoordinate && (this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.PAID || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.IN_SERVICE);
+    },
     showViewReviewButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED && Boolean(this.orderReview && this.orderReview.id);
+    },
+    hasValidServiceCoordinate() {
+      const latitude = Number(this.orderDetail.latitude);
+      const longitude = Number(this.orderDetail.longitude);
+      return Boolean(latitude && longitude);
     },
     showStatusNotice() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.WAIT_PAY || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REJECTED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.CANCELLED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REFUNDED;
@@ -207,7 +215,9 @@ const _sfc_main = {
     async handleStart() {
       await this.runOrderAction("start", async () => {
         await api_chefOrder.startChefOrder(this.orderId);
-      }, "已开始服务");
+      }, "已开始服务", false, async () => {
+        this.openServiceNavigation();
+      });
     },
     async handleFinish() {
       await this.runOrderAction("finish", async () => {
@@ -228,7 +238,7 @@ const _sfc_main = {
         });
       }, "拒单成功", true);
     },
-    async runOrderAction(action, handler, successText, closePopup = false) {
+    async runOrderAction(action, handler, successText, closePopup = false, afterSuccess = null) {
       if (this.actionLoading) {
         return;
       }
@@ -244,6 +254,9 @@ const _sfc_main = {
           this.closeRejectPopup();
         }
         await this.fetchOrderDetail();
+        if (typeof afterSuccess === "function") {
+          await afterSuccess();
+        }
       } catch (error) {
       } finally {
         this.actionLoading = false;
@@ -311,6 +324,46 @@ const _sfc_main = {
         url: "/pages-chef/order/list"
       });
     },
+    openServiceNavigation() {
+      if (!this.hasValidServiceCoordinate) {
+        common_vendor.index.showToast({
+          title: "未获取到服务地址坐标",
+          icon: "none"
+        });
+        return;
+      }
+      const latitude = Number(this.orderDetail.latitude);
+      const longitude = Number(this.orderDetail.longitude);
+      const systemInfo = common_vendor.index.getSystemInfoSync ? common_vendor.index.getSystemInfoSync() : {};
+      if (systemInfo.platform === "devtools") {
+        const addressText = this.orderDetail.fullAddress || `${latitude},${longitude}`;
+        common_vendor.index.setClipboardData({
+          data: addressText,
+          success: () => {
+            common_vendor.index.showModal({
+              title: "请在真机导航",
+              content: "微信开发者工具里点击“去这里”会尝试打开 qqmap:// 协议，电脑环境无法拉起腾讯地图导航。请在微信真机中测试导航，当前已为你复制服务地址。",
+              showCancel: false
+            });
+          },
+          fail: () => {
+            common_vendor.index.showModal({
+              title: "请在真机导航",
+              content: "微信开发者工具里无法直接拉起腾讯地图导航，请在微信真机中测试。",
+              showCancel: false
+            });
+          }
+        });
+        return;
+      }
+      common_vendor.index.openLocation({
+        latitude,
+        longitude,
+        name: this.orderDetail.contactName || "服务地址",
+        address: this.orderDetail.fullAddress || "",
+        scale: 16
+      });
+    },
     formatPeopleCount(value) {
       if (value === 0) {
         return "0人";
@@ -367,53 +420,58 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     G: $data.actionLoading,
     H: common_vendor.o((...args) => $options.handleStart && $options.handleStart(...args))
   } : {}, {
-    I: $options.showFinishButton
+    I: $options.showNavigateButton
+  }, $options.showNavigateButton ? {
+    J: $data.actionLoading,
+    K: common_vendor.o((...args) => $options.openServiceNavigation && $options.openServiceNavigation(...args))
+  } : {}, {
+    L: $options.showFinishButton
   }, $options.showFinishButton ? {
-    J: $data.actionLoading && $data.pendingAction === "finish",
-    K: $data.actionLoading,
-    L: common_vendor.o((...args) => $options.handleFinish && $options.handleFinish(...args))
+    M: $data.actionLoading && $data.pendingAction === "finish",
+    N: $data.actionLoading,
+    O: common_vendor.o((...args) => $options.handleFinish && $options.handleFinish(...args))
   } : {}, {
-    M: $options.showStatusNotice
+    P: $options.showStatusNotice
   }, $options.showStatusNotice ? {
-    N: common_vendor.t($options.statusPanelLabel),
-    O: common_vendor.t($options.statusNoticeText),
-    P: common_vendor.n($options.statusPanelClass)
+    Q: common_vendor.t($options.statusPanelLabel),
+    R: common_vendor.t($options.statusNoticeText),
+    S: common_vendor.n($options.statusPanelClass)
   } : {}, {
-    Q: $options.showViewReviewButton
+    T: $options.showViewReviewButton
   }, $options.showViewReviewButton ? {
-    R: $data.actionLoading,
-    S: common_vendor.o((...args) => $options.openReviewPopup && $options.openReviewPopup(...args))
+    U: $data.actionLoading,
+    V: common_vendor.o((...args) => $options.openReviewPopup && $options.openReviewPopup(...args))
   } : {}, {
-    T: $data.actionLoading,
-    U: common_vendor.o((...args) => $options.backToList && $options.backToList(...args))
+    W: $data.actionLoading,
+    X: common_vendor.o((...args) => $options.backToList && $options.backToList(...args))
   }), {
     b: !$data.orderDetail.id,
-    V: $data.showRejectPopup
+    Y: $data.showRejectPopup
   }, $data.showRejectPopup ? {
-    W: $data.rejectReason,
-    X: common_vendor.o(($event) => $data.rejectReason = $event.detail.value),
-    Y: $data.actionLoading,
-    Z: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args)),
-    aa: $data.actionLoading && $data.pendingAction === "reject",
+    Z: $data.rejectReason,
+    aa: common_vendor.o(($event) => $data.rejectReason = $event.detail.value),
     ab: $data.actionLoading,
-    ac: common_vendor.o((...args) => $options.handleReject && $options.handleReject(...args)),
-    ad: common_vendor.o(() => {
+    ac: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args)),
+    ad: $data.actionLoading && $data.pendingAction === "reject",
+    ae: $data.actionLoading,
+    af: common_vendor.o((...args) => $options.handleReject && $options.handleReject(...args)),
+    ag: common_vendor.o(() => {
     }),
-    ae: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args))
+    ah: common_vendor.o((...args) => $options.closeRejectPopup && $options.closeRejectPopup(...args))
   } : {}, {
-    af: $data.showReviewPopup && $data.orderReview && $data.orderReview.id
+    ai: $data.showReviewPopup && $data.orderReview && $data.orderReview.id
   }, $data.showReviewPopup && $data.orderReview && $data.orderReview.id ? common_vendor.e({
-    ag: common_vendor.t($options.formatScore($data.orderReview.overallScore)),
-    ah: common_vendor.t($data.orderReview.isAnonymous === 1 ? "匿名用户" : $options.getReviewUserName($data.orderReview)),
-    ai: common_vendor.t($options.formatFullDateTime($data.orderReview.createdAt)),
-    aj: common_vendor.t($options.formatScore($data.orderReview.dishScore)),
-    ak: common_vendor.t($options.formatScore($data.orderReview.serviceScore)),
-    al: common_vendor.t($options.formatScore($data.orderReview.skillScore)),
-    am: common_vendor.t($options.formatScore($data.orderReview.environmentScore)),
-    an: common_vendor.t($data.orderReview.content || "用户未填写评价内容"),
-    ao: $options.parseImageUrls($data.orderReview.imageUrls).length
+    aj: common_vendor.t($options.formatScore($data.orderReview.overallScore)),
+    ak: common_vendor.t($data.orderReview.isAnonymous === 1 ? "匿名用户" : $options.getReviewUserName($data.orderReview)),
+    al: common_vendor.t($options.formatFullDateTime($data.orderReview.createdAt)),
+    am: common_vendor.t($options.formatScore($data.orderReview.dishScore)),
+    an: common_vendor.t($options.formatScore($data.orderReview.serviceScore)),
+    ao: common_vendor.t($options.formatScore($data.orderReview.skillScore)),
+    ap: common_vendor.t($options.formatScore($data.orderReview.environmentScore)),
+    aq: common_vendor.t($data.orderReview.content || "用户未填写评价内容"),
+    ar: $options.parseImageUrls($data.orderReview.imageUrls).length
   }, $options.parseImageUrls($data.orderReview.imageUrls).length ? {
-    ap: common_vendor.f($options.parseImageUrls($data.orderReview.imageUrls), (url, index, i0) => {
+    as: common_vendor.f($options.parseImageUrls($data.orderReview.imageUrls), (url, index, i0) => {
       return {
         a: `${$data.orderReview.id}-${index}`,
         b: url,
@@ -421,23 +479,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    aq: $data.orderReview.replyContent
+    at: $data.orderReview.replyContent
   }, $data.orderReview.replyContent ? common_vendor.e({
-    ar: common_vendor.t($data.orderReview.replyContent),
-    as: $data.orderReview.replyAt
+    av: common_vendor.t($data.orderReview.replyContent),
+    aw: $data.orderReview.replyAt
   }, $data.orderReview.replyAt ? {
-    at: common_vendor.t($options.formatFullDateTime($data.orderReview.replyAt))
+    ax: common_vendor.t($options.formatFullDateTime($data.orderReview.replyAt))
   } : {}) : {
-    av: $data.reviewReplyContent,
-    aw: common_vendor.o(($event) => $data.reviewReplyContent = $event.detail.value),
-    ax: $data.reviewReplying,
-    ay: $data.reviewReplying,
-    az: common_vendor.o((...args) => $options.submitOrderReviewReply && $options.submitOrderReviewReply(...args))
+    ay: $data.reviewReplyContent,
+    az: common_vendor.o(($event) => $data.reviewReplyContent = $event.detail.value),
+    aA: $data.reviewReplying,
+    aB: $data.reviewReplying,
+    aC: common_vendor.o((...args) => $options.submitOrderReviewReply && $options.submitOrderReviewReply(...args))
   }, {
-    aA: common_vendor.o((...args) => $options.closeReviewPopup && $options.closeReviewPopup(...args)),
-    aB: common_vendor.o(() => {
+    aD: common_vendor.o((...args) => $options.closeReviewPopup && $options.closeReviewPopup(...args)),
+    aE: common_vendor.o(() => {
     }),
-    aC: common_vendor.o((...args) => $options.closeReviewPopup && $options.closeReviewPopup(...args))
+    aF: common_vendor.o((...args) => $options.closeReviewPopup && $options.closeReviewPopup(...args))
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-f5138f84"]]);

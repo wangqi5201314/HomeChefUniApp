@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_chef = require("../../api/chef.js");
+const api_chefSchedule = require("../../api/chef-schedule.js");
 const api_review = require("../../api/review.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
@@ -90,6 +91,10 @@ const _sfc_main = {
       this.loading = true;
       try {
         const dateRange = this.getNextSevenDaysRange();
+        try {
+          await api_chefSchedule.disableExpiredChefScheduleByChefSilently(this.chefId);
+        } catch (error) {
+        }
         const [chefData, scheduleData, reviewData] = await Promise.all([
           api_chef.getChefDetail(this.chefId),
           api_chef.getChefSchedule(this.chefId, dateRange),

@@ -23,9 +23,24 @@ const _sfc_main = {
   data() {
     return {
       bannerList: [
-        "/static/dish1.png",
-        "/static/dish2.png",
-        "/static/dish3.png"
+        {
+          kicker: "同城精选",
+          title: "上门私厨 更省心",
+          desc: "按地址、时段和食材模式智能推荐更合适的厨师。",
+          themeClass: "banner-theme-warm"
+        },
+        {
+          kicker: "预约灵活",
+          title: "早餐午餐晚餐都可约",
+          desc: "支持按日期和时间段筛选，快速找到可服务档期。",
+          themeClass: "banner-theme-fresh"
+        },
+        {
+          kicker: "安心下单",
+          title: "评分、订单量、距离一目了然",
+          desc: "结合服务半径和当前地址，挑选更适合你的厨师。",
+          themeClass: "banner-theme-sun"
+        }
       ],
       userId: "",
       loading: false,
@@ -250,8 +265,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.f($data.bannerList, (item, k0, i0) => {
       return {
-        a: item,
-        b: item
+        a: common_vendor.t(item.kicker),
+        b: common_vendor.t(item.title),
+        c: common_vendor.t(item.desc),
+        d: common_vendor.n(item.themeClass),
+        e: item.title
       };
     }),
     b: $options.hasAddress

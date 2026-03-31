@@ -16,9 +16,53 @@
   width: 100%;
   height: 100%;
 }
-.banner-image.data-v-4978fed5 {
+.banner-panel.data-v-4978fed5 {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   width: 100%;
   height: 100%;
+  padding: 32rpx 30rpx;
+  box-sizing: border-box;
+}
+.banner-theme-warm.data-v-4978fed5 {
+  background:
+    radial-gradient(circle at 80% 22%, rgba(255, 255, 255, 0.35), transparent 18%),
+    linear-gradient(135deg, #d96c3a 0%, #f29a52 52%, #ffd4a8 100%);
+}
+.banner-theme-fresh.data-v-4978fed5 {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.34), transparent 18%),
+    linear-gradient(135deg, #2f8f55 0%, #6dc38a 52%, #d7f0dc 100%);
+}
+.banner-theme-sun.data-v-4978fed5 {
+  background:
+    radial-gradient(circle at 78% 26%, rgba(255, 255, 255, 0.36), transparent 18%),
+    linear-gradient(135deg, #385170 0%, #5f86a8 52%, #f6d9a2 100%);
+}
+.banner-kicker.data-v-4978fed5,
+.banner-title.data-v-4978fed5,
+.banner-desc.data-v-4978fed5 {
+  display: block;
+  color: #ffffff;
+}
+.banner-kicker.data-v-4978fed5 {
+  font-size: 24rpx;
+  letter-spacing: 4rpx;
+  opacity: 0.88;
+}
+.banner-title.data-v-4978fed5 {
+  margin-top: 14rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.banner-desc.data-v-4978fed5 {
+  margin-top: 14rpx;
+  max-width: 78%;
+  font-size: 24rpx;
+  line-height: 1.7;
+  opacity: 0.92;
 }
 .intro-card.data-v-4978fed5,
 .address-card.data-v-4978fed5,

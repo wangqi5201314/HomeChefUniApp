@@ -81,6 +81,14 @@
           开始服务
         </button>
         <button
+          v-if="showNavigateButton"
+          class="ghost-btn full-btn"
+          :disabled="actionLoading"
+          @click="openServiceNavigation"
+        >
+          地图导航
+        </button>
+        <button
           v-if="showFinishButton"
           class="primary-btn full-btn"
           :loading="actionLoading && pendingAction === 'finish'"
@@ -244,8 +252,21 @@ export default {
     showFinishButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.IN_SERVICE
     },
+    showNavigateButton() {
+      return this.hasValidServiceCoordinate &&
+        (
+          this.orderDetail.orderStatus === ORDER_STATUS.PAID ||
+          this.orderDetail.orderStatus === ORDER_STATUS.IN_SERVICE
+        )
+    },
     showViewReviewButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED && Boolean(this.orderReview && this.orderReview.id)
+    },
+    hasValidServiceCoordinate() {
+      const latitude = Number(this.orderDetail.latitude)
+      const longitude = Number(this.orderDetail.longitude)
+
+      return Boolean(latitude && longitude)
     },
     showStatusNotice() {
       return this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY ||
@@ -439,7 +460,9 @@ export default {
     async handleStart() {
       await this.runOrderAction('start', async () => {
         await startChefOrder(this.orderId)
-      }, '已开始服务')
+      }, '已开始服务', false, async () => {
+        this.openServiceNavigation()
+      })
     },
     async handleFinish() {
       await this.runOrderAction('finish', async () => {
@@ -461,7 +484,7 @@ export default {
         })
       }, '拒单成功', true)
     },
-    async runOrderAction(action, handler, successText, closePopup = false) {
+    async runOrderAction(action, handler, successText, closePopup = false, afterSuccess = null) {
       if (this.actionLoading) {
         return
       }
@@ -481,6 +504,10 @@ export default {
         }
 
         await this.fetchOrderDetail()
+
+        if (typeof afterSuccess === 'function') {
+          await afterSuccess()
+        }
       } catch (error) {
       } finally {
         this.actionLoading = false
@@ -551,6 +578,50 @@ export default {
 
       uni.redirectTo({
         url: '/pages-chef/order/list'
+      })
+    },
+    openServiceNavigation() {
+      if (!this.hasValidServiceCoordinate) {
+        uni.showToast({
+          title: '未获取到服务地址坐标',
+          icon: 'none'
+        })
+        return
+      }
+
+      const latitude = Number(this.orderDetail.latitude)
+      const longitude = Number(this.orderDetail.longitude)
+      const systemInfo = uni.getSystemInfoSync ? uni.getSystemInfoSync() : {}
+
+      if (systemInfo.platform === 'devtools') {
+        const addressText = this.orderDetail.fullAddress || `${latitude},${longitude}`
+
+        uni.setClipboardData({
+          data: addressText,
+          success: () => {
+            uni.showModal({
+              title: '请在真机导航',
+              content: '微信开发者工具里点击“去这里”会尝试打开 qqmap:// 协议，电脑环境无法拉起腾讯地图导航。请在微信真机中测试导航，当前已为你复制服务地址。',
+              showCancel: false
+            })
+          },
+          fail: () => {
+            uni.showModal({
+              title: '请在真机导航',
+              content: '微信开发者工具里无法直接拉起腾讯地图导航，请在微信真机中测试。',
+              showCancel: false
+            })
+          }
+        })
+        return
+      }
+
+      uni.openLocation({
+        latitude,
+        longitude,
+        name: this.orderDetail.contactName || '服务地址',
+        address: this.orderDetail.fullAddress || '',
+        scale: 16
       })
     },
     formatPeopleCount(value) {

@@ -1,4 +1,6 @@
 import request from './request'
+import { BASE_URL } from '../utils/config'
+import { getToken } from '../utils/auth'
 
 export function getMyChefSchedule(params) {
   return request.get('/api/chef/schedule/my', params)
@@ -28,6 +30,49 @@ export function disableExpiredChefSchedule() {
   return request.post('/api/chef/schedule/disable-expired')
 }
 
+export function disableExpiredChefScheduleByChefSilently(chefId) {
+  return new Promise((resolve) => {
+    if (!chefId) {
+      resolve(null)
+      return
+    }
+
+    const token = getToken()
+    const header = {
+      'Content-Type': 'application/json'
+    }
+
+    if (token) {
+      header.Authorization = `Bearer ${token}`
+    }
+
+    uni.request({
+      url: `${BASE_URL}/api/chef/${chefId}/schedule/disable-expired`,
+      method: 'POST',
+      header,
+      success: (response) => {
+        const data = response && response.data ? response.data : null
+
+        if (
+          response &&
+          response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          data &&
+          Number(data.code) === 200
+        ) {
+          resolve(data.data || null)
+          return
+        }
+
+        resolve(null)
+      },
+      fail: () => {
+        resolve(null)
+      }
+    })
+  })
+}
+
 export default {
   getMySchedule,
   getMyChefSchedule,
@@ -35,5 +80,6 @@ export default {
   updateChefSchedule,
   deleteChefSchedule,
   updateChefScheduleAvailability,
-  disableExpiredChefSchedule
+  disableExpiredChefSchedule,
+  disableExpiredChefScheduleByChefSilently
 }
