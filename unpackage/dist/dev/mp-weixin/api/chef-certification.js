@@ -3,11 +3,12 @@ const common_vendor = require("../common/vendor.js");
 const api_request = require("./request.js");
 const utils_config = require("../utils/config.js");
 const utils_auth = require("../utils/auth.js");
+const utils_toastMessage = require("../utils/toast-message.js");
 const CHEF_LOGIN_PAGE = "/pages-chef/login/index";
 function redirectToChefLogin(message) {
   utils_auth.clearAuth();
   common_vendor.index.showToast({
-    title: message || "登录已失效",
+    title: utils_toastMessage.normalizeToastMessage(message) || "登录已失效",
     icon: "none"
   });
   common_vendor.index.reLaunch({
@@ -42,7 +43,7 @@ function getChefCertification() {
           return;
         }
         common_vendor.index.showToast({
-          title: message,
+          title: utils_toastMessage.normalizeToastMessage(message),
           icon: "none"
         });
         reject(data || response);

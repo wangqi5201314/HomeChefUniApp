@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_ai = require("../../api/ai.js");
 const utils_auth = require("../../utils/auth.js");
+const utils_toastMessage = require("../../utils/toast-message.js");
 const WELCOME_TEXT = "你好，我是小嘉AI，可以帮你解答做菜、调味、火候、食材搭配等问题。";
 function createMessage(role, content, extra) {
   return {
@@ -123,7 +124,7 @@ const _sfc_main = {
       this.sending = false;
       this.persistMessages();
       common_vendor.index.showToast({
-        title: error && error.message ? error.message : "发送失败，请稍后重试",
+        title: error && error.message ? utils_toastMessage.normalizeToastMessage(error.message) : "发送失败，请稍后重试",
         icon: "none"
       });
       this.$nextTick(() => {

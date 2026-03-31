@@ -3,10 +3,11 @@ const common_vendor = require("../common/vendor.js");
 const api_request = require("./request.js");
 const utils_config = require("../utils/config.js");
 const utils_auth = require("../utils/auth.js");
+const utils_toastMessage = require("../utils/toast-message.js");
 function redirectToLogin(message) {
   utils_auth.clearAuth();
   common_vendor.index.showToast({
-    title: message || "登录已失效",
+    title: utils_toastMessage.normalizeToastMessage(message) || "登录已失效",
     icon: "none"
   });
   common_vendor.index.reLaunch({
@@ -41,7 +42,7 @@ function createOrder(data) {
       },
       fail: (error) => {
         reject({
-          message: "网络异常",
+          message: utils_toastMessage.normalizeToastMessage("网络异常"),
           raw: error
         });
       }

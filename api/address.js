@@ -1,4 +1,6 @@
 import request from './request'
+import { BASE_URL } from '../utils/config'
+import { getToken } from '../utils/auth'
 
 function normalizeAddressPayload(data = {}) {
   const payload = {
@@ -36,6 +38,45 @@ export function getDefaultUserAddress(params) {
   return request.get('/api/user/address/default', params)
 }
 
+export function getDefaultUserAddressSilently(params = {}) {
+  return new Promise((resolve) => {
+    const token = getToken()
+    const header = {
+      'Content-Type': 'application/json'
+    }
+
+    if (token) {
+      header.Authorization = `Bearer ${token}`
+    }
+
+    uni.request({
+      url: `${BASE_URL}/api/user/address/default`,
+      method: 'GET',
+      data: params,
+      header,
+      success: (response) => {
+        const data = response && response.data ? response.data : null
+
+        if (
+          response &&
+          response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          data &&
+          Number(data.code) === 200
+        ) {
+          resolve(data.data || null)
+          return
+        }
+
+        resolve(null)
+      },
+      fail: () => {
+        resolve(null)
+      }
+    })
+  })
+}
+
 export function getAddressDetail(id) {
   return request.get(`/api/user/address/${id}`)
 }
@@ -59,6 +100,7 @@ export function setDefaultAddress(id, data) {
 export default {
   getUserAddressList,
   getDefaultUserAddress,
+  getDefaultUserAddressSilently,
   getAddressDetail,
   createAddress,
   updateAddress,

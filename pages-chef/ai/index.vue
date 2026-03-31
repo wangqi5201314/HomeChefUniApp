@@ -63,6 +63,7 @@
 import { chatWithAiStream } from '../../api/ai'
 import ChefTabbar from '../../components/chef-tabbar.vue'
 import { CHEF_AI_CHAT_HISTORY_KEY } from '../../utils/auth'
+import { normalizeToastMessage } from '../../utils/toast-message'
 
 const WELCOME_TEXT = '你好，我是小嘉AI，可以帮你解答做菜、调味、火候、食材搭配等问题。'
 
@@ -208,7 +209,7 @@ export default {
       this.persistMessages()
 
       uni.showToast({
-        title: error && error.message ? error.message : '发送失败，请稍后重试',
+        title: error && error.message ? normalizeToastMessage(error.message) : '发送失败，请稍后重试',
         icon: 'none'
       })
 

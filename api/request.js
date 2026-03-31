@@ -1,5 +1,6 @@
 import { BASE_URL, LOGIN_PAGE } from '../utils/config'
 import { clearAuth, getToken } from '../utils/auth'
+import { normalizeToastMessage } from '../utils/toast-message'
 
 const CHEF_LOGIN_PAGE = '/pages-chef/login/index'
 
@@ -29,7 +30,7 @@ function buildHeader(customHeader = {}) {
 
 function showToast(message) {
   uni.showToast({
-    title: message || '请求失败',
+    title: normalizeToastMessage(message) || '请求失败',
     icon: 'none'
   })
 }

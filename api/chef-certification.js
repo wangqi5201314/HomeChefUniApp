@@ -1,6 +1,7 @@
 import request from './request'
 import { BASE_URL } from '../utils/config'
 import { clearAuth, getToken } from '../utils/auth'
+import { normalizeToastMessage } from '../utils/toast-message'
 
 const CHEF_LOGIN_PAGE = '/pages-chef/login/index'
 
@@ -8,7 +9,7 @@ function redirectToChefLogin(message) {
   clearAuth()
 
   uni.showToast({
-    title: message || '登录已失效',
+    title: normalizeToastMessage(message) || '登录已失效',
     icon: 'none'
   })
 
@@ -50,7 +51,7 @@ export function getChefCertification() {
         }
 
         uni.showToast({
-          title: message,
+          title: normalizeToastMessage(message),
           icon: 'none'
         })
         reject(data || response)

@@ -133,7 +133,7 @@ const _sfc_main = {
         return;
       }
       try {
-        const data = await api_address.getDefaultUserAddress({
+        const data = await api_address.getDefaultUserAddressSilently({
           userId: this.userId
         });
         this.selectedAddress = data && data.id ? data : null;

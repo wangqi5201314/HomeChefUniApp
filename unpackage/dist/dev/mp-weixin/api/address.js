@@ -1,5 +1,8 @@
 "use strict";
+const common_vendor = require("../common/vendor.js");
 const api_request = require("./request.js");
+const utils_config = require("../utils/config.js");
+const utils_auth = require("../utils/auth.js");
 function normalizeAddressPayload(data = {}) {
   const payload = {
     userId: data.userId === 0 || data.userId ? Number(data.userId) : void 0,
@@ -22,8 +25,33 @@ function normalizeAddressPayload(data = {}) {
 function getUserAddressList(params) {
   return api_request.request.get("/api/user/address/list", params);
 }
-function getDefaultUserAddress(params) {
-  return api_request.request.get("/api/user/address/default", params);
+function getDefaultUserAddressSilently(params = {}) {
+  return new Promise((resolve) => {
+    const token = utils_auth.getToken();
+    const header = {
+      "Content-Type": "application/json"
+    };
+    if (token) {
+      header.Authorization = `Bearer ${token}`;
+    }
+    common_vendor.index.request({
+      url: `${utils_config.BASE_URL}/api/user/address/default`,
+      method: "GET",
+      data: params,
+      header,
+      success: (response) => {
+        const data = response && response.data ? response.data : null;
+        if (response && response.statusCode >= 200 && response.statusCode < 300 && data && Number(data.code) === 200) {
+          resolve(data.data || null);
+          return;
+        }
+        resolve(null);
+      },
+      fail: () => {
+        resolve(null);
+      }
+    });
+  });
 }
 function getAddressDetail(id) {
   return api_request.request.get(`/api/user/address/${id}`);
@@ -43,7 +71,7 @@ function setDefaultAddress(id, data) {
 exports.createAddress = createAddress;
 exports.deleteAddress = deleteAddress;
 exports.getAddressDetail = getAddressDetail;
-exports.getDefaultUserAddress = getDefaultUserAddress;
+exports.getDefaultUserAddressSilently = getDefaultUserAddressSilently;
 exports.getUserAddressList = getUserAddressList;
 exports.setDefaultAddress = setDefaultAddress;
 exports.updateAddress = updateAddress;

@@ -173,7 +173,7 @@
 </template>
 
 <script>
-import { getDefaultUserAddress } from '../../api/address'
+import { getDefaultUserAddressSilently } from '../../api/address'
 import { recommendChefs } from '../../api/chef'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { SORT_OPTIONS, getSortTypeText } from '../../utils/sort-options'
@@ -317,7 +317,7 @@ export default {
       }
 
       try {
-        const data = await getDefaultUserAddress({
+        const data = await getDefaultUserAddressSilently({
           userId: this.userId
         })
         this.selectedAddress = data && data.id ? data : null

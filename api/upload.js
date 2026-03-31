@@ -1,5 +1,6 @@
 import { BASE_URL, LOGIN_PAGE } from '../utils/config'
 import { clearAuth, getToken } from '../utils/auth'
+import { normalizeToastMessage } from '../utils/toast-message'
 
 const CHEF_LOGIN_PAGE = '/pages-chef/login/index'
 
@@ -7,7 +8,7 @@ let redirectingToLogin = false
 
 function showToast(message) {
   uni.showToast({
-    title: message || '上传失败',
+    title: normalizeToastMessage(message) || '上传失败',
     icon: 'none'
   })
 }

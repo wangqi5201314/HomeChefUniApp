@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const api_user = require("../../api/user.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_config = require("../../utils/config.js");
+const utils_toastMessage = require("../../utils/toast-message.js");
 const utils_userStatus = require("../../utils/user-status.js");
 function createDefaultForm() {
   return {
@@ -141,7 +142,7 @@ const _sfc_main = {
                 return;
               }
               if (uploadRes.statusCode < 200 || uploadRes.statusCode >= 300 || result.code !== 200) {
-                common_vendor.index.showToast({ title: result.message || "上传失败", icon: "none" });
+                common_vendor.index.showToast({ title: utils_toastMessage.normalizeToastMessage(result.message) || "上传失败", icon: "none" });
                 return;
               }
               const fileUrl = result.data && result.data.fileUrl ? result.data.fileUrl : "";

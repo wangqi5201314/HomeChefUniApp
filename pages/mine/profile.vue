@@ -71,6 +71,7 @@
 import { getCurrentUserInfo, updateCurrentUserInfo } from '../../api/user'
 import { clearAuth, getToken, setUserInfo } from '../../utils/auth'
 import { BASE_URL } from '../../utils/config'
+import { normalizeToastMessage } from '../../utils/toast-message'
 import { getUserStatusText } from '../../utils/user-status'
 
 function createDefaultForm() {
@@ -211,7 +212,7 @@ export default {
                 return
               }
               if (uploadRes.statusCode < 200 || uploadRes.statusCode >= 300 || result.code !== 200) {
-                uni.showToast({ title: result.message || '上传失败', icon: 'none' })
+                uni.showToast({ title: normalizeToastMessage(result.message) || '上传失败', icon: 'none' })
                 return
               }
               const fileUrl = result.data && result.data.fileUrl ? result.data.fileUrl : ''

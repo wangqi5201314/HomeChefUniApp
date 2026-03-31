@@ -6,6 +6,7 @@ const api_order = require("../../api/order.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
+const utils_toastMessage = require("../../utils/toast-message.js");
 const USER_ID_KEY = "user_id";
 const SELECTED_ADDRESS_KEY = "selected_address";
 const FIXED_TOTAL_AMOUNT = 299;
@@ -153,7 +154,7 @@ const _sfc_main = {
       try {
         const [chefData, addressData] = await Promise.all([
           api_chef.getChefDetail(this.orderInfo.chefId),
-          api_address.getDefaultUserAddress({
+          api_address.getDefaultUserAddressSilently({
             userId: this.userId
           })
         ]);
@@ -288,10 +289,10 @@ const _sfc_main = {
         return error;
       }
       if (error.message) {
-        return String(error.message);
+        return utils_toastMessage.normalizeToastMessage(String(error.message));
       }
       if (error.data && error.data.message) {
-        return String(error.data.message);
+        return utils_toastMessage.normalizeToastMessage(String(error.data.message));
       }
       return "下单失败，请稍后重试";
     },

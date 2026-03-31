@@ -2,6 +2,7 @@
 const common_vendor = require("../common/vendor.js");
 const utils_config = require("../utils/config.js");
 const utils_auth = require("../utils/auth.js");
+const utils_toastMessage = require("../utils/toast-message.js");
 const CHEF_LOGIN_PAGE = "/pages-chef/login/index";
 let redirectingToLogin = false;
 function buildUrl(url) {
@@ -23,7 +24,7 @@ function buildHeader(customHeader = {}) {
 }
 function showToast(message) {
   common_vendor.index.showToast({
-    title: message || "请求失败",
+    title: utils_toastMessage.normalizeToastMessage(message) || "请求失败",
     icon: "none"
   });
 }

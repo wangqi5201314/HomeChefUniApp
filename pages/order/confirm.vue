@@ -170,12 +170,13 @@
 </template>
 
 <script>
-import { getDefaultUserAddress } from '../../api/address'
+import { getDefaultUserAddressSilently } from '../../api/address'
 import { getChefDetail } from '../../api/chef'
 import { createOrder } from '../../api/order'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { formatScheduleDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText, isValidTimeSlot, normalizeTimeSlot } from '../../utils/time-slot'
+import { normalizeToastMessage } from '../../utils/toast-message'
 
 const USER_ID_KEY = 'user_id'
 const SELECTED_ADDRESS_KEY = 'selected_address'
@@ -337,7 +338,7 @@ export default {
       try {
         const [chefData, addressData] = await Promise.all([
           getChefDetail(this.orderInfo.chefId),
-          getDefaultUserAddress({
+          getDefaultUserAddressSilently({
             userId: this.userId
           })
         ])
@@ -488,11 +489,11 @@ export default {
       }
 
       if (error.message) {
-        return String(error.message)
+        return normalizeToastMessage(String(error.message))
       }
 
       if (error.data && error.data.message) {
-        return String(error.data.message)
+        return normalizeToastMessage(String(error.data.message))
       }
 
       return '下单失败，请稍后重试'
