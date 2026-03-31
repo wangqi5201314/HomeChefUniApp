@@ -58,6 +58,41 @@ function searchAddress(keyword, options = {}) {
     }).filter((item) => item.latitude && item.longitude);
   });
 }
+function suggestAddress(keyword, options = {}) {
+  const normalizedKeyword = keyword ? String(keyword).trim() : "";
+  const limit = Number(options.limit) > 0 ? Number(options.limit) : 5;
+  if (!normalizedKeyword) {
+    return Promise.resolve([]);
+  }
+  const requestData = {
+    keyword: normalizedKeyword,
+    region_fix: typeof options.regionFix === "number" ? options.regionFix : 0
+  };
+  if (options.region) {
+    requestData.region = options.region;
+  }
+  if (options.location && options.location.latitude && options.location.longitude) {
+    requestData.location = `${Number(options.location.latitude)},${Number(options.location.longitude)}`;
+  }
+  return requestTencentMap("/place/v1/suggestion", requestData).then((response) => {
+    const list = Array.isArray(response.data) ? response.data : [];
+    return list.map((item, index) => {
+      const latitude = item.location ? Number(item.location.lat) : Number(item.latitude || 0);
+      const longitude = item.location ? Number(item.location.lng) : Number(item.longitude || 0);
+      return {
+        id: item.id || `${item.title || "suggestion"}-${index}`,
+        title: item.title || "",
+        address: item.address || "",
+        latitude,
+        longitude,
+        province: item.province || "",
+        city: item.city || "",
+        district: item.district || "",
+        raw: item
+      };
+    }).filter((item) => item.latitude && item.longitude).slice(0, limit);
+  });
+}
 function reverseGeocoder(latitude, longitude) {
   return requestTencentMap("/geocoder/v1", {
     location: `${Number(latitude)},${Number(longitude)}`,
@@ -112,4 +147,5 @@ function buildLocationPayloadByGeocoder(result, options = {}) {
 exports.buildLocationPayloadByGeocoder = buildLocationPayloadByGeocoder;
 exports.reverseGeocoder = reverseGeocoder;
 exports.searchAddress = searchAddress;
+exports.suggestAddress = suggestAddress;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/utils/tencent-map.js.map

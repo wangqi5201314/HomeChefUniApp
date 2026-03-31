@@ -28,7 +28,7 @@
     <view class="form-card">
       <view class="section-head">
         <text class="section-title">地图选址</text>
-        <text class="section-tip">搜索或点击地图可自动回填地址</text>
+        <text class="section-tip">搜索地址、点击地图或拖动地图后松手，都可自动回填地址。</text>
       </view>
 
       <view class="search-bar">
@@ -37,6 +37,7 @@
           class="search-input"
           confirm-type="search"
           placeholder="搜索小区、写字楼、街道等地址"
+          @input="handleKeywordInput"
           @confirm="handleSearch"
         />
         <button class="search-btn" size="mini" type="primary" :loading="searching" @click="handleSearch">
@@ -58,14 +59,18 @@
 
       <view class="map-wrapper">
         <map
+          id="addressMap"
           class="map"
           :latitude="mapLatitude"
           :longitude="mapLongitude"
           :scale="16"
           :show-location="true"
+          @regionchange="handleMapRegionChange"
           @tap="handleMapTap"
         />
-        <view class="map-center-pin">+</view>
+        <view class="map-center-pin">
+          <image class="map-center-pin-image" :src="markerIcon" mode="aspectFit" />
+        </view>
       </view>
 
       <view class="selected-location">
@@ -138,11 +143,12 @@
 <script>
 import { createAddress, getAddressDetail, updateAddress } from '../../api/address'
 import { loadProvinceRegion, provinceList } from '../../data/address/regions'
-import { reverseGeocoder, searchAddress } from '../../utils/tencent-map'
+import { buildLocationPayloadByGeocoder, reverseGeocoder, searchAddress, suggestAddress } from '../../utils/tencent-map'
 
 const USER_ID_KEY = 'user_id'
 const DEFAULT_LATITUDE = 39.90469
 const DEFAULT_LONGITUDE = 116.40717
+const MARKER_ICON = '/static/service-location-marker.png'
 
 function createDefaultForm() {
   return {
@@ -174,6 +180,11 @@ export default {
       searchResults: [],
       mapLatitude: DEFAULT_LATITUDE,
       mapLongitude: DEFAULT_LONGITUDE,
+      markerIcon: MARKER_ICON,
+      mapContext: null,
+      regionChangeTimer: null,
+      suggestTimer: null,
+      ignoreNextRegionChange: false,
       form: createDefaultForm()
     }
   },
@@ -260,7 +271,25 @@ export default {
 
     this.initDefaultRegion()
   },
+  onUnload() {
+    if (this.regionChangeTimer) {
+      clearTimeout(this.regionChangeTimer)
+      this.regionChangeTimer = null
+    }
+
+    if (this.suggestTimer) {
+      clearTimeout(this.suggestTimer)
+      this.suggestTimer = null
+    }
+  },
   methods: {
+    getMapContext() {
+      if (!this.mapContext) {
+        this.mapContext = uni.createMapContext('addressMap', this)
+      }
+
+      return this.mapContext
+    },
     getProvinceByName(name) {
       return this.provinceOptions.find((item) => item.name === name) || null
     },
@@ -306,6 +335,7 @@ export default {
       this.form.province = firstProvince.name
       this.loadProvinceData(firstProvince.code)
       this.applyRegionValues('', '', '')
+      this.setMapCenter(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
     },
     syncRegionByForm() {
       const province = this.getProvinceByName(this.form.province) || this.provinceOptions[0] || null
@@ -321,10 +351,25 @@ export default {
       this.applyRegionValues(this.form.city, this.form.district, this.form.town)
     },
     setMapCenter(latitude, longitude) {
+      this.ignoreNextRegionChange = true
       this.mapLatitude = Number(latitude) || DEFAULT_LATITUDE
       this.mapLongitude = Number(longitude) || DEFAULT_LONGITUDE
       this.form.latitude = this.mapLatitude
       this.form.longitude = this.mapLongitude
+    },
+    applyLocationPayload(locationData = {}) {
+      const province = this.getProvinceByName(locationData.province) || this.provinceOptions[0] || null
+
+      if (province) {
+        this.form.province = province.name
+        this.loadProvinceData(province.code)
+        this.applyRegionValues(locationData.city, locationData.district, locationData.town)
+      } else {
+        this.syncRegionByForm()
+      }
+
+      this.form.detailAddress = locationData.detailAddress || ''
+      this.setMapCenter(locationData.latitude, locationData.longitude)
     },
     async loadAddressDetail() {
       try {
@@ -394,6 +439,51 @@ export default {
     handleDefaultChange(event) {
       this.form.isDefault = event.detail.value ? 1 : 0
     },
+    handleKeywordInput(event) {
+      const value = event && event.detail ? String(event.detail.value || '') : ''
+      this.searchKeyword = value
+
+      if (this.suggestTimer) {
+        clearTimeout(this.suggestTimer)
+      }
+
+      if (!value.trim()) {
+        this.searchResults = []
+        return
+      }
+
+      this.suggestTimer = setTimeout(() => {
+        this.loadSuggestionList(value)
+      }, 260)
+    },
+    async loadSuggestionList(keyword) {
+      const normalizedKeyword = keyword ? String(keyword).trim() : ''
+
+      if (!normalizedKeyword) {
+        this.searchResults = []
+        return
+      }
+
+      try {
+        const list = await suggestAddress(normalizedKeyword, {
+          region: this.form.city || this.form.province || '',
+          location: {
+            latitude: this.mapLatitude,
+            longitude: this.mapLongitude
+          }
+        })
+
+        if (normalizedKeyword !== String(this.searchKeyword || '').trim()) {
+          return
+        }
+
+        this.searchResults = Array.isArray(list) ? list : []
+      } catch (error) {
+        if (normalizedKeyword === String(this.searchKeyword || '').trim()) {
+          this.searchResults = []
+        }
+      }
+    },
     async handleSearch() {
       const keyword = this.searchKeyword.trim()
 
@@ -458,56 +548,61 @@ export default {
 
       await this.fillFormByCoordinate(latitude, longitude)
     },
-    extractTownName(result, simplify) {
-      return (
-        (result.address_reference &&
-          result.address_reference.town &&
-          (result.address_reference.town.title || result.address_reference.town.name)) ||
-        (result.address_component && result.address_component.street) ||
-        simplify.street ||
-        ''
-      )
-    },
-    extractDetailAddress(result, simplify, fallback) {
-      const precise = [simplify.street, simplify.street_number].filter(Boolean).join('')
-      if (precise) {
-        return precise
+    handleMapRegionChange(event) {
+      const detail = event && event.detail ? event.detail : {}
+
+      if (detail.type !== 'end') {
+        return
       }
 
-      if (fallback && fallback.title) {
-        return fallback.title
+      if (this.ignoreNextRegionChange) {
+        this.ignoreNextRegionChange = false
+        return
       }
 
-      return (
-        simplify.recommend ||
-        simplify.rough ||
-        (result.formatted_addresses && result.formatted_addresses.recommend) ||
-        ''
-      )
+      if (this.regionChangeTimer) {
+        clearTimeout(this.regionChangeTimer)
+      }
+
+      this.regionChangeTimer = setTimeout(() => {
+        const mapContext = this.getMapContext()
+
+        if (!mapContext || typeof mapContext.getCenterLocation !== 'function') {
+          return
+        }
+
+        mapContext.getCenterLocation({
+          success: ({ latitude, longitude }) => {
+            const nextLatitude = Number(latitude)
+            const nextLongitude = Number(longitude)
+            const currentLatitude = Number(this.form.latitude)
+            const currentLongitude = Number(this.form.longitude)
+
+            if (!nextLatitude || !nextLongitude) {
+              return
+            }
+
+            if (
+              Math.abs(nextLatitude - currentLatitude) < 0.00005
+              && Math.abs(nextLongitude - currentLongitude) < 0.00005
+            ) {
+              return
+            }
+
+            this.fillFormByCoordinate(nextLatitude, nextLongitude)
+          }
+        })
+      }, 260)
     },
     async fillFormByCoordinate(latitude, longitude, fallback = {}) {
       try {
-        this.setMapCenter(latitude, longitude)
-        const data = await reverseGeocoder(latitude, longitude)
-        const province = data.province || ''
-        const city = data.city || ''
-        const district = data.district || ''
-        const town = data.town || ''
-        const detailAddress = this.extractDetailAddress(data.raw, data.simplify, fallback)
-
-        if (province) {
-          this.form.province = province
-          const provinceItem = this.getProvinceByName(province)
-          if (provinceItem) {
-            this.loadProvinceData(provinceItem.code)
-          }
-        }
-
-        this.applyRegionValues(city, district, town)
-
-        if (detailAddress) {
-          this.form.detailAddress = detailAddress
-        }
+        const geocoderResult = await reverseGeocoder(latitude, longitude)
+        const payload = buildLocationPayloadByGeocoder(geocoderResult, {
+          detailAddress: fallback.title || fallback.address || '',
+          latitude,
+          longitude
+        })
+        this.applyLocationPayload(payload)
 
         uni.showToast({
           title: '地址已回填',
@@ -766,18 +861,16 @@ export default {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 48rpx;
-  height: 48rpx;
-  margin-left: -24rpx;
-  margin-top: -24rpx;
-  border-radius: 50%;
-  background: rgba(217, 108, 58, 0.95);
-  color: #ffffff;
-  font-size: 34rpx;
-  line-height: 48rpx;
-  text-align: center;
+  width: 68rpx;
+  height: 68rpx;
+  transform: translate(-50%, -100%);
   pointer-events: none;
-  box-shadow: 0 8rpx 20rpx rgba(217, 108, 58, 0.25);
+  z-index: 2;
+}
+
+.map-center-pin-image {
+  width: 100%;
+  height: 100%;
 }
 
 .selected-location {

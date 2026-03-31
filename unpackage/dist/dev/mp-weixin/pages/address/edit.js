@@ -6,6 +6,7 @@ const utils_tencentMap = require("../../utils/tencent-map.js");
 const USER_ID_KEY = "user_id";
 const DEFAULT_LATITUDE = 39.90469;
 const DEFAULT_LONGITUDE = 116.40717;
+const MARKER_ICON = "/static/service-location-marker.png";
 function createDefaultForm() {
   return {
     contactName: "",
@@ -35,6 +36,11 @@ const _sfc_main = {
       searchResults: [],
       mapLatitude: DEFAULT_LATITUDE,
       mapLongitude: DEFAULT_LONGITUDE,
+      markerIcon: MARKER_ICON,
+      mapContext: null,
+      regionChangeTimer: null,
+      suggestTimer: null,
+      ignoreNextRegionChange: false,
       form: createDefaultForm()
     };
   },
@@ -111,7 +117,23 @@ const _sfc_main = {
     }
     this.initDefaultRegion();
   },
+  onUnload() {
+    if (this.regionChangeTimer) {
+      clearTimeout(this.regionChangeTimer);
+      this.regionChangeTimer = null;
+    }
+    if (this.suggestTimer) {
+      clearTimeout(this.suggestTimer);
+      this.suggestTimer = null;
+    }
+  },
   methods: {
+    getMapContext() {
+      if (!this.mapContext) {
+        this.mapContext = common_vendor.index.createMapContext("addressMap", this);
+      }
+      return this.mapContext;
+    },
     getProvinceByName(name) {
       return this.provinceOptions.find((item) => item.name === name) || null;
     },
@@ -152,6 +174,7 @@ const _sfc_main = {
       this.form.province = firstProvince.name;
       this.loadProvinceData(firstProvince.code);
       this.applyRegionValues("", "", "");
+      this.setMapCenter(DEFAULT_LATITUDE, DEFAULT_LONGITUDE);
     },
     syncRegionByForm() {
       const province = this.getProvinceByName(this.form.province) || this.provinceOptions[0] || null;
@@ -165,10 +188,23 @@ const _sfc_main = {
       this.applyRegionValues(this.form.city, this.form.district, this.form.town);
     },
     setMapCenter(latitude, longitude) {
+      this.ignoreNextRegionChange = true;
       this.mapLatitude = Number(latitude) || DEFAULT_LATITUDE;
       this.mapLongitude = Number(longitude) || DEFAULT_LONGITUDE;
       this.form.latitude = this.mapLatitude;
       this.form.longitude = this.mapLongitude;
+    },
+    applyLocationPayload(locationData = {}) {
+      const province = this.getProvinceByName(locationData.province) || this.provinceOptions[0] || null;
+      if (province) {
+        this.form.province = province.name;
+        this.loadProvinceData(province.code);
+        this.applyRegionValues(locationData.city, locationData.district, locationData.town);
+      } else {
+        this.syncRegionByForm();
+      }
+      this.form.detailAddress = locationData.detailAddress || "";
+      this.setMapCenter(locationData.latitude, locationData.longitude);
     },
     async loadAddressDetail() {
       try {
@@ -230,6 +266,44 @@ const _sfc_main = {
     handleDefaultChange(event) {
       this.form.isDefault = event.detail.value ? 1 : 0;
     },
+    handleKeywordInput(event) {
+      const value = event && event.detail ? String(event.detail.value || "") : "";
+      this.searchKeyword = value;
+      if (this.suggestTimer) {
+        clearTimeout(this.suggestTimer);
+      }
+      if (!value.trim()) {
+        this.searchResults = [];
+        return;
+      }
+      this.suggestTimer = setTimeout(() => {
+        this.loadSuggestionList(value);
+      }, 260);
+    },
+    async loadSuggestionList(keyword) {
+      const normalizedKeyword = keyword ? String(keyword).trim() : "";
+      if (!normalizedKeyword) {
+        this.searchResults = [];
+        return;
+      }
+      try {
+        const list = await utils_tencentMap.suggestAddress(normalizedKeyword, {
+          region: this.form.city || this.form.province || "",
+          location: {
+            latitude: this.mapLatitude,
+            longitude: this.mapLongitude
+          }
+        });
+        if (normalizedKeyword !== String(this.searchKeyword || "").trim()) {
+          return;
+        }
+        this.searchResults = Array.isArray(list) ? list : [];
+      } catch (error) {
+        if (normalizedKeyword === String(this.searchKeyword || "").trim()) {
+          this.searchResults = [];
+        }
+      }
+    },
     async handleSearch() {
       const keyword = this.searchKeyword.trim();
       if (!keyword || this.searching) {
@@ -287,39 +361,49 @@ const _sfc_main = {
       }
       await this.fillFormByCoordinate(latitude, longitude);
     },
-    extractTownName(result, simplify) {
-      return result.address_reference && result.address_reference.town && (result.address_reference.town.title || result.address_reference.town.name) || result.address_component && result.address_component.street || simplify.street || "";
-    },
-    extractDetailAddress(result, simplify, fallback) {
-      const precise = [simplify.street, simplify.street_number].filter(Boolean).join("");
-      if (precise) {
-        return precise;
+    handleMapRegionChange(event) {
+      const detail = event && event.detail ? event.detail : {};
+      if (detail.type !== "end") {
+        return;
       }
-      if (fallback && fallback.title) {
-        return fallback.title;
+      if (this.ignoreNextRegionChange) {
+        this.ignoreNextRegionChange = false;
+        return;
       }
-      return simplify.recommend || simplify.rough || result.formatted_addresses && result.formatted_addresses.recommend || "";
+      if (this.regionChangeTimer) {
+        clearTimeout(this.regionChangeTimer);
+      }
+      this.regionChangeTimer = setTimeout(() => {
+        const mapContext = this.getMapContext();
+        if (!mapContext || typeof mapContext.getCenterLocation !== "function") {
+          return;
+        }
+        mapContext.getCenterLocation({
+          success: ({ latitude, longitude }) => {
+            const nextLatitude = Number(latitude);
+            const nextLongitude = Number(longitude);
+            const currentLatitude = Number(this.form.latitude);
+            const currentLongitude = Number(this.form.longitude);
+            if (!nextLatitude || !nextLongitude) {
+              return;
+            }
+            if (Math.abs(nextLatitude - currentLatitude) < 5e-5 && Math.abs(nextLongitude - currentLongitude) < 5e-5) {
+              return;
+            }
+            this.fillFormByCoordinate(nextLatitude, nextLongitude);
+          }
+        });
+      }, 260);
     },
     async fillFormByCoordinate(latitude, longitude, fallback = {}) {
       try {
-        this.setMapCenter(latitude, longitude);
-        const data = await utils_tencentMap.reverseGeocoder(latitude, longitude);
-        const province = data.province || "";
-        const city = data.city || "";
-        const district = data.district || "";
-        const town = data.town || "";
-        const detailAddress = this.extractDetailAddress(data.raw, data.simplify, fallback);
-        if (province) {
-          this.form.province = province;
-          const provinceItem = this.getProvinceByName(province);
-          if (provinceItem) {
-            this.loadProvinceData(provinceItem.code);
-          }
-        }
-        this.applyRegionValues(city, district, town);
-        if (detailAddress) {
-          this.form.detailAddress = detailAddress;
-        }
+        const geocoderResult = await utils_tencentMap.reverseGeocoder(latitude, longitude);
+        const payload = utils_tencentMap.buildLocationPayloadByGeocoder(geocoderResult, {
+          detailAddress: fallback.title || fallback.address || "",
+          latitude,
+          longitude
+        });
+        this.applyLocationPayload(payload);
         common_vendor.index.showToast({
           title: "地址已回填",
           icon: "success"
@@ -446,9 +530,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: common_vendor.o(($event) => $data.form.contactName = $event.detail.value),
     c: $data.form.contactPhone,
     d: common_vendor.o(($event) => $data.form.contactPhone = $event.detail.value),
-    e: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
-    f: $data.searchKeyword,
-    g: common_vendor.o(($event) => $data.searchKeyword = $event.detail.value),
+    e: common_vendor.o([($event) => $data.searchKeyword = $event.detail.value, (...args) => $options.handleKeywordInput && $options.handleKeywordInput(...args)]),
+    f: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
+    g: $data.searchKeyword,
     h: $data.searching,
     i: common_vendor.o((...args) => $options.handleSearch && $options.handleSearch(...args)),
     j: $data.searchResults.length > 0
@@ -464,35 +548,37 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     l: $data.mapLatitude,
     m: $data.mapLongitude,
-    n: common_vendor.o((...args) => $options.handleMapTap && $options.handleMapTap(...args)),
-    o: common_vendor.t($options.selectedLocationText),
-    p: common_vendor.t($data.form.province || "请选择省份"),
-    q: $options.provinceRange,
-    r: $options.provinceIndex,
-    s: common_vendor.o((...args) => $options.handleProvinceChange && $options.handleProvinceChange(...args)),
-    t: common_vendor.t($data.form.city || "请选择城市"),
-    v: !$data.form.city ? 1 : "",
-    w: $options.cityRange,
-    x: $options.cityIndex,
-    y: common_vendor.o((...args) => $options.handleCityChange && $options.handleCityChange(...args)),
-    z: common_vendor.t($data.form.district || "请选择区县"),
-    A: !$data.form.district ? 1 : "",
-    B: $options.districtRange,
-    C: $options.districtIndex,
-    D: common_vendor.o((...args) => $options.handleDistrictChange && $options.handleDistrictChange(...args)),
-    E: common_vendor.t($data.form.town || "请选择镇 / 街道"),
-    F: !$data.form.town ? 1 : "",
-    G: $options.townRange,
-    H: $options.townIndex,
-    I: common_vendor.o((...args) => $options.handleTownChange && $options.handleTownChange(...args)),
-    J: $data.form.detailAddress,
-    K: common_vendor.o(($event) => $data.form.detailAddress = $event.detail.value),
-    L: Number($data.form.isDefault) === 1,
-    M: common_vendor.o((...args) => $options.handleDefaultChange && $options.handleDefaultChange(...args)),
-    N: common_vendor.t($data.saving ? "保存中..." : "保存地址"),
-    O: $data.saving,
-    P: $data.saving,
-    Q: common_vendor.o((...args) => $options.handleSubmit && $options.handleSubmit(...args))
+    n: common_vendor.o((...args) => $options.handleMapRegionChange && $options.handleMapRegionChange(...args)),
+    o: common_vendor.o((...args) => $options.handleMapTap && $options.handleMapTap(...args)),
+    p: $data.markerIcon,
+    q: common_vendor.t($options.selectedLocationText),
+    r: common_vendor.t($data.form.province || "请选择省份"),
+    s: $options.provinceRange,
+    t: $options.provinceIndex,
+    v: common_vendor.o((...args) => $options.handleProvinceChange && $options.handleProvinceChange(...args)),
+    w: common_vendor.t($data.form.city || "请选择城市"),
+    x: !$data.form.city ? 1 : "",
+    y: $options.cityRange,
+    z: $options.cityIndex,
+    A: common_vendor.o((...args) => $options.handleCityChange && $options.handleCityChange(...args)),
+    B: common_vendor.t($data.form.district || "请选择区县"),
+    C: !$data.form.district ? 1 : "",
+    D: $options.districtRange,
+    E: $options.districtIndex,
+    F: common_vendor.o((...args) => $options.handleDistrictChange && $options.handleDistrictChange(...args)),
+    G: common_vendor.t($data.form.town || "请选择镇 / 街道"),
+    H: !$data.form.town ? 1 : "",
+    I: $options.townRange,
+    J: $options.townIndex,
+    K: common_vendor.o((...args) => $options.handleTownChange && $options.handleTownChange(...args)),
+    L: $data.form.detailAddress,
+    M: common_vendor.o(($event) => $data.form.detailAddress = $event.detail.value),
+    N: Number($data.form.isDefault) === 1,
+    O: common_vendor.o((...args) => $options.handleDefaultChange && $options.handleDefaultChange(...args)),
+    P: common_vendor.t($data.saving ? "保存中..." : "保存地址"),
+    Q: $data.saving,
+    R: $data.saving,
+    S: common_vendor.o((...args) => $options.handleSubmit && $options.handleSubmit(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-dcb1f0d8"]]);
