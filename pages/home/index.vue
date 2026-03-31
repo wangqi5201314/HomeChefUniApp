@@ -20,96 +20,176 @@
     <view class="intro-card">
       <view class="intro-header">
         <text class="intro-title">精选上门私厨</text>
-        <text class="intro-tag">严选服务</text>
+        <text class="intro-tag">智能推荐</text>
       </view>
-      <text class="intro-text">挑选擅长菜系、服务经验和评分都更适合你的厨师，预约上门做饭更省心。</text>
+      <text class="intro-text">根据你的服务地址、食材模式、预约日期和时间段，为你推荐更合适的上门厨师。</text>
       <view class="feature-list">
         <view class="feature-item">
           <view class="feature-icon">
             <text class="iconfont feature-iconfont icon-shicai"></text>
           </view>
-          <text class="feature-label">新鲜食材</text>
+          <text class="feature-label">按食材匹配</text>
         </view>
         <view class="feature-item">
           <view class="feature-icon">
             <text class="iconfont feature-iconfont icon-chushi"></text>
           </view>
-          <text class="feature-label">经验厨师</text>
+          <text class="feature-label">按评分推荐</text>
         </view>
         <view class="feature-item">
           <view class="feature-icon">
             <text class="iconfont feature-iconfont icon-shangmen"></text>
           </view>
-          <text class="feature-label">上门便捷</text>
+          <text class="feature-label">按距离排序</text>
         </view>
       </view>
     </view>
 
-    <view class="search-bar">
-      <input
-        v-model="searchName"
-        class="search-input"
-        type="text"
-        placeholder="搜索厨师姓名"
-        confirm-type="search"
-        @confirm="handleSearch"
-      />
-      <button class="search-btn" size="mini" @click="handleSearch">搜索</button>
+    <view class="address-card" @click="goSelectAddress">
+      <view class="card-head">
+        <text class="card-title">当前服务地址</text>
+        <text class="card-link">切换地址</text>
+      </view>
+      <text v-if="hasAddress" class="address-text">{{ selectedAddressText }}</text>
+      <text v-else class="address-empty">请先选择服务地址</text>
     </view>
 
-    <view v-if="loading && !chefList.length" class="loading-card">
+    <view class="filter-card">
+      <view class="filter-section">
+        <text class="filter-title">食材模式</text>
+        <view class="option-row">
+          <view
+            v-for="item in ingredientModeOptions"
+            :key="item.value"
+            class="option-chip"
+            :class="{ active: form.ingredientMode === item.value }"
+            @click="handleIngredientModeChange(item.value)"
+          >
+            <text
+              class="option-chip-text"
+              :class="{ active: form.ingredientMode === item.value }"
+            >
+              {{ item.label }}
+            </text>
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-section">
+        <text class="filter-title">预约时间</text>
+        <view class="picker-stack">
+          <picker mode="date" class="picker-box" :value="form.serviceDate" @change="handleDateChange">
+            <view class="picker-value">{{ form.serviceDate || '请选择服务日期' }}</view>
+          </picker>
+          <picker
+            class="picker-box"
+            :range="timeSlotRange"
+            :value="timeSlotIndex"
+            @change="handleTimeSlotChange"
+          >
+            <view class="picker-value">{{ timeSlotText }}</view>
+          </picker>
+        </view>
+      </view>
+
+      <view class="filter-section no-margin">
+        <text class="filter-title">排序方式</text>
+        <picker
+          class="picker-box"
+          :range="sortTypeRange"
+          :value="sortTypeIndex"
+          @change="handleSortTypeChange"
+        >
+          <view class="picker-value">{{ sortTypeText }}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view v-if="!hasAddress" class="state-wrap">
+      <text class="state-text">请先选择服务地址</text>
+      <button class="state-btn" type="primary" @click="goSelectAddress">选择地址</button>
+    </view>
+
+    <view v-else-if="loading && !chefList.length" class="loading-card">
       <view class="loading-block large"></view>
       <view class="loading-block medium"></view>
       <view class="loading-block short"></view>
     </view>
 
     <view v-else-if="!loading && chefList.length === 0" class="state-wrap">
-      <text class="state-text">暂无厨师数据</text>
+      <text class="state-text">暂无符合条件的厨师</text>
     </view>
 
     <view v-else class="list-wrap">
       <view v-if="loading" class="inline-loading">
-        <text class="inline-loading-text">正在刷新列表...</text>
+        <text class="inline-loading-text">正在刷新推荐列表...</text>
       </view>
 
       <view class="list">
-      <view
-        v-for="item in chefList"
-        :key="item.id"
-        class="chef-card"
-        @click="goToDetail(item.id)"
-      >
-        <view class="avatar-wrap">
-          <image
-            v-if="item.avatar"
-            class="avatar"
-            :src="item.avatar"
-            mode="aspectFill"
-          />
-          <view v-else class="avatar avatar-placeholder">
-            <text class="avatar-text">{{ getNameInitial(item.name) }}</text>
+        <view
+          v-for="item in chefList"
+          :key="item.id"
+          class="chef-card"
+          @click="goToDetail(item.id)"
+        >
+          <view class="avatar-wrap">
+            <image
+              v-if="item.avatar"
+              class="avatar"
+              :src="item.avatar"
+              mode="aspectFill"
+            />
+            <view v-else class="avatar avatar-placeholder">
+              <text class="avatar-text">{{ getNameInitial(item.name) }}</text>
+            </view>
           </view>
-        </view>
 
-        <view class="chef-info">
-          <view class="chef-header">
-            <text class="chef-name">{{ item.name || '未命名厨师' }}</text>
-          </view>
-          <text class="chef-cuisine">擅长菜系：{{ item.specialtyCuisine || '-' }}</text>
-          <view class="meta-row">
-            <text class="meta-text">从业 {{ formatExperience(item.yearsOfExperience) }}</text>
-            <text class="meta-text">评分 {{ formatNumber(item.ratingAvg) }}</text>
-            <text class="meta-text">接单 {{ formatCount(item.orderCount) }}</text>
+          <view class="chef-info">
+            <view class="chef-header">
+              <text class="chef-name">{{ item.name || '未命名厨师' }}</text>
+              <text class="distance-tag">{{ formatDistance(item.distanceKm) }}</text>
+            </view>
+            <text class="chef-cuisine">擅长菜系：{{ item.specialtyCuisine || '-' }}</text>
+            <text class="chef-address">当前服务地址：{{ item.serviceAreaText || '暂未设置服务地址' }}</text>
+            <view class="tag-row">
+              <text class="data-tag">{{ item.serviceModeDesc || getChefServiceModeText(item.serviceMode) }}</text>
+              <text class="data-tag">服务半径 {{ formatRadius(item.serviceRadiusKm) }}</text>
+            </view>
+            <view class="meta-row">
+              <text class="meta-text">从业 {{ formatExperience(item.yearsOfExperience) }}</text>
+              <text class="meta-text">评分 {{ formatNumber(item.ratingAvg) }}</text>
+              <text class="meta-text">订单 {{ formatCount(item.orderCount) }}</text>
+              <text class="meta-text">好评率 {{ formatRate(item.goodReviewRate) }}</text>
+            </view>
           </view>
         </view>
-      </view>
       </view>
     </view>
   </view>
 </template>
 
 <script>
-import { getChefList } from '../../api/chef'
+import { getDefaultUserAddress } from '../../api/address'
+import { recommendChefs } from '../../api/chef'
+import { getChefServiceModeText } from '../../utils/chef-service-mode'
+import { SORT_OPTIONS, getSortTypeText } from '../../utils/sort-options'
+import { TIME_SLOT_OPTIONS, getTimeSlotText } from '../../utils/time-slot'
+
+const USER_ID_KEY = 'user_id'
+const SELECTED_ADDRESS_KEY = 'selected_address'
+
+const INGREDIENT_MODE_OPTIONS = [
+  { label: '用户自备食材', value: 1 },
+  { label: '平台协同采购', value: 2 }
+]
+
+function getTodayDate() {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export default {
   name: 'HomePage',
@@ -120,45 +200,185 @@ export default {
         '/static/dish2.png',
         '/static/dish3.png'
       ],
-      searchName: '',
+      userId: '',
+      loading: false,
       chefList: [],
-      loading: false
+      selectedAddress: null,
+      form: {
+        ingredientMode: 1,
+        serviceDate: getTodayDate(),
+        timeSlot: 'DINNER',
+        sortType: 'DEFAULT'
+      }
+    }
+  },
+  computed: {
+    ingredientModeOptions() {
+      return INGREDIENT_MODE_OPTIONS
+    },
+    hasAddress() {
+      return Boolean(this.selectedAddress && this.selectedAddress.id)
+    },
+    selectedAddressText() {
+      if (!this.hasAddress) {
+        return ''
+      }
+
+      const address = this.selectedAddress || {}
+      return [
+        address.province,
+        address.city,
+        address.district,
+        address.town,
+        address.detailAddress
+      ]
+        .filter(Boolean)
+        .join('')
+    },
+    timeSlotRange() {
+      return TIME_SLOT_OPTIONS.map((item) => item.label)
+    },
+    timeSlotIndex() {
+      const index = TIME_SLOT_OPTIONS.findIndex((item) => item.value === this.form.timeSlot)
+      return index >= 0 ? index : 0
+    },
+    timeSlotText() {
+      return getTimeSlotText(this.form.timeSlot)
+    },
+    sortTypeRange() {
+      return SORT_OPTIONS.map((item) => item.label)
+    },
+    sortTypeIndex() {
+      const index = SORT_OPTIONS.findIndex((item) => item.value === this.form.sortType)
+      return index >= 0 ? index : 0
+    },
+    sortTypeText() {
+      return getSortTypeText(this.form.sortType)
     }
   },
   onLoad() {
-    this.fetchChefList()
+    this.userId = uni.getStorageSync(USER_ID_KEY) || ''
+  },
+  onShow() {
+    this.initializePage()
   },
   onPullDownRefresh() {
-    this.fetchChefList({
+    this.initializePage({
       fromPullDownRefresh: true
     })
   },
   methods: {
-    async fetchChefList(options = {}) {
+    getChefServiceModeText,
+    async initializePage(options = {}) {
       const { fromPullDownRefresh = false } = options
 
-      this.loading = true
-
       try {
-        const params = {}
-
-        if (this.searchName.trim()) {
-          params.name = this.searchName.trim()
-        }
-
-        const data = await getChefList(params)
-        this.chefList = Array.isArray(data) ? data : []
-      } catch (error) {
-        this.chefList = []
+        await this.loadCurrentAddress()
+        await this.fetchRecommendList({
+          silent: !this.hasAddress
+        })
       } finally {
-        this.loading = false
         if (fromPullDownRefresh) {
           uni.stopPullDownRefresh()
         }
       }
     },
-    handleSearch() {
-      this.fetchChefList()
+    async loadCurrentAddress() {
+      const selectedAddress = uni.getStorageSync(SELECTED_ADDRESS_KEY)
+
+      if (selectedAddress && selectedAddress.id) {
+        this.selectedAddress = selectedAddress
+        return
+      }
+
+      if (!this.userId) {
+        this.selectedAddress = null
+        this.chefList = []
+        return
+      }
+
+      try {
+        const data = await getDefaultUserAddress({
+          userId: this.userId
+        })
+        this.selectedAddress = data && data.id ? data : null
+      } catch (error) {
+        this.selectedAddress = null
+      }
+    },
+    async fetchRecommendList(options = {}) {
+      const { silent = false } = options
+
+      if (!this.userId || !this.hasAddress) {
+        this.chefList = []
+        this.loading = false
+        return
+      }
+
+      this.loading = true
+
+      try {
+        const data = await recommendChefs({
+          userId: Number(this.userId),
+          addressId: Number(this.selectedAddress.id),
+          ingredientMode: Number(this.form.ingredientMode),
+          serviceDate: this.form.serviceDate,
+          timeSlot: this.form.timeSlot,
+          sortType: this.form.sortType
+        })
+        this.chefList = Array.isArray(data) ? data : []
+      } catch (error) {
+        this.chefList = []
+        if (!silent) {
+          // request.js already handles toast
+        }
+      } finally {
+        this.loading = false
+      }
+    },
+    goSelectAddress() {
+      uni.navigateTo({
+        url: '/pages/address/list?mode=select'
+      })
+    },
+    handleIngredientModeChange(value) {
+      if (this.form.ingredientMode === value) {
+        return
+      }
+
+      this.form.ingredientMode = value
+      this.fetchRecommendList()
+    },
+    handleDateChange(event) {
+      const value = event && event.detail ? event.detail.value : ''
+      if (!value || value === this.form.serviceDate) {
+        return
+      }
+
+      this.form.serviceDate = value
+      this.fetchRecommendList()
+    },
+    handleTimeSlotChange(event) {
+      const index = Number(event.detail.value)
+      const selected = TIME_SLOT_OPTIONS[index]
+
+      if (!selected || selected.value === this.form.timeSlot) {
+        return
+      }
+
+      this.form.timeSlot = selected.value
+      this.fetchRecommendList()
+    },
+    handleSortTypeChange(event) {
+      const index = Number(event.detail.value)
+      const selected = SORT_OPTIONS[index]
+
+      if (!selected || selected.value === this.form.sortType) {
+        return
+      }
+
+      this.form.sortType = selected.value
+      this.fetchRecommendList()
     },
     goToDetail(id) {
       if (!id) {
@@ -176,7 +396,7 @@ export default {
       if (value === 0) {
         return '0 年'
       }
-      return value ? `${value} 年` : '-'
+      return value || value === 0 ? `${value} 年` : '-'
     },
     formatNumber(value) {
       if (value === 0) {
@@ -189,6 +409,40 @@ export default {
         return '0'
       }
       return value || '-'
+    },
+    formatRate(value) {
+      if (value === 0) {
+        return '0%'
+      }
+
+      if (!value) {
+        return '-'
+      }
+
+      const numericValue = Number(value)
+      if (Number.isNaN(numericValue)) {
+        return String(value)
+      }
+
+      return numericValue > 1 ? `${numericValue.toFixed(2)}%` : `${(numericValue * 100).toFixed(2)}%`
+    },
+    formatRadius(value) {
+      if (value === 0) {
+        return '0 km'
+      }
+
+      return value || value === 0 ? `${Number(value).toFixed(2).replace(/\.00$/, '')} km` : '-'
+    },
+    formatDistance(value) {
+      if (value === 0) {
+        return '距离你 0 km'
+      }
+
+      if (!value && value !== 0) {
+        return '距离信息暂缺'
+      }
+
+      return `距离你 ${Number(value).toFixed(2)} km`
     }
   }
 }
@@ -220,22 +474,40 @@ export default {
   height: 100%;
 }
 
+.intro-card,
+.address-card,
+.filter-card,
+.loading-card,
+.state-wrap,
+.chef-card,
+.inline-loading {
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
+}
+
 .intro-card {
   margin-bottom: 24rpx;
   padding: 24rpx 26rpx;
-  border-radius: 24rpx;
   background: linear-gradient(135deg, #fff7f0 0%, #fff1e6 100%);
   box-shadow: 0 10rpx 28rpx rgba(217, 108, 58, 0.08);
 }
 
-.intro-header {
+.intro-header,
+.card-head,
+.chef-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
+}
+
+.intro-header {
   margin-bottom: 14rpx;
 }
 
-.intro-title {
+.intro-title,
+.card-title {
   font-size: 32rpx;
   font-weight: 600;
   color: #2a2d33;
@@ -263,9 +535,9 @@ export default {
 
 .feature-item {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
-  flex: 1;
 }
 
 .feature-icon {
@@ -284,8 +556,8 @@ export default {
 
 .feature-iconfont {
   font-size: 30rpx;
-  color: #c76335;
   line-height: 1;
+  color: #c76335;
 }
 
 .icon-shicai::before {
@@ -306,50 +578,106 @@ export default {
   color: #666f7c;
 }
 
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
+.address-card,
+.filter-card {
   margin-bottom: 24rpx;
-  padding: 20rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
+  padding: 24rpx;
 }
 
-.search-input {
-  flex: 1;
-  height: 72rpx;
+.card-link {
+  font-size: 26rpx;
+  color: #d96c3a;
+}
+
+.address-text,
+.address-empty {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+}
+
+.address-text {
+  color: #4f5662;
+}
+
+.address-empty {
+  color: #8a8f99;
+}
+
+.filter-section {
+  margin-bottom: 28rpx;
+}
+
+.filter-section.no-margin {
+  margin-bottom: 0;
+}
+
+.filter-title {
+  display: block;
+  margin-bottom: 18rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.option-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+}
+
+.option-chip {
+  padding: 18rpx 26rpx;
+  border: 2rpx solid #eceff4;
+  border-radius: 999rpx;
+  background: #fafbfc;
+}
+
+.option-chip.active {
+  border-color: #d96c3a;
+  background: #fff2eb;
+}
+
+.option-chip-text {
+  font-size: 26rpx;
+  color: #68707d;
+}
+
+.option-chip-text.active {
+  color: #c76335;
+  font-weight: 600;
+}
+
+.picker-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.picker-box {
+  width: 100%;
+}
+
+.picker-value {
+  width: 100%;
+  min-height: 84rpx;
   padding: 0 24rpx;
-  border-radius: 999rpx;
-  background: #f3f5f8;
+  border-radius: 18rpx;
+  background: #f7f8fb;
+  box-sizing: border-box;
   font-size: 28rpx;
+  line-height: 84rpx;
   color: #222222;
-}
-
-.search-btn {
-  margin: 0;
-  padding: 0 28rpx;
-  height: 72rpx;
-  line-height: 72rpx;
-  border: none;
-  border-radius: 999rpx;
-  background: #d96c3a;
-  color: #ffffff;
-  font-size: 28rpx;
-}
-
-.search-btn::after {
-  border: none;
 }
 
 .state-wrap {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 360rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
+  min-height: 320rpx;
+  padding: 40rpx 32rpx;
 }
 
 .state-text {
@@ -357,10 +685,23 @@ export default {
   color: #8a8f99;
 }
 
+.state-btn {
+  margin-top: 28rpx;
+  width: 220rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #d96c3a;
+  font-size: 28rpx;
+}
+
+.state-btn::after {
+  border: none;
+}
+
 .loading-card {
   padding: 28rpx 24rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
 }
 
 .loading-block {
@@ -392,7 +733,6 @@ export default {
 .inline-loading {
   margin-bottom: 16rpx;
   padding: 14rpx 20rpx;
-  border-radius: 16rpx;
   background: #fff5ee;
 }
 
@@ -409,11 +749,8 @@ export default {
 
 .chef-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 24rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
 }
 
 .avatar-wrap {
@@ -445,32 +782,55 @@ export default {
   min-width: 0;
 }
 
-.chef-header {
-  margin-bottom: 12rpx;
-}
-
 .chef-name {
   font-size: 34rpx;
   font-weight: 600;
   color: #222222;
 }
 
-.chef-cuisine {
-  display: block;
-  margin-bottom: 16rpx;
-  font-size: 28rpx;
-  color: #5c6470;
-  line-height: 1.5;
+.distance-tag {
+  flex-shrink: 0;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #fff2eb;
+  font-size: 22rpx;
+  color: #c76335;
 }
 
+.chef-cuisine,
+.chef-address {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 27rpx;
+  line-height: 1.6;
+  color: #5c6470;
+}
+
+.tag-row,
 .meta-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx 24rpx;
+  gap: 12rpx 16rpx;
+}
+
+.tag-row {
+  margin-top: 16rpx;
+}
+
+.data-tag {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f7f8fb;
+  font-size: 22rpx;
+  color: #6d7581;
+}
+
+.meta-row {
+  margin-top: 16rpx;
 }
 
 .meta-text {
-  font-size: 26rpx;
+  font-size: 25rpx;
   color: #8a8f99;
 }
 
