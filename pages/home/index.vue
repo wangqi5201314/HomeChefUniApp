@@ -10,13 +10,17 @@
     >
       <swiper-item
         v-for="item in bannerList"
-        :key="item.title"
+        :key="item.id || item.title"
         class="banner-item"
       >
-        <view class="banner-panel" :class="item.themeClass">
-          <text class="banner-kicker">{{ item.kicker }}</text>
-          <text class="banner-title">{{ item.title }}</text>
-          <text class="banner-desc">{{ item.desc }}</text>
+        <image
+          v-if="item.imageUrl"
+          class="banner-image"
+          :src="item.imageUrl"
+          mode="aspectFill"
+        />
+        <view v-else class="banner-panel banner-placeholder">
+          <text class="banner-placeholder-text">请在全局配置中补充 OSS 访问域名</text>
         </view>
       </swiper-item>
     </swiper>
@@ -176,11 +180,13 @@
 import { getDefaultUserAddressSilently } from '../../api/address'
 import { recommendChefs } from '../../api/chef'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
+import { OSS_PUBLIC_BASE_URL } from '../../utils/config'
 import { SORT_OPTIONS, getSortTypeText } from '../../utils/sort-options'
 import { TIME_SLOT_OPTIONS, getTimeSlotText } from '../../utils/time-slot'
 
 const USER_ID_KEY = 'user_id'
 const SELECTED_ADDRESS_KEY = 'selected_address'
+const HOME_BANNER_PATHS = ['/banner/dish1.png', '/banner/dish2.png', '/banner/dish3.png']
 
 const INGREDIENT_MODE_OPTIONS = [
   { label: '用户自备食材', value: 1 },
@@ -193,6 +199,24 @@ function getTodayDate() {
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function buildOssImageUrl(path) {
+  if (!path) {
+    return ''
+  }
+
+  if (/^https?:\/\//.test(path)) {
+    return path
+  }
+
+  const baseUrl = `${OSS_PUBLIC_BASE_URL || ''}`.trim().replace(/\/+$/, '')
+  if (!baseUrl) {
+    return ''
+  }
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${baseUrl}${normalizedPath}`
 }
 
 export default {
@@ -276,6 +300,7 @@ export default {
     }
   },
   onLoad() {
+    this.resetBannerList()
     this.userId = uni.getStorageSync(USER_ID_KEY) || ''
   },
   onShow() {
@@ -288,6 +313,12 @@ export default {
   },
   methods: {
     getChefServiceModeText,
+    resetBannerList() {
+      this.bannerList = HOME_BANNER_PATHS.map((path, index) => ({
+        id: index + 1,
+        imageUrl: buildOssImageUrl(path)
+      }))
+    },
     async initializePage(options = {}) {
       const { fromPullDownRefresh = false } = options
 
@@ -488,6 +519,11 @@ export default {
   height: 100%;
 }
 
+.banner-image {
+  width: 100%;
+  height: 100%;
+}
+
 .banner-panel {
   display: flex;
   flex-direction: column;
@@ -496,6 +532,17 @@ export default {
   height: 100%;
   padding: 32rpx 30rpx;
   box-sizing: border-box;
+}
+
+.banner-placeholder {
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f2a061 0%, #f6c38d 100%);
+}
+
+.banner-placeholder-text {
+  font-size: 28rpx;
+  color: #ffffff;
 }
 
 .banner-theme-warm {

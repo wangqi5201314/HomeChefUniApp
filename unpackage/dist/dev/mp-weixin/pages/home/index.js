@@ -3,10 +3,12 @@ const common_vendor = require("../../common/vendor.js");
 const api_address = require("../../api/address.js");
 const api_chef = require("../../api/chef.js");
 const utils_chefServiceMode = require("../../utils/chef-service-mode.js");
+const utils_config = require("../../utils/config.js");
 const utils_sortOptions = require("../../utils/sort-options.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
 const USER_ID_KEY = "user_id";
 const SELECTED_ADDRESS_KEY = "selected_address";
+const HOME_BANNER_PATHS = ["/banner/dish1.png", "/banner/dish2.png", "/banner/dish3.png"];
 const INGREDIENT_MODE_OPTIONS = [
   { label: "用户自备食材", value: 1 },
   { label: "平台协同采购", value: 2 }
@@ -17,6 +19,20 @@ function getTodayDate() {
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
   const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+function buildOssImageUrl(path) {
+  if (!path) {
+    return "";
+  }
+  if (/^https?:\/\//.test(path)) {
+    return path;
+  }
+  const baseUrl = `${utils_config.OSS_PUBLIC_BASE_URL}`.trim().replace(/\/+$/, "");
+  if (!baseUrl) {
+    return "";
+  }
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
 }
 const _sfc_main = {
   name: "HomePage",
@@ -96,6 +112,7 @@ const _sfc_main = {
     }
   },
   onLoad() {
+    this.resetBannerList();
     this.userId = common_vendor.index.getStorageSync(USER_ID_KEY) || "";
   },
   onShow() {
@@ -108,6 +125,12 @@ const _sfc_main = {
   },
   methods: {
     getChefServiceModeText: utils_chefServiceMode.getChefServiceModeText,
+    resetBannerList() {
+      this.bannerList = HOME_BANNER_PATHS.map((path, index) => ({
+        id: index + 1,
+        imageUrl: buildOssImageUrl(path)
+      }));
+    },
     async initializePage(options = {}) {
       const { fromPullDownRefresh = false } = options;
       try {
@@ -264,13 +287,13 @@ const _sfc_main = {
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.f($data.bannerList, (item, k0, i0) => {
-      return {
-        a: common_vendor.t(item.kicker),
-        b: common_vendor.t(item.title),
-        c: common_vendor.t(item.desc),
-        d: common_vendor.n(item.themeClass),
-        e: item.title
-      };
+      return common_vendor.e({
+        a: item.imageUrl
+      }, item.imageUrl ? {
+        b: item.imageUrl
+      } : {}, {
+        c: item.id || item.title
+      });
     }),
     b: $options.hasAddress
   }, $options.hasAddress ? {
