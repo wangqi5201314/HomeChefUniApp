@@ -6,6 +6,8 @@ const _sfc_main = {
   data() {
     return {
       loading: false,
+      showPassword: false,
+      showConfirmPassword: false,
       form: {
         phone: "",
         password: "",
@@ -15,6 +17,15 @@ const _sfc_main = {
     };
   },
   methods: {
+    togglePasswordVisible(type) {
+      if (type === "password") {
+        this.showPassword = !this.showPassword;
+        return;
+      }
+      if (type === "confirm") {
+        this.showConfirmPassword = !this.showConfirmPassword;
+      }
+    },
     validateForm() {
       if (!this.form.phone.trim()) {
         common_vendor.index.showToast({ title: "请输入手机号", icon: "none" });
@@ -74,16 +85,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: $data.loading,
     e: $data.form.name,
     f: common_vendor.o(($event) => $data.form.name = $event.detail.value),
-    g: $data.loading,
-    h: $data.form.password,
-    i: common_vendor.o(($event) => $data.form.password = $event.detail.value),
-    j: $data.loading,
-    k: $data.form.confirmPassword,
-    l: common_vendor.o(($event) => $data.form.confirmPassword = $event.detail.value),
-    m: common_vendor.t($data.loading ? "注册中..." : "注册"),
+    g: !$data.showPassword,
+    h: $data.loading,
+    i: $data.form.password,
+    j: common_vendor.o(($event) => $data.form.password = $event.detail.value),
+    k: common_vendor.t($data.showPassword ? "隐藏" : "显示"),
+    l: common_vendor.o(($event) => $options.togglePasswordVisible("password")),
+    m: !$data.showConfirmPassword,
     n: $data.loading,
-    o: $data.loading,
-    p: common_vendor.o((...args) => $options.handleRegister && $options.handleRegister(...args))
+    o: $data.form.confirmPassword,
+    p: common_vendor.o(($event) => $data.form.confirmPassword = $event.detail.value),
+    q: common_vendor.t($data.showConfirmPassword ? "隐藏" : "显示"),
+    r: common_vendor.o(($event) => $options.togglePasswordVisible("confirm")),
+    s: common_vendor.t($data.loading ? "注册中..." : "注册"),
+    t: $data.loading,
+    v: $data.loading,
+    w: common_vendor.o((...args) => $options.handleRegister && $options.handleRegister(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-c94e6b93"]]);

@@ -45,6 +45,22 @@
   color: #222222;
   box-sizing: border-box;
 }
+.input-wrap.data-v-c94e6b93 {
+  position: relative;
+}
+.input-with-eye.data-v-c94e6b93 {
+  padding-right: 108rpx;
+}
+.eye-toggle.data-v-c94e6b93 {
+  position: absolute;
+  top: 50%;
+  right: 24rpx;
+  transform: translateY(-50%);
+  font-size: 24rpx;
+}
+.eye-toggle--chef.data-v-c94e6b93 {
+  color: #2f8f55;
+}
 .register-btn.data-v-c94e6b93 {
   height: 88rpx;
   line-height: 88rpx;

@@ -30,24 +30,34 @@
 
       <view class="form-item">
         <text class="label">密码</text>
-        <input
-          v-model="form.password"
-          class="input"
-          password
-          placeholder="请输入至少 6 位密码"
-          :disabled="loading"
-        />
+        <view class="input-wrap">
+          <input
+            v-model="form.password"
+            class="input input-with-eye"
+            :password="!showPassword"
+            placeholder="请输入至少 6 位密码"
+            :disabled="loading"
+          />
+          <text class="eye-toggle eye-toggle--chef" @click="togglePasswordVisible('password')">
+            {{ showPassword ? '隐藏' : '显示' }}
+          </text>
+        </view>
       </view>
 
       <view class="form-item">
         <text class="label">确认密码</text>
-        <input
-          v-model="form.confirmPassword"
-          class="input"
-          password
-          placeholder="请再次输入密码"
-          :disabled="loading"
-        />
+        <view class="input-wrap">
+          <input
+            v-model="form.confirmPassword"
+            class="input input-with-eye"
+            :password="!showConfirmPassword"
+            placeholder="请再次输入密码"
+            :disabled="loading"
+          />
+          <text class="eye-toggle eye-toggle--chef" @click="togglePasswordVisible('confirm')">
+            {{ showConfirmPassword ? '隐藏' : '显示' }}
+          </text>
+        </view>
       </view>
 
       <button class="register-btn" type="primary" :loading="loading" :disabled="loading" @click="handleRegister">
@@ -65,6 +75,8 @@ export default {
   data() {
     return {
       loading: false,
+      showPassword: false,
+      showConfirmPassword: false,
       form: {
         phone: '',
         password: '',
@@ -74,6 +86,16 @@ export default {
     }
   },
   methods: {
+    togglePasswordVisible(type) {
+      if (type === 'password') {
+        this.showPassword = !this.showPassword
+        return
+      }
+
+      if (type === 'confirm') {
+        this.showConfirmPassword = !this.showConfirmPassword
+      }
+    },
     validateForm() {
       if (!this.form.phone.trim()) {
         uni.showToast({ title: '请输入手机号', icon: 'none' })
@@ -189,6 +211,26 @@ export default {
   font-size: 30rpx;
   color: #222222;
   box-sizing: border-box;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-with-eye {
+  padding-right: 108rpx;
+}
+
+.eye-toggle {
+  position: absolute;
+  top: 50%;
+  right: 24rpx;
+  transform: translateY(-50%);
+  font-size: 24rpx;
+}
+
+.eye-toggle--chef {
+  color: #2f8f55;
 }
 
 .register-btn {

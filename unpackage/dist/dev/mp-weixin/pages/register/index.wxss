@@ -45,6 +45,20 @@
   color: #222222;
   box-sizing: border-box;
 }
+.input-wrap.data-v-46a64346 {
+  position: relative;
+}
+.input-with-eye.data-v-46a64346 {
+  padding-right: 108rpx;
+}
+.eye-toggle.data-v-46a64346 {
+  position: absolute;
+  top: 50%;
+  right: 24rpx;
+  transform: translateY(-50%);
+  font-size: 24rpx;
+  color: #d96c3a;
+}
 .register-btn.data-v-46a64346 {
   height: 88rpx;
   line-height: 88rpx;
