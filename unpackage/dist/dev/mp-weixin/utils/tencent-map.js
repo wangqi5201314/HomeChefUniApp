@@ -144,6 +144,7 @@ function buildLocationPayloadByGeocoder(result, options = {}) {
     latitude: Number(result.latitude || options.latitude || 0)
   };
 }
+exports.TENCENT_MAP_KEY = TENCENT_MAP_KEY;
 exports.buildLocationPayloadByGeocoder = buildLocationPayloadByGeocoder;
 exports.reverseGeocoder = reverseGeocoder;
 exports.searchAddress = searchAddress;

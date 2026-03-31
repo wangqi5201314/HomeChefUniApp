@@ -142,7 +142,7 @@
 
 <script>
 import { createAddress, getAddressDetail, updateAddress } from '../../api/address'
-import { loadProvinceRegion, provinceList } from '../../data/address/regions'
+import { getDistrictChildren, getDistrictTree } from '../../utils/tencent-district'
 import { buildLocationPayloadByGeocoder, reverseGeocoder, searchAddress, suggestAddress } from '../../utils/tencent-map'
 
 const USER_ID_KEY = 'user_id'
@@ -173,7 +173,7 @@ export default {
       userId: '',
       saving: false,
       searching: false,
-      provinceOptions: provinceList,
+      provinceOptions: [],
       currentProvinceCode: '',
       currentProvinceRegion: null,
       searchKeyword: '',
@@ -226,12 +226,7 @@ export default {
       if (!this.currentCity || !Array.isArray(this.currentCity.districts)) {
         return []
       }
-
-      const usableDistricts = this.currentCity.districts.filter(
-        (item) => Array.isArray(item.towns) && item.towns.length > 0
-      )
-
-      return usableDistricts.length > 0 ? usableDistricts : this.currentCity.districts
+      return this.currentCity.districts
     },
     districtRange() {
       return this.districtOptions.map((item) => item.name)
@@ -264,12 +259,7 @@ export default {
       title: this.id ? '编辑地址' : '新增地址'
     })
 
-    if (this.id) {
-      this.loadAddressDetail()
-      return
-    }
-
-    this.initDefaultRegion()
+    this.bootstrapPage()
   },
   onUnload() {
     if (this.regionChangeTimer) {
@@ -283,12 +273,50 @@ export default {
     }
   },
   methods: {
+    async bootstrapPage() {
+      try {
+        await this.ensureDistrictTreeLoaded()
+
+        if (this.id) {
+          await this.loadAddressDetail()
+          return
+        }
+
+        await this.initDefaultRegion()
+      } catch (error) {
+        uni.showToast({
+          title: '行政区划加载失败',
+          icon: 'none'
+        })
+      }
+    },
     getMapContext() {
       if (!this.mapContext) {
         this.mapContext = uni.createMapContext('addressMap', this)
       }
 
       return this.mapContext
+    },
+    async ensureDistrictTreeLoaded() {
+      if (this.provinceOptions.length > 0) {
+        return
+      }
+
+      const tree = await getDistrictTree()
+      this.provinceOptions = tree && Array.isArray(tree.provinces) ? tree.provinces : []
+    },
+    findOptionByName(list, name) {
+      const normalizedName = name ? String(name).trim() : ''
+
+      if (!Array.isArray(list) || !list.length || !normalizedName) {
+        return null
+      }
+
+      return (
+        list.find((item) => item && item.name === normalizedName)
+        || list.find((item) => item && item.name && (item.name.includes(normalizedName) || normalizedName.includes(item.name)))
+        || null
+      )
     },
     getProvinceByName(name) {
       return this.provinceOptions.find((item) => item.name === name) || null
@@ -301,32 +329,50 @@ export default {
       }
 
       this.currentProvinceCode = String(provinceCode)
-      this.currentProvinceRegion = loadProvinceRegion(this.currentProvinceCode) || {
+      this.currentProvinceRegion = this.provinceOptions.find((item) => String(item.code) === this.currentProvinceCode) || {
         code: this.currentProvinceCode,
         name: '',
         cities: []
       }
     },
-    applyRegionValues(cityName, districtName, townName) {
-      const city = this.cityOptions.find((item) => item.name === cityName) || this.cityOptions[0] || null
+    async ensureTownOptionsLoaded(district) {
+      if (!district || !district.code) {
+        return []
+      }
+
+      if (!district._townsLoaded) {
+        try {
+          const townList = await getDistrictChildren(district.code)
+          district.towns = townList.map((item) => item.name).filter(Boolean)
+        } catch (error) {
+          district.towns = Array.isArray(district.towns) ? district.towns : []
+        }
+
+        district._townsLoaded = true
+      }
+
+      return Array.isArray(district.towns) ? district.towns : []
+    },
+    async applyRegionValues(cityName, districtName, townName) {
+      const city = this.findOptionByName(this.cityOptions, cityName) || this.cityOptions[0] || null
       this.form.city = city ? city.name : ''
 
       const districtOptions = city && Array.isArray(city.districts) ? city.districts : []
-      const usableDistricts = districtOptions.filter(
-        (item) => Array.isArray(item.towns) && item.towns.length > 0
-      )
-      const availableDistricts = usableDistricts.length > 0 ? usableDistricts : districtOptions
       const district =
-        availableDistricts.find((item) => item.name === districtName) || availableDistricts[0] || null
+        this.findOptionByName(districtOptions, districtName) || districtOptions[0] || null
       this.form.district = district ? district.name : ''
 
-      const townOptions = district && Array.isArray(district.towns) ? district.towns : []
+      const townOptions = district ? await this.ensureTownOptionsLoaded(district) : []
       const exactTown = townOptions.find((item) => item === townName)
       const fuzzyTown = townOptions.find((item) => townName && (item.includes(townName) || townName.includes(item)))
-      const town = exactTown || fuzzyTown || townOptions[0] || townName || ''
-      this.form.town = town
+
+      if (townOptions.length > 0) {
+        this.form.town = exactTown || fuzzyTown || townOptions[0] || ''
+      } else {
+        this.form.town = townName || ''
+      }
     },
-    initDefaultRegion() {
+    async initDefaultRegion() {
       const firstProvince = this.provinceOptions[0]
       if (!firstProvince) {
         return
@@ -334,10 +380,10 @@ export default {
 
       this.form.province = firstProvince.name
       this.loadProvinceData(firstProvince.code)
-      this.applyRegionValues('', '', '')
+      await this.applyRegionValues('', '', '')
       this.setMapCenter(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
     },
-    syncRegionByForm() {
+    async syncRegionByForm() {
       const province = this.getProvinceByName(this.form.province) || this.provinceOptions[0] || null
 
       if (!province) {
@@ -348,7 +394,7 @@ export default {
 
       this.form.province = province.name
       this.loadProvinceData(province.code)
-      this.applyRegionValues(this.form.city, this.form.district, this.form.town)
+      await this.applyRegionValues(this.form.city, this.form.district, this.form.town)
     },
     setMapCenter(latitude, longitude) {
       this.ignoreNextRegionChange = true
@@ -357,15 +403,15 @@ export default {
       this.form.latitude = this.mapLatitude
       this.form.longitude = this.mapLongitude
     },
-    applyLocationPayload(locationData = {}) {
+    async applyLocationPayload(locationData = {}) {
       const province = this.getProvinceByName(locationData.province) || this.provinceOptions[0] || null
 
       if (province) {
         this.form.province = province.name
         this.loadProvinceData(province.code)
-        this.applyRegionValues(locationData.city, locationData.district, locationData.town)
+        await this.applyRegionValues(locationData.city, locationData.district, locationData.town)
       } else {
-        this.syncRegionByForm()
+        await this.syncRegionByForm()
       }
 
       this.form.detailAddress = locationData.detailAddress || ''
@@ -387,12 +433,12 @@ export default {
           isDefault: data.isDefault === 1 || data.isDefault === true ? 1 : 0
         }
         this.setMapCenter(this.form.latitude, this.form.longitude)
-        this.syncRegionByForm()
+        await this.syncRegionByForm()
       } catch (error) {
-        this.initDefaultRegion()
+        await this.initDefaultRegion()
       }
     },
-    handleProvinceChange(event) {
+    async handleProvinceChange(event) {
       const index = Number(event.detail.value)
       const province = this.provinceOptions[index]
 
@@ -402,9 +448,9 @@ export default {
 
       this.form.province = province.name
       this.loadProvinceData(province.code)
-      this.applyRegionValues('', '', '')
+      await this.applyRegionValues('', '', '')
     },
-    handleCityChange(event) {
+    async handleCityChange(event) {
       const index = Number(event.detail.value)
       const city = this.cityOptions[index]
 
@@ -413,9 +459,9 @@ export default {
       }
 
       this.form.city = city.name
-      this.applyRegionValues(city.name, '', '')
+      await this.applyRegionValues(city.name, '', '')
     },
-    handleDistrictChange(event) {
+    async handleDistrictChange(event) {
       const index = Number(event.detail.value)
       const district = this.districtOptions[index]
 
@@ -424,7 +470,7 @@ export default {
       }
 
       this.form.district = district.name
-      this.applyRegionValues(this.form.city, district.name, '')
+      await this.applyRegionValues(this.form.city, district.name, '')
     },
     handleTownChange(event) {
       const index = Number(event.detail.value)
@@ -602,7 +648,7 @@ export default {
           latitude,
           longitude
         })
-        this.applyLocationPayload(payload)
+        await this.applyLocationPayload(payload)
 
         uni.showToast({
           title: '地址已回填',
@@ -664,7 +710,7 @@ export default {
         return false
       }
 
-      if (!this.form.town) {
+      if (this.townOptions.length > 0 && !this.form.town) {
         uni.showToast({
           title: '请选择镇 / 街道',
           icon: 'none'
