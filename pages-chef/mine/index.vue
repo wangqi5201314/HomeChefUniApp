@@ -105,8 +105,11 @@ export default {
     }
     this.loadChefInfo()
   },
+  onPullDownRefresh() {
+    this.loadChefInfo(true)
+  },
   methods: {
-    async loadChefInfo() {
+    async loadChefInfo(fromPullDownRefresh = false) {
       try {
         const [chefData, certificationData] = await Promise.all([
           getCurrentChefProfile(),
@@ -127,6 +130,10 @@ export default {
         setChefInfo(this.chefInfo)
       } catch (error) {
         this.hasCertificationRecord = true
+      } finally {
+        if (fromPullDownRefresh) {
+          uni.stopPullDownRefresh()
+        }
       }
     },
     formatValue(value) {

@@ -99,10 +99,13 @@ export default {
       this.fetchOrderList(false)
     }
   },
+  onPullDownRefresh() {
+    this.fetchOrderList(false, true)
+  },
   methods: {
     formatFullDateTime,
     getTimeSlotText,
-    async fetchOrderList(showLoading = true) {
+    async fetchOrderList(showLoading = true, fromPullDownRefresh = false) {
       if (showLoading) {
         this.loading = true
       }
@@ -119,6 +122,9 @@ export default {
         this.orderList = []
       } finally {
         this.loading = false
+        if (fromPullDownRefresh) {
+          uni.stopPullDownRefresh()
+        }
       }
     },
     changeTab(status) {

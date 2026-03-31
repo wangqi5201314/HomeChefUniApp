@@ -178,7 +178,9 @@
         {
           "path": "order/list",
           "style": {
-            "navigationBarTitleText": "我的订单"
+            "navigationBarTitleText": "我的订单",
+            "enablePullDownRefresh": true,
+            "backgroundTextStyle": "dark"
           }
         },
         {
@@ -202,7 +204,9 @@
         {
           "path": "mine/index",
           "style": {
-            "navigationBarTitleText": "我的"
+            "navigationBarTitleText": "我的",
+            "enablePullDownRefresh": true,
+            "backgroundTextStyle": "dark"
           }
         },
         {

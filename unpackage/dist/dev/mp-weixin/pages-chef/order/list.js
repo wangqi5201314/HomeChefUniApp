@@ -29,10 +29,13 @@ const _sfc_main = {
       this.fetchOrderList(false);
     }
   },
+  onPullDownRefresh() {
+    this.fetchOrderList(false, true);
+  },
   methods: {
     formatFullDateTime: utils_scheduleTime.formatFullDateTime,
     getTimeSlotText: utils_timeSlot.getTimeSlotText,
-    async fetchOrderList(showLoading = true) {
+    async fetchOrderList(showLoading = true, fromPullDownRefresh = false) {
       if (showLoading) {
         this.loading = true;
       }
@@ -47,6 +50,9 @@ const _sfc_main = {
         this.orderList = [];
       } finally {
         this.loading = false;
+        if (fromPullDownRefresh) {
+          common_vendor.index.stopPullDownRefresh();
+        }
       }
     },
     changeTab(status) {

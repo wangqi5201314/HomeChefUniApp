@@ -50,8 +50,11 @@ const _sfc_main = {
     }
     this.loadChefInfo();
   },
+  onPullDownRefresh() {
+    this.loadChefInfo(true);
+  },
   methods: {
-    async loadChefInfo() {
+    async loadChefInfo(fromPullDownRefresh = false) {
       try {
         const [chefData, certificationData] = await Promise.all([
           api_chefProfile.getCurrentChefProfile(),
@@ -64,6 +67,10 @@ const _sfc_main = {
         utils_auth.setChefInfo(this.chefInfo);
       } catch (error) {
         this.hasCertificationRecord = true;
+      } finally {
+        if (fromPullDownRefresh) {
+          common_vendor.index.stopPullDownRefresh();
+        }
       }
     },
     formatValue(value) {
