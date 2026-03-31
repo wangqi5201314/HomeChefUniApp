@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "小嘉AI",
+  "usingComponents": {
+    "chef-tabbar": "../../components/chef-tabbar"
+  }
+}

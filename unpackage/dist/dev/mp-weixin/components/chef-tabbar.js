@@ -12,6 +12,11 @@ const TAB_ITEMS = [
     url: "/pages-chef/order/list"
   },
   {
+    key: "ai",
+    label: "小嘉AI",
+    url: "/pages-chef/ai/index"
+  },
+  {
     key: "mine",
     label: "我的",
     url: "/pages-chef/mine/index"

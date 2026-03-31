@@ -34,6 +34,10 @@ const _sfc_main = {
       currentProvinceRegion: null,
       mapLatitude: DEFAULT_LATITUDE,
       mapLongitude: DEFAULT_LONGITUDE,
+      markerIcon: MARKER_ICON,
+      mapContext: null,
+      regionChangeTimer: null,
+      ignoreNextRegionChange: false,
       form: createDefaultForm()
     };
   },
@@ -50,21 +54,6 @@ const _sfc_main = {
         this.form.detailAddress
       ].filter(Boolean);
       return parts.length ? parts.join("") : "暂未设置服务位置";
-    },
-    markers() {
-      if (!this.form.latitude || !this.form.longitude) {
-        return [];
-      }
-      return [
-        {
-          id: 1,
-          latitude: Number(this.form.latitude),
-          longitude: Number(this.form.longitude),
-          width: 34,
-          height: 34,
-          iconPath: MARKER_ICON
-        }
-      ];
     },
     provinceRange() {
       return this.provinceOptions.map((item) => item.name);
@@ -127,7 +116,19 @@ const _sfc_main = {
       this.loadLocationDetail();
     }
   },
+  onUnload() {
+    if (this.regionChangeTimer) {
+      clearTimeout(this.regionChangeTimer);
+      this.regionChangeTimer = null;
+    }
+  },
   methods: {
+    getMapContext() {
+      if (!this.mapContext) {
+        this.mapContext = common_vendor.index.createMapContext("serviceLocationMap", this);
+      }
+      return this.mapContext;
+    },
     getProvinceByName(name) {
       return this.provinceOptions.find((item) => item.name === name) || null;
     },
@@ -185,6 +186,7 @@ const _sfc_main = {
       this.applyRegionValues(this.form.city, this.form.district, this.form.town);
     },
     setMapCenter(latitude, longitude) {
+      this.ignoreNextRegionChange = true;
       this.mapLatitude = Number(latitude) || DEFAULT_LATITUDE;
       this.mapLongitude = Number(longitude) || DEFAULT_LONGITUDE;
       this.form.latitude = this.mapLatitude;
@@ -345,6 +347,40 @@ const _sfc_main = {
       }
       await this.fillLocationByCoordinate(latitude, longitude);
     },
+    handleMapRegionChange(event) {
+      const detail = event && event.detail ? event.detail : {};
+      if (detail.type !== "end") {
+        return;
+      }
+      if (this.ignoreNextRegionChange) {
+        this.ignoreNextRegionChange = false;
+        return;
+      }
+      if (this.regionChangeTimer) {
+        clearTimeout(this.regionChangeTimer);
+      }
+      this.regionChangeTimer = setTimeout(() => {
+        const mapContext = this.getMapContext();
+        if (!mapContext || typeof mapContext.getCenterLocation !== "function") {
+          return;
+        }
+        mapContext.getCenterLocation({
+          success: ({ latitude, longitude }) => {
+            const nextLatitude = Number(latitude);
+            const nextLongitude = Number(longitude);
+            const currentLatitude = Number(this.form.latitude);
+            const currentLongitude = Number(this.form.longitude);
+            if (!nextLatitude || !nextLongitude) {
+              return;
+            }
+            if (Math.abs(nextLatitude - currentLatitude) < 5e-5 && Math.abs(nextLongitude - currentLongitude) < 5e-5) {
+              return;
+            }
+            this.fillLocationByCoordinate(nextLatitude, nextLongitude);
+          }
+        });
+      }, 260);
+    },
     validateForm() {
       if (!this.form.locationName.trim()) {
         common_vendor.index.showToast({
@@ -447,35 +483,36 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     l: $data.mapLatitude,
     m: $data.mapLongitude,
-    n: $options.markers,
+    n: common_vendor.o((...args) => $options.handleMapRegionChange && $options.handleMapRegionChange(...args)),
     o: common_vendor.o((...args) => $options.handleMapTap && $options.handleMapTap(...args)),
-    p: common_vendor.t($options.selectedLocationText),
-    q: common_vendor.t($data.form.province || "请选择省份"),
-    r: !$data.form.province ? 1 : "",
-    s: $options.provinceRange,
-    t: $options.provinceIndex,
-    v: common_vendor.o((...args) => $options.handleProvinceChange && $options.handleProvinceChange(...args)),
-    w: common_vendor.t($data.form.city || "请选择城市"),
-    x: !$data.form.city ? 1 : "",
-    y: $options.cityRange,
-    z: $options.cityIndex,
-    A: common_vendor.o((...args) => $options.handleCityChange && $options.handleCityChange(...args)),
-    B: common_vendor.t($data.form.district || "请选择区县"),
-    C: !$data.form.district ? 1 : "",
-    D: $options.districtRange,
-    E: $options.districtIndex,
-    F: common_vendor.o((...args) => $options.handleDistrictChange && $options.handleDistrictChange(...args)),
-    G: common_vendor.t($data.form.town || ($options.townOptions.length ? "请选择镇/街道" : "暂无可选镇街")),
-    H: !$data.form.town ? 1 : "",
-    I: $options.townRange,
-    J: $options.townIndex,
-    K: common_vendor.o((...args) => $options.handleTownChange && $options.handleTownChange(...args)),
-    L: $data.form.detailAddress,
-    M: common_vendor.o(($event) => $data.form.detailAddress = $event.detail.value),
-    N: common_vendor.t($data.saving ? "保存中..." : "保存服务位置"),
-    O: $data.saving,
-    P: $data.saving || $data.loading,
-    Q: common_vendor.o((...args) => $options.handleSubmit && $options.handleSubmit(...args))
+    p: $data.markerIcon,
+    q: common_vendor.t($options.selectedLocationText),
+    r: common_vendor.t($data.form.province || "请选择省份"),
+    s: !$data.form.province ? 1 : "",
+    t: $options.provinceRange,
+    v: $options.provinceIndex,
+    w: common_vendor.o((...args) => $options.handleProvinceChange && $options.handleProvinceChange(...args)),
+    x: common_vendor.t($data.form.city || "请选择城市"),
+    y: !$data.form.city ? 1 : "",
+    z: $options.cityRange,
+    A: $options.cityIndex,
+    B: common_vendor.o((...args) => $options.handleCityChange && $options.handleCityChange(...args)),
+    C: common_vendor.t($data.form.district || "请选择区县"),
+    D: !$data.form.district ? 1 : "",
+    E: $options.districtRange,
+    F: $options.districtIndex,
+    G: common_vendor.o((...args) => $options.handleDistrictChange && $options.handleDistrictChange(...args)),
+    H: common_vendor.t($data.form.town || ($options.townOptions.length ? "请选择镇/街道" : "暂无可选镇街")),
+    I: !$data.form.town ? 1 : "",
+    J: $options.townRange,
+    K: $options.townIndex,
+    L: common_vendor.o((...args) => $options.handleTownChange && $options.handleTownChange(...args)),
+    M: $data.form.detailAddress,
+    N: common_vendor.o(($event) => $data.form.detailAddress = $event.detail.value),
+    O: common_vendor.t($data.saving ? "保存中..." : "保存服务位置"),
+    P: $data.saving,
+    Q: $data.saving || $data.loading,
+    R: common_vendor.o((...args) => $options.handleSubmit && $options.handleSubmit(...args))
   }));
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-c3d606db"]]);

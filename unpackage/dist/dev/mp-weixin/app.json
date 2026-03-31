@@ -28,6 +28,7 @@
         "review/list",
         "order/list",
         "order/detail",
+        "ai/index",
         "schedule/index",
         "certification/index",
         "mine/index",

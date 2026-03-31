@@ -25,7 +25,7 @@
       <view class="form-card">
         <view class="section-head">
           <text class="section-title">地图搜索</text>
-          <text class="section-tip">搜索地址或点击地图，可自动回填结构化地址和坐标。</text>
+          <text class="section-tip">搜索地址、点击地图或拖动地图后松手，都可自动回填结构化地址和坐标。</text>
         </view>
 
         <view class="search-bar">
@@ -55,14 +55,18 @@
 
         <view class="map-wrapper">
           <map
+            id="serviceLocationMap"
             class="map"
             :latitude="mapLatitude"
             :longitude="mapLongitude"
             :scale="16"
-            :markers="markers"
             :show-location="true"
+            @regionchange="handleMapRegionChange"
             @tap="handleMapTap"
           />
+          <view class="map-center-pin">
+            <image class="map-center-pin-image" :src="markerIcon" mode="aspectFit" />
+          </view>
         </view>
 
         <view class="selected-location">
@@ -172,6 +176,10 @@ export default {
       currentProvinceRegion: null,
       mapLatitude: DEFAULT_LATITUDE,
       mapLongitude: DEFAULT_LONGITUDE,
+      markerIcon: MARKER_ICON,
+      mapContext: null,
+      regionChangeTimer: null,
+      ignoreNextRegionChange: false,
       form: createDefaultForm()
     }
   },
@@ -189,22 +197,6 @@ export default {
       ].filter(Boolean)
 
       return parts.length ? parts.join('') : '暂未设置服务位置'
-    },
-    markers() {
-      if (!this.form.latitude || !this.form.longitude) {
-        return []
-      }
-
-      return [
-        {
-          id: 1,
-          latitude: Number(this.form.latitude),
-          longitude: Number(this.form.longitude),
-          width: 34,
-          height: 34,
-          iconPath: MARKER_ICON
-        }
-      ]
     },
     provinceRange() {
       return this.provinceOptions.map((item) => item.name)
@@ -275,7 +267,20 @@ export default {
       this.loadLocationDetail()
     }
   },
+  onUnload() {
+    if (this.regionChangeTimer) {
+      clearTimeout(this.regionChangeTimer)
+      this.regionChangeTimer = null
+    }
+  },
   methods: {
+    getMapContext() {
+      if (!this.mapContext) {
+        this.mapContext = uni.createMapContext('serviceLocationMap', this)
+      }
+
+      return this.mapContext
+    },
     getProvinceByName(name) {
       return this.provinceOptions.find((item) => item.name === name) || null
     },
@@ -340,6 +345,7 @@ export default {
       this.applyRegionValues(this.form.city, this.form.district, this.form.town)
     },
     setMapCenter(latitude, longitude) {
+      this.ignoreNextRegionChange = true
       this.mapLatitude = Number(latitude) || DEFAULT_LATITUDE
       this.mapLongitude = Number(longitude) || DEFAULT_LONGITUDE
       this.form.latitude = this.mapLatitude
@@ -517,6 +523,52 @@ export default {
       }
 
       await this.fillLocationByCoordinate(latitude, longitude)
+    },
+    handleMapRegionChange(event) {
+      const detail = event && event.detail ? event.detail : {}
+
+      if (detail.type !== 'end') {
+        return
+      }
+
+      if (this.ignoreNextRegionChange) {
+        this.ignoreNextRegionChange = false
+        return
+      }
+
+      if (this.regionChangeTimer) {
+        clearTimeout(this.regionChangeTimer)
+      }
+
+      this.regionChangeTimer = setTimeout(() => {
+        const mapContext = this.getMapContext()
+
+        if (!mapContext || typeof mapContext.getCenterLocation !== 'function') {
+          return
+        }
+
+        mapContext.getCenterLocation({
+          success: ({ latitude, longitude }) => {
+            const nextLatitude = Number(latitude)
+            const nextLongitude = Number(longitude)
+            const currentLatitude = Number(this.form.latitude)
+            const currentLongitude = Number(this.form.longitude)
+
+            if (!nextLatitude || !nextLongitude) {
+              return
+            }
+
+            if (
+              Math.abs(nextLatitude - currentLatitude) < 0.00005
+              && Math.abs(nextLongitude - currentLongitude) < 0.00005
+            ) {
+              return
+            }
+
+            this.fillLocationByCoordinate(nextLatitude, nextLongitude)
+          }
+        })
+      }, 260)
     },
     validateForm() {
       if (!this.form.locationName.trim()) {
@@ -781,6 +833,7 @@ export default {
 
 .map-wrapper {
   margin-top: 22rpx;
+  position: relative;
   overflow: hidden;
   border-radius: 24rpx;
 }
@@ -788,6 +841,22 @@ export default {
 .map {
   width: 100%;
   height: 420rpx;
+}
+
+.map-center-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 68rpx;
+  height: 68rpx;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.map-center-pin-image {
+  width: 100%;
+  height: 100%;
 }
 
 .selected-location {

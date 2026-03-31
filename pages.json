@@ -190,6 +190,12 @@
           }
         },
         {
+          "path": "ai/index",
+          "style": {
+            "navigationBarTitleText": "小嘉AI"
+          }
+        },
+        {
           "path": "schedule/index",
           "style": {
             "navigationBarTitleText": "我的档期"

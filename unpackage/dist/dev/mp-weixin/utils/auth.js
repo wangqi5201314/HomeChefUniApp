@@ -7,6 +7,7 @@ const ADMIN_ID_KEY = "admin_id";
 const CHEF_ID_KEY = "chef_id";
 const CHEF_INFO_KEY = "chef_info";
 const AI_CHAT_HISTORY_KEY = "xiaojia_ai_chat_history";
+const CHEF_AI_CHAT_HISTORY_KEY = "chef_xiaojia_ai_chat_history";
 function getToken() {
   return common_vendor.index.getStorageSync(utils_config.TOKEN_KEY) || "";
 }
@@ -64,6 +65,9 @@ function removeChefInfo() {
 function removeAiChatHistory() {
   common_vendor.index.removeStorageSync(AI_CHAT_HISTORY_KEY);
 }
+function removeChefAiChatHistory() {
+  common_vendor.index.removeStorageSync(CHEF_AI_CHAT_HISTORY_KEY);
+}
 function clearAuth() {
   removeToken();
   removeUserInfo();
@@ -73,8 +77,10 @@ function clearAuth() {
   removeChefId();
   removeChefInfo();
   removeAiChatHistory();
+  removeChefAiChatHistory();
 }
 exports.AI_CHAT_HISTORY_KEY = AI_CHAT_HISTORY_KEY;
+exports.CHEF_AI_CHAT_HISTORY_KEY = CHEF_AI_CHAT_HISTORY_KEY;
 exports.clearAuth = clearAuth;
 exports.getChefId = getChefId;
 exports.getChefInfo = getChefInfo;

@@ -25,6 +25,7 @@ if (!Math) {
   "./pages-chef/review/list.js";
   "./pages-chef/order/list.js";
   "./pages-chef/order/detail.js";
+  "./pages-chef/ai/index.js";
   "./pages-chef/schedule/index.js";
   "./pages-chef/certification/index.js";
   "./pages-chef/mine/index.js";

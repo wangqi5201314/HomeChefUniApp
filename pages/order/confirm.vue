@@ -21,28 +21,6 @@
         <text v-else class="empty-text">请先选择服务地址</text>
       </view>
 
-      <view class="section-card range-card">
-        <view class="section-head">
-          <text class="section-title">服务范围提示</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">厨师服务半径</text>
-          <text class="info-value">{{ serviceRadiusText }}</text>
-        </view>
-        <view class="range-block">
-          <text class="range-block-label">当前用户地址</text>
-          <text class="range-block-value">{{ fullAddress || '暂未选择服务地址' }}</text>
-        </view>
-        <view class="range-block">
-          <text class="range-block-label">厨师当前服务地址</text>
-          <text class="range-block-value">{{ chefServiceLocationText }}</text>
-        </view>
-        <view class="range-tip-card">
-          <text class="range-tip-main">实际是否可预约以后端服务范围校验为准</text>
-          <text class="range-tip-sub">提交订单后，系统将根据厨师服务基准位置和当前地址进行服务范围校验。</text>
-        </view>
-      </view>
-
       <view class="section-card">
         <text class="section-title">厨师信息</text>
         <view class="chef-box">
@@ -262,18 +240,6 @@ export default {
       ]
         .filter(Boolean)
         .join('')
-    },
-    serviceRadiusText() {
-      const radius = this.chef.serviceRadiusKm
-
-      if (radius === 0 || radius) {
-        return `服务半径 ${radius} km`
-      }
-
-      return '暂未设置'
-    },
-    chefServiceLocationText() {
-      return this.chef.serviceAreaText || '暂未设置服务地址'
     },
     chefServiceModeValue() {
       return Number(this.chef.serviceMode)
@@ -615,10 +581,6 @@ export default {
   position: relative;
 }
 
-.range-card {
-  background: linear-gradient(180deg, #fffaf5 0%, #ffffff 100%);
-}
-
 .section-head,
 .info-line,
 .address-user {
@@ -665,50 +627,6 @@ export default {
   font-size: 28rpx;
   line-height: 1.6;
   color: #4f5662;
-}
-
-.range-block {
-  margin-top: 8rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f8faf9;
-}
-
-.range-block-label {
-  display: block;
-  font-size: 24rpx;
-  color: #8a8f99;
-}
-
-.range-block-value {
-  display: block;
-  margin-top: 10rpx;
-  font-size: 28rpx;
-  line-height: 1.7;
-  color: #4f5662;
-  word-break: break-all;
-}
-
-.range-tip-card {
-  margin-top: 18rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 18rpx;
-  background: rgba(217, 108, 58, 0.08);
-}
-
-.range-tip-main {
-  display: block;
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #b45e37;
-}
-
-.range-tip-sub {
-  display: block;
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #8a6a5d;
 }
 
 .chef-box {
