@@ -10,12 +10,50 @@
     </view>
 
     <view v-else>
-      <view class="hero-card">
-        <view>
-          <text class="hero-label">订单状态</text>
-          <text class="hero-status" :class="statusClass">{{ statusLabel }}</text>
+      <view class="hero-card" :class="heroToneClass">
+        <view class="hero-top">
+          <view class="hero-copy">
+            <text class="hero-label">订单状态</text>
+            <text class="hero-status">{{ statusLabel }}</text>
+            <text class="hero-desc">{{ statusSummaryText }}</text>
+          </view>
+          <text class="hero-badge" :class="statusClass">{{ statusLabel }}</text>
         </view>
-        <text class="hero-no">订单号：{{ orderDetail.orderNo || '-' }}</text>
+        <view class="hero-meta-grid">
+          <view class="hero-meta-item">
+            <text class="hero-meta-label">订单号</text>
+            <text class="hero-meta-value">{{ orderDetail.orderNo || '-' }}</text>
+          </view>
+          <view class="hero-meta-item">
+            <text class="hero-meta-label">创建时间</text>
+            <text class="hero-meta-value">{{ formatFullDateTime(orderDetail.createdAt) }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="detail-card progress-card">
+        <view class="progress-head">
+          <text class="section-title progress-title">服务流程</text>
+          <text class="progress-caption">当前阶段：{{ statusLabel }}</text>
+        </view>
+        <view class="progress-track">
+          <view
+            v-for="(step, index) in progressSteps"
+            :key="step.key"
+            class="progress-step"
+            :class="getProgressStepClass(index)"
+          >
+            <view class="progress-dot">
+              <text class="progress-dot-text">{{ index + 1 }}</text>
+            </view>
+            <text class="progress-step-label">{{ step.label }}</text>
+            <view v-if="index < progressSteps.length - 1" class="progress-line"></view>
+          </view>
+        </view>
+        <view v-if="progressTerminalText" class="progress-terminal" :class="statusClass">
+          <text class="progress-terminal-label">流程提示</text>
+          <text class="progress-terminal-text">{{ progressTerminalText }}</text>
+        </view>
       </view>
 
       <view class="detail-card">
@@ -243,6 +281,109 @@ export default {
     statusClass() {
       return getOrderStatusClass(this.orderDetail.orderStatus)
     },
+    heroToneClass() {
+      if (this.statusClass === 'pending') {
+        return 'hero-card--pending'
+      }
+
+      if (this.statusClass === 'success') {
+        return 'hero-card--success'
+      }
+
+      if (this.statusClass === 'danger') {
+        return 'hero-card--danger'
+      }
+
+      return ''
+    },
+    statusSummaryText() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.PENDING_CONFIRM) {
+        return '请尽快处理新订单，确认后用户才能继续支付。'
+      }
+
+      if (status === ORDER_STATUS.WAIT_PAY) {
+        return '你已确认订单，当前正在等待用户完成支付。'
+      }
+
+      if (status === ORDER_STATUS.PAID) {
+        return '订单已支付，可以按预约时间开始服务。'
+      }
+
+      if (status === ORDER_STATUS.IN_SERVICE) {
+        return '服务进行中，完成后记得及时结束订单。'
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return '本单服务已闭环完成，可查看用户评价。'
+      }
+
+      if (status === ORDER_STATUS.REJECTED) {
+        return '订单已拒绝，本次服务流程不再继续。'
+      }
+
+      if (status === ORDER_STATUS.CANCELLED) {
+        return '用户已取消订单，本次服务流程结束。'
+      }
+
+      if (status === ORDER_STATUS.REFUNDED) {
+        return '订单已退款完成，本次服务流程结束。'
+      }
+
+      return '当前订单状态已更新。'
+    },
+    progressSteps() {
+      return [
+        { key: ORDER_STATUS.PENDING_CONFIRM, label: '待确认' },
+        { key: ORDER_STATUS.WAIT_PAY, label: '待支付' },
+        { key: ORDER_STATUS.PAID, label: '已支付' },
+        { key: ORDER_STATUS.IN_SERVICE, label: '服务中' },
+        { key: ORDER_STATUS.COMPLETED, label: '已完成' }
+      ]
+    },
+    activeProgressIndex() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.PENDING_CONFIRM || status === ORDER_STATUS.REJECTED) {
+        return 0
+      }
+
+      if (status === ORDER_STATUS.WAIT_PAY || status === ORDER_STATUS.CANCELLED) {
+        return 1
+      }
+
+      if (status === ORDER_STATUS.PAID || status === ORDER_STATUS.REFUNDED) {
+        return 2
+      }
+
+      if (status === ORDER_STATUS.IN_SERVICE) {
+        return 3
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return 4
+      }
+
+      return 0
+    },
+    progressTerminalText() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.REJECTED) {
+        return '订单在待确认阶段已拒绝，不再进入后续服务流程。'
+      }
+
+      if (status === ORDER_STATUS.CANCELLED) {
+        return '订单已被用户取消，服务流程在支付前结束。'
+      }
+
+      if (status === ORDER_STATUS.REFUNDED) {
+        return '订单已退款，后续不再继续本次服务流程。'
+      }
+
+      return ''
+    },
     showAcceptButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.PENDING_CONFIRM
     },
@@ -341,6 +482,17 @@ export default {
     formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
+    getProgressStepClass(index) {
+      if (index < this.activeProgressIndex) {
+        return 'done'
+      }
+
+      if (index === this.activeProgressIndex) {
+        return 'active'
+      }
+
+      return 'todo'
+    },
     formatScore(value) {
       if (value === 0) {
         return '0'
@@ -648,42 +800,101 @@ export default {
 }
 
 .hero-card {
+  padding: 32rpx;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.34), transparent 24%),
+    linear-gradient(135deg, #56b57f 0%, #2f8f55 56%, #216f40 100%);
+}
+
+.hero-card--pending {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.34), transparent 24%),
+    linear-gradient(135deg, #f2b07c 0%, #d78644 56%, #b9682e 100%);
+}
+
+.hero-card--danger {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.34), transparent 24%),
+    linear-gradient(135deg, #ef8b8b 0%, #d14a4a 56%, #b73b3b 100%);
+}
+
+.hero-top {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 24rpx;
-  padding: 32rpx;
+}
+
+.hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-label,
+.hero-status,
+.hero-desc,
+.hero-meta-label,
+.hero-meta-value {
+  display: block;
 }
 
 .hero-label {
-  display: block;
   font-size: 24rpx;
-  color: #7b8680;
+  letter-spacing: 3rpx;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .hero-status {
-  display: block;
-  margin-top: 12rpx;
-  font-size: 38rpx;
+  margin-top: 14rpx;
+  font-size: 48rpx;
   font-weight: 700;
+  color: #ffffff;
 }
 
-.hero-status.pending {
-  color: #c45e31;
+.hero-desc {
+  margin-top: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88);
 }
 
-.hero-status.success {
-  color: #2f8f55;
+.hero-badge {
+  flex-shrink: 0;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 2rpx rgba(255, 255, 255, 0.18);
 }
 
-.hero-status.danger {
-  color: #d14a4a;
+.hero-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 28rpx;
 }
 
-.hero-no {
-  font-size: 24rpx;
-  color: #62706a;
-  text-align: right;
+.hero-meta-item {
+  min-width: 0;
+  padding: 18rpx 20rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.hero-meta-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.hero-meta-value {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #ffffff;
+  word-break: break-all;
 }
 
 .detail-card {
@@ -691,11 +902,141 @@ export default {
   padding: 28rpx;
 }
 
+.progress-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcf8 100%);
+}
+
+.progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
 .section-title {
   display: block;
   margin-bottom: 20rpx;
   font-size: 30rpx;
   font-weight: 600;
+  color: #223128;
+}
+
+.progress-title {
+  margin-bottom: 0;
+}
+
+.progress-caption {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #7a837d;
+}
+
+.progress-track {
+  display: flex;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.progress-step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.progress-line {
+  position: absolute;
+  top: 24rpx;
+  left: calc(50% + 30rpx);
+  width: calc(100% - 60rpx);
+  height: 4rpx;
+  border-radius: 999rpx;
+  background: #e1e8e3;
+}
+
+.progress-step.done .progress-line,
+.progress-step.active .progress-line {
+  background: linear-gradient(90deg, #70bf92 0%, #2f8f55 100%);
+}
+
+.progress-dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #edf2ee;
+  box-shadow: inset 0 0 0 2rpx #dfe7e1;
+}
+
+.progress-step.done .progress-dot,
+.progress-step.active .progress-dot {
+  background: linear-gradient(135deg, #5fb684 0%, #2f8f55 100%);
+  box-shadow: 0 10rpx 20rpx rgba(47, 143, 85, 0.2);
+}
+
+.progress-dot-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #7a837d;
+}
+
+.progress-step.done .progress-dot-text,
+.progress-step.active .progress-dot-text {
+  color: #ffffff;
+}
+
+.progress-step-label {
+  margin-top: 14rpx;
+  font-size: 23rpx;
+  color: #919b95;
+  text-align: center;
+}
+
+.progress-step.done .progress-step-label,
+.progress-step.active .progress-step-label {
+  color: #223128;
+  font-weight: 600;
+}
+
+.progress-terminal {
+  margin-top: 26rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 22rpx;
+}
+
+.progress-terminal.pending {
+  background: #fff2eb;
+}
+
+.progress-terminal.success {
+  background: #edf8f1;
+}
+
+.progress-terminal.danger {
+  background: #fdeeee;
+}
+
+.progress-terminal-label,
+.progress-terminal-text {
+  display: block;
+}
+
+.progress-terminal-label {
+  font-size: 22rpx;
+  color: #7a837d;
+}
+
+.progress-terminal-text {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
   color: #223128;
 }
 
@@ -828,39 +1169,46 @@ export default {
   max-height: 84vh;
   overflow-y: auto;
 }
+
 .review-popup-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20rpx;
 }
+
 .review-popup-score {
   flex-shrink: 0;
   font-size: 26rpx;
   font-weight: 600;
   color: #d96c3a;
 }
+
 .review-meta {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
   margin-top: 20rpx;
 }
+
 .review-meta-text {
   font-size: 24rpx;
   color: #7a837d;
   line-height: 1.6;
 }
+
 .review-score-row {
   display: flex;
   flex-wrap: wrap;
   gap: 14rpx 20rpx;
   margin-top: 22rpx;
 }
+
 .review-score-item {
   font-size: 26rpx;
   color: #223128;
 }
+
 .review-block,
 .review-reply-card {
   margin-top: 24rpx;
@@ -868,12 +1216,14 @@ export default {
   border-radius: 22rpx;
   background: #f7f9f8;
 }
+
 .review-block-title {
   display: block;
   font-size: 26rpx;
   font-weight: 600;
   color: #223128;
 }
+
 .review-block-content {
   display: block;
   margin-top: 12rpx;
@@ -881,33 +1231,40 @@ export default {
   line-height: 1.7;
   color: #1f2329;
 }
+
 .review-image-list {
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
   margin-top: 16rpx;
 }
+
 .review-image {
   width: 176rpx;
   height: 176rpx;
   border-radius: 18rpx;
   background: #eef2ef;
 }
+
 .review-reply-time {
   display: block;
   margin-top: 12rpx;
 }
+
 .review-reply-textarea {
   height: 180rpx;
   margin-top: 16rpx;
 }
+
 .review-reply-actions {
   display: flex;
   margin-top: 20rpx;
 }
+
 .review-close-btn {
   margin-top: 28rpx;
 }
+
 .primary-btn::after,
 .ghost-btn::after,
 .back-btn::after,

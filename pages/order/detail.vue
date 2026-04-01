@@ -9,12 +9,50 @@
     </view>
 
     <view v-else>
-      <view class="section-card hero-card">
-        <view class="hero-head">
-          <text class="order-no">订单号：{{ orderDetail.orderNo || '-' }}</text>
+      <view class="section-card hero-card" :class="heroToneClass">
+        <view class="hero-top">
+          <view class="hero-copy">
+            <text class="hero-eyebrow">订单状态</text>
+            <text class="hero-status-title">{{ statusLabel }}</text>
+            <text class="hero-status-desc">{{ statusSummaryText }}</text>
+          </view>
           <text class="status-tag" :class="statusClass">{{ statusLabel }}</text>
         </view>
-        <text class="hero-time">创建时间：{{ formatFullDateTime(orderDetail.createdAt) }}</text>
+        <view class="hero-meta-grid">
+          <view class="hero-meta-item">
+            <text class="hero-meta-label">订单号</text>
+            <text class="hero-meta-value">{{ orderDetail.orderNo || '-' }}</text>
+          </view>
+          <view class="hero-meta-item">
+            <text class="hero-meta-label">创建时间</text>
+            <text class="hero-meta-value">{{ formatFullDateTime(orderDetail.createdAt) }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section-card progress-card">
+        <view class="progress-head">
+          <text class="section-title progress-title">服务流程</text>
+          <text class="progress-caption">当前阶段：{{ statusLabel }}</text>
+        </view>
+        <view class="progress-track">
+          <view
+            v-for="(step, index) in progressSteps"
+            :key="step.key"
+            class="progress-step"
+            :class="getProgressStepClass(index)"
+          >
+            <view class="progress-dot">
+              <text class="progress-dot-text">{{ index + 1 }}</text>
+            </view>
+            <text class="progress-step-label">{{ step.label }}</text>
+            <view v-if="index < progressSteps.length - 1" class="progress-line"></view>
+          </view>
+        </view>
+        <view v-if="progressTerminalText" class="progress-terminal" :class="statusClass">
+          <text class="progress-terminal-label">流程提示</text>
+          <text class="progress-terminal-text">{{ progressTerminalText }}</text>
+        </view>
       </view>
 
       <view class="section-card">
@@ -236,6 +274,109 @@ export default {
     statusClass() {
       return getOrderStatusClass(this.orderDetail.orderStatus)
     },
+    heroToneClass() {
+      if (this.statusClass === 'pending') {
+        return 'hero-card--pending'
+      }
+
+      if (this.statusClass === 'success') {
+        return 'hero-card--success'
+      }
+
+      if (this.statusClass === 'danger') {
+        return 'hero-card--danger'
+      }
+
+      return ''
+    },
+    statusSummaryText() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.PENDING_CONFIRM) {
+        return '订单已创建，正在等待厨师确认是否接单。'
+      }
+
+      if (status === ORDER_STATUS.WAIT_PAY) {
+        return '厨师已确认订单，请尽快完成支付以锁定档期。'
+      }
+
+      if (status === ORDER_STATUS.PAID) {
+        return '订单已支付成功，等待厨师按预约时间开始服务。'
+      }
+
+      if (status === ORDER_STATUS.IN_SERVICE) {
+        return '厨师已开始服务，本单正在进行中。'
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return '本次服务已经完成，可查看评价或补充评价。'
+      }
+
+      if (status === ORDER_STATUS.REJECTED) {
+        return '厨师未接受本次订单，你可以重新选择其他厨师。'
+      }
+
+      if (status === ORDER_STATUS.CANCELLED) {
+        return '订单已取消，本次服务流程已终止。'
+      }
+
+      if (status === ORDER_STATUS.REFUNDED) {
+        return '订单已进入退款完成状态。'
+      }
+
+      return '当前订单状态已更新。'
+    },
+    progressSteps() {
+      return [
+        { key: ORDER_STATUS.PENDING_CONFIRM, label: '待确认' },
+        { key: ORDER_STATUS.WAIT_PAY, label: '待支付' },
+        { key: ORDER_STATUS.PAID, label: '已支付' },
+        { key: ORDER_STATUS.IN_SERVICE, label: '服务中' },
+        { key: ORDER_STATUS.COMPLETED, label: '已完成' }
+      ]
+    },
+    activeProgressIndex() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.PENDING_CONFIRM || status === ORDER_STATUS.REJECTED) {
+        return 0
+      }
+
+      if (status === ORDER_STATUS.WAIT_PAY || status === ORDER_STATUS.CANCELLED) {
+        return 1
+      }
+
+      if (status === ORDER_STATUS.PAID || status === ORDER_STATUS.REFUNDED) {
+        return 2
+      }
+
+      if (status === ORDER_STATUS.IN_SERVICE) {
+        return 3
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return 4
+      }
+
+      return 0
+    },
+    progressTerminalText() {
+      const status = this.orderDetail.orderStatus
+
+      if (status === ORDER_STATUS.REJECTED) {
+        return '订单在待确认阶段被厨师拒绝，本次服务流程未继续推进。'
+      }
+
+      if (status === ORDER_STATUS.CANCELLED) {
+        return '订单已被取消，服务流程在支付前结束。'
+      }
+
+      if (status === ORDER_STATUS.REFUNDED) {
+        return '订单已退款，后续服务流程不再继续。'
+      }
+
+      return ''
+    },
     showCancelButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.PENDING_CONFIRM || this.orderDetail.orderStatus === ORDER_STATUS.WAIT_PAY
     },
@@ -311,6 +452,17 @@ export default {
     formatFullDateTime,
     formatScheduleDateTime,
     getTimeSlotText,
+    getProgressStepClass(index) {
+      if (index < this.activeProgressIndex) {
+        return 'done'
+      }
+
+      if (index === this.activeProgressIndex) {
+        return 'active'
+      }
+
+      return 'todo'
+    },
     getIngredientModeText(value) {
       const normalizedValue = Number(value)
 
@@ -506,67 +658,612 @@ export default {
 </script>
 
 <style scoped>
-.page { min-height: 100vh; padding: 24rpx 24rpx 220rpx; background: #f6f7fb; box-sizing: border-box; }
-.state-card, .section-card, .modal-card { border-radius: 24rpx; background: #ffffff; box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05); }
-.state-card { display: flex; align-items: center; justify-content: center; min-height: 360rpx; padding: 40rpx 32rpx; }
-.state-text { font-size: 28rpx; color: #8a8f99; }
-.section-card { margin-bottom: 24rpx; padding: 28rpx; }
-.hero-card { background: linear-gradient(135deg, #fff7f1 0%, #ffffff 100%); }
-.hero-head, .info-line { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
-.hero-head { margin-bottom: 14rpx; }
-.order-no { flex: 1; min-width: 0; font-size: 28rpx; font-weight: 600; color: #1f2329; }
-.hero-time { display: block; font-size: 24rpx; color: #8a8f99; }
-.status-tag { flex-shrink: 0; padding: 10rpx 18rpx; border-radius: 999rpx; font-size: 22rpx; }
-.status-tag.pending { background: #fff2eb; color: #c45e31; }
-.status-tag.success { background: #edf8f1; color: #2f8f55; }
-.status-tag.danger { background: #fdeeee; color: #d14a4a; }
-.section-title { display: block; margin-bottom: 20rpx; font-size: 30rpx; font-weight: 600; color: #1f2329; }
-.info-line { padding: 12rpx 0; }
-.block-line { padding: 12rpx 0; }
-.info-label { flex-shrink: 0; font-size: 26rpx; color: #8a8f99; }
-.info-value { font-size: 26rpx; color: #4f5662; text-align: right; }
-.block-value { display: block; margin-top: 10rpx; font-size: 26rpx; line-height: 1.6; color: #4f5662; }
-.amount { color: #d96c3a; font-weight: 600; }
-.chef-card { display: flex; align-items: center; gap: 24rpx; }
-.chef-avatar { width: 116rpx; height: 116rpx; border-radius: 24rpx; background: #f1e1d9; flex-shrink: 0; }
-.chef-avatar-placeholder { display: flex; align-items: center; justify-content: center; }
-.chef-avatar-text { font-size: 40rpx; font-weight: 600; color: #b96845; }
-.chef-meta { flex: 1; min-width: 0; }
-.chef-name { display: block; font-size: 30rpx; font-weight: 600; color: #1f2329; }
-.chef-desc { display: block; margin-top: 12rpx; font-size: 25rpx; line-height: 1.6; color: #6b7280; }
-.review-head { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
-.review-title { margin-bottom: 0; }
-.review-score { font-size: 28rpx; font-weight: 600; color: #d96c3a; }
-.review-meta { display: flex; flex-direction: column; gap: 8rpx; }
-.review-meta-text { font-size: 24rpx; color: #8a8f99; }
-.review-score-row { display: flex; flex-wrap: wrap; gap: 16rpx 24rpx; margin-top: 20rpx; }
-.review-score-item { font-size: 26rpx; color: #333333; }
-.review-block { margin-top: 24rpx; }
-.review-block-title { display: block; font-size: 26rpx; font-weight: 600; color: #1f2329; }
-.review-block-content { display: block; margin-top: 12rpx; font-size: 28rpx; line-height: 1.7; color: #4f5662; }
-.review-image-list { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 12rpx; }
-.review-image { width: 160rpx; height: 160rpx; border-radius: 20rpx; background: #f3f4f6; }
-.review-reply-card { margin-top: 24rpx; padding: 24rpx; border-radius: 20rpx; background: #fff7f1; }
-.review-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 20rpx; }
-.review-empty-text { font-size: 26rpx; color: #8a8f99; }
-.review-action-btn { min-width: 220rpx; height: 80rpx; line-height: 80rpx; margin: 0; padding: 0 28rpx; border: none; border-radius: 999rpx; background: #d96c3a; font-size: 28rpx; color: #ffffff; }
-.review-action-btn::after { border: none; }
-.bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, 0.98); box-shadow: 0 -8rpx 24rpx rgba(32, 37, 43, 0.06); box-sizing: border-box; }
-.action-row { display: flex; align-items: center; gap: 20rpx; }
-.action-btn { flex: 1; height: 88rpx; line-height: 88rpx; border: none; border-radius: 999rpx; font-size: 30rpx; font-weight: 500; }
-.action-btn::after, .modal-btn::after, .home-btn::after { border: none; }
-.action-btn.primary { background: #d96c3a; color: #ffffff; }
-.action-btn.secondary { background: #f2f4f7; color: #4f5662; }
-.action-btn.danger { background: #fdeeee; color: #d14a4a; }
-.status-notice-wrap { flex: 1; display: flex; justify-content: flex-end; }
-.status-notice { padding: 0 28rpx; height: 88rpx; line-height: 88rpx; border-radius: 999rpx; background: #f2f4f7; font-size: 30rpx; font-weight: 500; color: #8a8f99; }
-.home-btn { width: 100%; height: 84rpx; line-height: 84rpx; margin-top: 16rpx; border: none; border-radius: 999rpx; background: #fff2eb; font-size: 28rpx; color: #c45e31; }
-.modal-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 32rpx; background: rgba(15, 23, 42, 0.42); box-sizing: border-box; }
-.modal-card { width: 100%; padding: 32rpx; }
-.modal-title { display: block; margin-bottom: 20rpx; font-size: 32rpx; font-weight: 600; color: #1f2329; }
-.modal-textarea { width: 100%; min-height: 180rpx; padding: 24rpx; border-radius: 18rpx; background: #f7f8fb; font-size: 28rpx; color: #222222; box-sizing: border-box; }
-.modal-actions { display: flex; gap: 20rpx; margin-top: 28rpx; }
-.modal-btn { flex: 1; height: 84rpx; line-height: 84rpx; border: none; border-radius: 999rpx; font-size: 28rpx; }
-.modal-btn.plain { background: #f2f4f7; color: #4f5662; }
-.modal-btn.danger { background: #d14a4a; color: #ffffff; }
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 220rpx;
+  background:
+    radial-gradient(circle at top right, rgba(217, 108, 58, 0.12), transparent 30%),
+    linear-gradient(180deg, #fff7f1 0%, #f6f7fb 30%, #f6f7fb 100%);
+  box-sizing: border-box;
+}
+
+.state-card,
+.section-card,
+.modal-card {
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14rpx 36rpx rgba(32, 37, 43, 0.06);
+}
+
+.state-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360rpx;
+  padding: 40rpx 32rpx;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: #8a8f99;
+}
+
+.section-card {
+  margin-bottom: 24rpx;
+  padding: 28rpx;
+}
+
+.hero-card {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.42), transparent 24%),
+    linear-gradient(135deg, #f7a97a 0%, #d96c3a 52%, #c3562e 100%);
+}
+
+.hero-card--success {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.36), transparent 24%),
+    linear-gradient(135deg, #4fb17a 0%, #2f8f55 55%, #216f40 100%);
+}
+
+.hero-card--danger {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.36), transparent 24%),
+    linear-gradient(135deg, #ef8b8b 0%, #d14a4a 55%, #b93737 100%);
+}
+
+.hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-eyebrow,
+.hero-status-title,
+.hero-status-desc,
+.hero-meta-label,
+.hero-meta-value {
+  display: block;
+}
+
+.hero-eyebrow {
+  font-size: 24rpx;
+  letter-spacing: 3rpx;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.hero-status-title {
+  margin-top: 14rpx;
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hero-status-desc {
+  margin-top: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.hero-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 28rpx;
+}
+
+.hero-meta-item {
+  min-width: 0;
+  padding: 18rpx 20rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10rpx);
+}
+
+.hero-meta-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.hero-meta-value {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #ffffff;
+  word-break: break-all;
+}
+
+.status-tag {
+  flex-shrink: 0;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 2rpx rgba(255, 255, 255, 0.18);
+}
+
+.status-tag.pending,
+.status-tag.success,
+.status-tag.danger {
+  color: #ffffff;
+}
+
+.progress-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf6 100%);
+}
+
+.progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.progress-title {
+  margin-bottom: 0;
+}
+
+.progress-caption {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #8a8f99;
+}
+
+.progress-track {
+  display: flex;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.progress-step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.progress-line {
+  position: absolute;
+  top: 24rpx;
+  left: calc(50% + 30rpx);
+  width: calc(100% - 60rpx);
+  height: 4rpx;
+  border-radius: 999rpx;
+  background: #e6eaf0;
+}
+
+.progress-step.done .progress-line,
+.progress-step.active .progress-line {
+  background: linear-gradient(90deg, #f0a06c 0%, #d96c3a 100%);
+}
+
+.progress-dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #edf0f4;
+  box-shadow: inset 0 0 0 2rpx #dde3eb;
+}
+
+.progress-step.done .progress-dot,
+.progress-step.active .progress-dot {
+  background: linear-gradient(135deg, #f5a36e 0%, #d96c3a 100%);
+  box-shadow: 0 10rpx 20rpx rgba(217, 108, 58, 0.22);
+}
+
+.progress-dot-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #7a828f;
+}
+
+.progress-step.done .progress-dot-text,
+.progress-step.active .progress-dot-text {
+  color: #ffffff;
+}
+
+.progress-step-label {
+  margin-top: 14rpx;
+  font-size: 23rpx;
+  color: #9198a4;
+  text-align: center;
+}
+
+.progress-step.done .progress-step-label,
+.progress-step.active .progress-step-label {
+  color: #1f2329;
+  font-weight: 600;
+}
+
+.progress-terminal {
+  margin-top: 26rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 22rpx;
+}
+
+.progress-terminal.pending {
+  background: #fff2eb;
+}
+
+.progress-terminal.success {
+  background: #edf8f1;
+}
+
+.progress-terminal.danger {
+  background: #fdeeee;
+}
+
+.progress-terminal-label,
+.progress-terminal-text {
+  display: block;
+}
+
+.progress-terminal-label {
+  font-size: 22rpx;
+  color: #7b838f;
+}
+
+.progress-terminal-text {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #1f2329;
+}
+
+.info-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 12rpx 0;
+}
+
+.block-line {
+  padding: 12rpx 0;
+}
+
+.info-label {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #8a8f99;
+}
+
+.info-value {
+  font-size: 26rpx;
+  color: #4f5662;
+  text-align: right;
+}
+
+.block-value {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #4f5662;
+}
+
+.amount {
+  color: #d96c3a;
+  font-weight: 600;
+}
+
+.chef-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: #fff8f3;
+}
+
+.chef-avatar {
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: 24rpx;
+  background: #f1e1d9;
+  flex-shrink: 0;
+}
+
+.chef-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chef-avatar-text {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #b96845;
+}
+
+.chef-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.chef-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.chef-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 25rpx;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.review-title {
+  margin-bottom: 0;
+}
+
+.review-score {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #d96c3a;
+}
+
+.review-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.review-meta-text {
+  font-size: 24rpx;
+  color: #8a8f99;
+}
+
+.review-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx 24rpx;
+  margin-top: 20rpx;
+}
+
+.review-score-item {
+  font-size: 26rpx;
+  color: #333333;
+}
+
+.review-block {
+  margin-top: 24rpx;
+}
+
+.review-block-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.review-block-content {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #4f5662;
+}
+
+.review-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+
+.review-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 20rpx;
+  background: #f3f4f6;
+}
+
+.review-reply-card {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: #fff7f1;
+}
+
+.review-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.review-empty-text {
+  font-size: 26rpx;
+  color: #8a8f99;
+}
+
+.review-action-btn {
+  min-width: 220rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  margin: 0;
+  padding: 0 28rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #d96c3a;
+  font-size: 28rpx;
+  color: #ffffff;
+}
+
+.review-action-btn::after {
+  border: none;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 -8rpx 24rpx rgba(32, 37, 43, 0.06);
+  box-sizing: border-box;
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.action-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border: none;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.action-btn::after,
+.modal-btn::after,
+.home-btn::after {
+  border: none;
+}
+
+.action-btn.primary {
+  background: #d96c3a;
+  color: #ffffff;
+}
+
+.action-btn.secondary {
+  background: #f2f4f7;
+  color: #4f5662;
+}
+
+.action-btn.danger {
+  background: #fdeeee;
+  color: #d14a4a;
+}
+
+.status-notice-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status-notice {
+  padding: 0 28rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 999rpx;
+  background: #f2f4f7;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #8a8f99;
+}
+
+.home-btn {
+  width: 100%;
+  height: 84rpx;
+  line-height: 84rpx;
+  margin-top: 16rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #fff2eb;
+  font-size: 28rpx;
+  color: #c45e31;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  background: rgba(15, 23, 42, 0.42);
+  box-sizing: border-box;
+}
+
+.modal-card {
+  width: 100%;
+  padding: 32rpx;
+}
+
+.modal-title {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.modal-textarea {
+  width: 100%;
+  min-height: 180rpx;
+  padding: 24rpx;
+  border-radius: 18rpx;
+  background: #f7f8fb;
+  font-size: 28rpx;
+  color: #222222;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  border: none;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+}
+
+.modal-btn.plain {
+  background: #f2f4f7;
+  color: #4f5662;
+}
+
+.modal-btn.danger {
+  background: #d14a4a;
+  color: #ffffff;
+}
 </style>
