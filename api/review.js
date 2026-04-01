@@ -16,6 +16,25 @@ export function getChefReviewList(chefId) {
   return request.get(`/api/review/chef/${chefId}`)
 }
 
+export function getSingleReview(params = {}) {
+  const hasOrderId = params.orderId === 0 || Boolean(params.orderId)
+  const hasOrderNo = Boolean(params.orderNo)
+
+  if ((hasOrderId && hasOrderNo) || (!hasOrderId && !hasOrderNo)) {
+    return Promise.reject(new Error('orderId 和 orderNo 必须二选一'))
+  }
+
+  if (hasOrderId) {
+    return request.get('/api/review/single', {
+      orderId: params.orderId
+    })
+  }
+
+  return request.get('/api/review/single', {
+    orderNo: params.orderNo
+  })
+}
+
 export function replyReview(id, data) {
   return request.post(`/api/review/${id}/reply`, data)
 }
@@ -25,5 +44,6 @@ export default {
   getUserReviewList,
   getMyReviewList,
   getChefReviewList,
+  getSingleReview,
   replyReview
 }

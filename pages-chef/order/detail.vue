@@ -206,7 +206,7 @@ import {
   rejectChefOrder,
   startChefOrder
 } from '../../api/chef-order'
-import { getChefReviewList, replyReview } from '../../api/review'
+import { getSingleReview, replyReview } from '../../api/review'
 import { getChefId, getChefInfo } from '../../utils/auth'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 import { formatFullDateTime, formatScheduleDateTime } from '../../utils/schedule-time'
@@ -380,33 +380,8 @@ export default {
         current: urls[currentIndex]
       })
     },
-    resolveChefId() {
-      return this.orderDetail.chefId || this.chefId || ''
-    },
-    findOrderReview(reviewList) {
-      if (!Array.isArray(reviewList) || !reviewList.length) {
-        return null
-      }
-
-      const currentOrderId = this.orderDetail.id ? String(this.orderDetail.id) : ''
-      const currentOrderNo = this.orderDetail.orderNo ? String(this.orderDetail.orderNo) : ''
-
-      return reviewList.find((item) => {
-        if (!item) {
-          return false
-        }
-
-        const itemOrderId = item.orderId ? String(item.orderId) : ''
-        const itemOrderNo = item.orderNo ? String(item.orderNo) : ''
-
-        return (currentOrderId && itemOrderId === currentOrderId) ||
-          (currentOrderNo && itemOrderNo === currentOrderNo)
-      }) || null
-    },
     async fetchOrderReview() {
-      const chefId = this.resolveChefId()
-
-      if (!chefId || !this.orderDetail.id || this.orderDetail.orderStatus !== ORDER_STATUS.COMPLETED) {
+      if (!this.orderDetail.id || this.orderDetail.orderStatus !== ORDER_STATUS.COMPLETED) {
         this.orderReview = null
         this.reviewReplyContent = ''
         this.showReviewPopup = false
@@ -414,8 +389,9 @@ export default {
       }
 
       try {
-        const data = await getChefReviewList(chefId)
-        this.orderReview = this.findOrderReview(Array.isArray(data) ? data : [])
+        this.orderReview = await getSingleReview({
+          orderId: this.orderDetail.id
+        })
         this.reviewReplyContent = ''
         if (!this.orderReview) {
           this.showReviewPopup = false

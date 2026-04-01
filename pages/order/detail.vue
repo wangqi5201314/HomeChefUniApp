@@ -193,7 +193,7 @@
 import { getChefDetail } from '../../api/chef'
 import { cancelOrder, getOrderDetail } from '../../api/order'
 import { createPayment, mockPaymentSuccess, refundPayment } from '../../api/pay'
-import { getMyReviewList } from '../../api/review'
+import { getSingleReview } from '../../api/review'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 import { formatFullDateTime, formatScheduleDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText } from '../../utils/time-slot'
@@ -372,23 +372,15 @@ export default {
         return
       }
 
-      if (!this.userId && !this.orderDetail.userId) {
+      if (!this.orderDetail.id && !this.orderDetail.orderNo) {
         return
       }
 
       this.reviewLoading = true
       try {
-        const data = await getMyReviewList(this.userId || this.orderDetail.userId)
-        const reviewList = Array.isArray(data) ? data : []
-        this.orderReview = reviewList.find((item) => {
-          if (!item) {
-            return false
-          }
-
-          const sameOrderId = item.orderId && String(item.orderId) === String(this.orderDetail.id)
-          const sameOrderNo = item.orderNo && this.orderDetail.orderNo && String(item.orderNo) === String(this.orderDetail.orderNo)
-          return sameOrderId || sameOrderNo
-        }) || null
+        this.orderReview = await getSingleReview({
+          orderId: this.orderDetail.id
+        })
       } catch (error) {
         this.orderReview = null
       } finally {

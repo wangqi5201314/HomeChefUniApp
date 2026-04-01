@@ -168,21 +168,14 @@ const _sfc_main = {
       if (this.orderDetail.orderStatus !== utils_orderStatus.ORDER_STATUS.COMPLETED) {
         return;
       }
-      if (!this.userId && !this.orderDetail.userId) {
+      if (!this.orderDetail.id && !this.orderDetail.orderNo) {
         return;
       }
       this.reviewLoading = true;
       try {
-        const data = await api_review.getMyReviewList(this.userId || this.orderDetail.userId);
-        const reviewList = Array.isArray(data) ? data : [];
-        this.orderReview = reviewList.find((item) => {
-          if (!item) {
-            return false;
-          }
-          const sameOrderId = item.orderId && String(item.orderId) === String(this.orderDetail.id);
-          const sameOrderNo = item.orderNo && this.orderDetail.orderNo && String(item.orderNo) === String(this.orderDetail.orderNo);
-          return sameOrderId || sameOrderNo;
-        }) || null;
+        this.orderReview = await api_review.getSingleReview({
+          orderId: this.orderDetail.id
+        });
       } catch (error) {
         this.orderReview = null;
       } finally {

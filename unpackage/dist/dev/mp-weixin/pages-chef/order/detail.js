@@ -143,35 +143,17 @@ const _sfc_main = {
         current: urls[currentIndex]
       });
     },
-    resolveChefId() {
-      return this.orderDetail.chefId || this.chefId || "";
-    },
-    findOrderReview(reviewList) {
-      if (!Array.isArray(reviewList) || !reviewList.length) {
-        return null;
-      }
-      const currentOrderId = this.orderDetail.id ? String(this.orderDetail.id) : "";
-      const currentOrderNo = this.orderDetail.orderNo ? String(this.orderDetail.orderNo) : "";
-      return reviewList.find((item) => {
-        if (!item) {
-          return false;
-        }
-        const itemOrderId = item.orderId ? String(item.orderId) : "";
-        const itemOrderNo = item.orderNo ? String(item.orderNo) : "";
-        return currentOrderId && itemOrderId === currentOrderId || currentOrderNo && itemOrderNo === currentOrderNo;
-      }) || null;
-    },
     async fetchOrderReview() {
-      const chefId = this.resolveChefId();
-      if (!chefId || !this.orderDetail.id || this.orderDetail.orderStatus !== utils_orderStatus.ORDER_STATUS.COMPLETED) {
+      if (!this.orderDetail.id || this.orderDetail.orderStatus !== utils_orderStatus.ORDER_STATUS.COMPLETED) {
         this.orderReview = null;
         this.reviewReplyContent = "";
         this.showReviewPopup = false;
         return;
       }
       try {
-        const data = await api_review.getChefReviewList(chefId);
-        this.orderReview = this.findOrderReview(Array.isArray(data) ? data : []);
+        this.orderReview = await api_review.getSingleReview({
+          orderId: this.orderDetail.id
+        });
         this.reviewReplyContent = "";
         if (!this.orderReview) {
           this.showReviewPopup = false;
