@@ -25,6 +25,26 @@
         <view class="info-line"><text class="info-label">结束时间</text><text class="info-value">{{ formatScheduleDateTime(orderDetail.serviceEndTime) }}</text></view>
       </view>
 
+      <view v-if="showChefInfoSection" class="section-card">
+        <text class="section-title">厨师信息</text>
+        <view class="chef-card">
+          <image
+            v-if="chefDisplay.avatar"
+            class="chef-avatar"
+            :src="chefDisplay.avatar"
+            mode="aspectFill"
+          />
+          <view v-else class="chef-avatar chef-avatar-placeholder">
+            <text class="chef-avatar-text">{{ getChefInitial(chefDisplay.name) }}</text>
+          </view>
+          <view class="chef-meta">
+            <text class="chef-name">{{ chefDisplay.name || '未命名厨师' }}</text>
+            <text class="chef-desc">{{ chefDisplay.specialtyCuisine || chefDisplay.serviceModeDesc || '已开始为你服务' }}</text>
+            <text class="chef-desc">联系电话：{{ chefDisplay.phone || '-' }}</text>
+          </view>
+        </view>
+      </view>
+
       <view class="section-card">
         <text class="section-title">下单信息</text>
         <view class="info-line"><text class="info-label">用餐人数</text><text class="info-value">{{ orderDetail.peopleCount || '-' }}</text></view>
@@ -44,14 +64,69 @@
 
       <view class="section-card">
         <text class="section-title">费用信息</text>
-        <view class="info-line"><text class="info-label">总金额</text><text class="info-value amount">¥{{ formatAmount(orderDetail.totalAmount) }}</text></view>
-        <view class="info-line"><text class="info-label">实付金额</text><text class="info-value amount">¥{{ formatAmount(orderDetail.payAmount) }}</text></view>
+        <view class="info-line"><text class="info-label">总金额</text><text class="info-value amount">￥{{ formatAmount(orderDetail.totalAmount) }}</text></view>
+        <view class="info-line"><text class="info-label">实付金额</text><text class="info-value amount">￥{{ formatAmount(orderDetail.payAmount) }}</text></view>
       </view>
 
       <view v-if="orderDetail.cancelReason || orderDetail.refundReason" class="section-card">
         <text class="section-title">售后信息</text>
         <view v-if="orderDetail.cancelReason" class="block-line"><text class="info-label">取消原因</text><text class="block-value">{{ orderDetail.cancelReason }}</text></view>
         <view v-if="orderDetail.refundReason" class="block-line"><text class="info-label">退款原因</text><text class="block-value">{{ orderDetail.refundReason }}</text></view>
+      </view>
+
+      <view v-if="showReviewSection" class="section-card">
+        <view class="review-head">
+          <text class="section-title review-title">本单评价</text>
+          <text v-if="hasOrderReview" class="review-score">综合评分 {{ formatScore(orderReview.overallScore) }}</text>
+        </view>
+
+        <view v-if="reviewLoading" class="review-empty">
+          <text class="review-empty-text">评价信息加载中...</text>
+        </view>
+
+        <view v-else-if="hasOrderReview">
+          <view class="review-meta">
+            <text class="review-meta-text">{{ orderReview.isAnonymous === 1 ? '匿名评价' : '实名评价' }}</text>
+            <text class="review-meta-text">评价时间：{{ formatFullDateTime(orderReview.createdAt) }}</text>
+          </view>
+
+          <view class="review-score-row">
+            <text class="review-score-item">菜品 {{ formatScore(orderReview.dishScore) }}</text>
+            <text class="review-score-item">服务 {{ formatScore(orderReview.serviceScore) }}</text>
+            <text class="review-score-item">技能 {{ formatScore(orderReview.skillScore) }}</text>
+            <text class="review-score-item">环境 {{ formatScore(orderReview.environmentScore) }}</text>
+          </view>
+
+          <view class="review-block">
+            <text class="review-block-title">评价内容</text>
+            <text class="review-block-content">{{ orderReview.content || '未填写评价内容' }}</text>
+          </view>
+
+          <view v-if="parseImageUrls(orderReview.imageUrls).length" class="review-block">
+            <text class="review-block-title">评价图片</text>
+            <view class="review-image-list">
+              <image
+                v-for="(url, index) in parseImageUrls(orderReview.imageUrls)"
+                :key="`${orderReview.id}-${index}`"
+                class="review-image"
+                :src="url"
+                mode="aspectFill"
+                @click="previewImages(parseImageUrls(orderReview.imageUrls), index)"
+              />
+            </view>
+          </view>
+
+          <view v-if="orderReview.replyContent" class="review-reply-card">
+            <text class="review-block-title">厨师回复</text>
+            <text class="review-block-content">{{ orderReview.replyContent }}</text>
+            <text v-if="orderReview.replyAt" class="review-meta-text">回复时间：{{ formatFullDateTime(orderReview.replyAt) }}</text>
+          </view>
+        </view>
+
+        <view v-else class="review-empty">
+          <text class="review-empty-text">这笔订单还没有评价</text>
+          <button class="review-action-btn" @click="goReview">去评价</button>
+        </view>
       </view>
     </view>
 
@@ -84,11 +159,10 @@
         >
           申请退款
         </button>
-        <button v-if="showReviewButton" class="action-btn primary" @click="goReview">去评价</button>
         <view v-if="showStatusNotice" class="status-notice-wrap"><text class="status-notice">{{ statusNoticeText }}</text></view>
       </view>
 
-      <button v-if="showBackHomeButton" class="home-btn" @click="goHome">返回到首页</button>
+      <button v-if="showBackHomeButton" class="home-btn" @click="goHome">返回首页</button>
     </view>
 
     <view v-if="showCancelModal" class="modal-mask" @click="closeCancelPopup">
@@ -116,11 +190,15 @@
 </template>
 
 <script>
+import { getChefDetail } from '../../api/chef'
 import { cancelOrder, getOrderDetail } from '../../api/order'
 import { createPayment, mockPaymentSuccess, refundPayment } from '../../api/pay'
+import { getMyReviewList } from '../../api/review'
 import { ORDER_STATUS, getOrderStatusClass, getOrderStatusLabel } from '../../utils/order-status'
 import { formatFullDateTime, formatScheduleDateTime } from '../../utils/schedule-time'
 import { getTimeSlotText } from '../../utils/time-slot'
+
+const USER_ID_KEY = 'user_id'
 
 const INGREDIENT_MODE_TEXT_MAP = {
   1: '用户自备食材',
@@ -133,7 +211,9 @@ export default {
     return {
       ORDER_STATUS,
       id: '',
+      userId: '',
       loading: false,
+      reviewLoading: false,
       paying: false,
       cancelSubmitting: false,
       refundSubmitting: false,
@@ -141,7 +221,9 @@ export default {
       showRefundModal: false,
       cancelReason: '',
       refundReason: '',
-      orderDetail: {}
+      orderDetail: {},
+      chefInfo: null,
+      orderReview: null
     }
   },
   computed: {
@@ -163,8 +245,24 @@ export default {
     showRefundButton() {
       return this.orderDetail.orderStatus === ORDER_STATUS.PAID
     },
-    showReviewButton() {
-      return this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED && !this.isReviewed
+    chefDisplay() {
+      return {
+        name: this.orderDetail.chefName || (this.chefInfo && this.chefInfo.name) || '',
+        avatar: this.orderDetail.chefAvatar || (this.chefInfo && this.chefInfo.avatar) || '',
+        phone: this.orderDetail.chefPhone || (this.chefInfo && this.chefInfo.phone) || '',
+        specialtyCuisine: this.orderDetail.chefSpecialtyCuisine || (this.chefInfo && this.chefInfo.specialtyCuisine) || '',
+        serviceModeDesc: this.orderDetail.chefServiceModeDesc || (this.chefInfo && this.chefInfo.serviceModeDesc) || ''
+      }
+    },
+    showChefInfoSection() {
+      const status = this.orderDetail.orderStatus
+      return (status === ORDER_STATUS.IN_SERVICE || status === ORDER_STATUS.COMPLETED) && !!this.chefDisplay.name
+    },
+    showReviewSection() {
+      return this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED
+    },
+    hasOrderReview() {
+      return !!(this.orderReview && this.orderReview.id)
     },
     showStatusNotice() {
       return this.orderDetail.orderStatus === ORDER_STATUS.PAID ||
@@ -191,12 +289,12 @@ export default {
       return this.showCancelButton ||
         this.showPayButton ||
         this.showRefundButton ||
-        this.showReviewButton ||
         this.showStatusNotice ||
         this.showBackHomeButton
     }
   },
   onLoad(options) {
+    this.userId = uni.getStorageSync(USER_ID_KEY) || ''
     this.id = options && options.id ? options.id : ''
     if (!this.id) {
       uni.showToast({ title: '缺少订单 id', icon: 'none' })
@@ -222,16 +320,103 @@ export default {
 
       return value || '-'
     },
+    getChefInitial(name) {
+      return name ? String(name).slice(0, 1) : '厨'
+    },
     async loadOrderDetail() {
       this.loading = true
       try {
         const data = await getOrderDetail(this.id)
         this.orderDetail = data || {}
+        if (!this.userId && data && data.userId) {
+          this.userId = data.userId
+        }
+        await Promise.all([
+          this.loadChefInfo(),
+          this.loadOrderReview()
+        ])
       } catch (error) {
         this.orderDetail = {}
+        this.chefInfo = null
+        this.orderReview = null
       } finally {
         this.loading = false
       }
+    },
+    async loadChefInfo() {
+      this.chefInfo = null
+
+      const status = this.orderDetail.orderStatus
+      if (status !== ORDER_STATUS.IN_SERVICE && status !== ORDER_STATUS.COMPLETED) {
+        return
+      }
+
+      if (this.orderDetail.chefName || this.orderDetail.chefAvatar || this.orderDetail.chefPhone) {
+        return
+      }
+
+      if (!this.orderDetail.chefId) {
+        return
+      }
+
+      try {
+        this.chefInfo = await getChefDetail(this.orderDetail.chefId)
+      } catch (error) {
+        this.chefInfo = null
+      }
+    },
+    async loadOrderReview() {
+      this.orderReview = null
+
+      if (this.orderDetail.orderStatus !== ORDER_STATUS.COMPLETED) {
+        return
+      }
+
+      if (!this.userId && !this.orderDetail.userId) {
+        return
+      }
+
+      this.reviewLoading = true
+      try {
+        const data = await getMyReviewList(this.userId || this.orderDetail.userId)
+        const reviewList = Array.isArray(data) ? data : []
+        this.orderReview = reviewList.find((item) => {
+          if (!item) {
+            return false
+          }
+
+          const sameOrderId = item.orderId && String(item.orderId) === String(this.orderDetail.id)
+          const sameOrderNo = item.orderNo && this.orderDetail.orderNo && String(item.orderNo) === String(this.orderDetail.orderNo)
+          return sameOrderId || sameOrderNo
+        }) || null
+      } catch (error) {
+        this.orderReview = null
+      } finally {
+        this.reviewLoading = false
+      }
+    },
+    parseImageUrls(imageUrls) {
+      if (!imageUrls) {
+        return []
+      }
+
+      return String(imageUrls)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    },
+    previewImages(urls, currentIndex) {
+      uni.previewImage({
+        urls,
+        current: urls[currentIndex]
+      })
+    },
+    formatScore(score) {
+      if (score === 0) {
+        return '0'
+      }
+
+      return score || '-'
     },
     formatAmount(value) {
       if (value === 0) {
@@ -263,7 +448,6 @@ export default {
         uni.showToast({ title: '取消成功', icon: 'success' })
         this.showCancelModal = false
         await this.loadOrderDetail()
-      } catch (error) {
       } finally {
         this.cancelSubmitting = false
       }
@@ -296,7 +480,6 @@ export default {
         uni.showToast({ title: '退款申请成功', icon: 'success' })
         this.showRefundModal = false
         await this.loadOrderDetail()
-      } catch (error) {
       } finally {
         this.refundSubmitting = false
       }
@@ -313,13 +496,12 @@ export default {
         setTimeout(() => {
           uni.navigateTo({ url: `/pages/pay/result?orderId=${this.orderDetail.id}` })
         }, 300)
-      } catch (error) {
       } finally {
         this.paying = false
       }
     },
     goReview() {
-      if (this.isReviewed) {
+      if (this.isReviewed || !this.orderDetail.id) {
         return
       }
       uni.navigateTo({ url: `/pages/review/create?orderId=${this.orderDetail.id}&chefId=${this.orderDetail.chefId}&userId=${this.orderDetail.userId}` })
@@ -353,6 +535,30 @@ export default {
 .info-value { font-size: 26rpx; color: #4f5662; text-align: right; }
 .block-value { display: block; margin-top: 10rpx; font-size: 26rpx; line-height: 1.6; color: #4f5662; }
 .amount { color: #d96c3a; font-weight: 600; }
+.chef-card { display: flex; align-items: center; gap: 24rpx; }
+.chef-avatar { width: 116rpx; height: 116rpx; border-radius: 24rpx; background: #f1e1d9; flex-shrink: 0; }
+.chef-avatar-placeholder { display: flex; align-items: center; justify-content: center; }
+.chef-avatar-text { font-size: 40rpx; font-weight: 600; color: #b96845; }
+.chef-meta { flex: 1; min-width: 0; }
+.chef-name { display: block; font-size: 30rpx; font-weight: 600; color: #1f2329; }
+.chef-desc { display: block; margin-top: 12rpx; font-size: 25rpx; line-height: 1.6; color: #6b7280; }
+.review-head { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.review-title { margin-bottom: 0; }
+.review-score { font-size: 28rpx; font-weight: 600; color: #d96c3a; }
+.review-meta { display: flex; flex-direction: column; gap: 8rpx; }
+.review-meta-text { font-size: 24rpx; color: #8a8f99; }
+.review-score-row { display: flex; flex-wrap: wrap; gap: 16rpx 24rpx; margin-top: 20rpx; }
+.review-score-item { font-size: 26rpx; color: #333333; }
+.review-block { margin-top: 24rpx; }
+.review-block-title { display: block; font-size: 26rpx; font-weight: 600; color: #1f2329; }
+.review-block-content { display: block; margin-top: 12rpx; font-size: 28rpx; line-height: 1.7; color: #4f5662; }
+.review-image-list { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 12rpx; }
+.review-image { width: 160rpx; height: 160rpx; border-radius: 20rpx; background: #f3f4f6; }
+.review-reply-card { margin-top: 24rpx; padding: 24rpx; border-radius: 20rpx; background: #fff7f1; }
+.review-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 20rpx; }
+.review-empty-text { font-size: 26rpx; color: #8a8f99; }
+.review-action-btn { min-width: 220rpx; height: 80rpx; line-height: 80rpx; margin: 0; padding: 0 28rpx; border: none; border-radius: 999rpx; background: #d96c3a; font-size: 28rpx; color: #ffffff; }
+.review-action-btn::after { border: none; }
 .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, 0.98); box-shadow: 0 -8rpx 24rpx rgba(32, 37, 43, 0.06); box-sizing: border-box; }
 .action-row { display: flex; align-items: center; gap: 20rpx; }
 .action-btn { flex: 1; height: 88rpx; line-height: 88rpx; border: none; border-radius: 999rpx; font-size: 30rpx; font-weight: 500; }

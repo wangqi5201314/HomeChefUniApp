@@ -1,10 +1,13 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_chef = require("../../api/chef.js");
 const api_order = require("../../api/order.js");
 const api_pay = require("../../api/pay.js");
+const api_review = require("../../api/review.js");
 const utils_orderStatus = require("../../utils/order-status.js");
 const utils_scheduleTime = require("../../utils/schedule-time.js");
 const utils_timeSlot = require("../../utils/time-slot.js");
+const USER_ID_KEY = "user_id";
 const INGREDIENT_MODE_TEXT_MAP = {
   1: "用户自备食材",
   2: "平台协同采购"
@@ -15,7 +18,9 @@ const _sfc_main = {
     return {
       ORDER_STATUS: utils_orderStatus.ORDER_STATUS,
       id: "",
+      userId: "",
       loading: false,
+      reviewLoading: false,
       paying: false,
       cancelSubmitting: false,
       refundSubmitting: false,
@@ -23,7 +28,9 @@ const _sfc_main = {
       showRefundModal: false,
       cancelReason: "",
       refundReason: "",
-      orderDetail: {}
+      orderDetail: {},
+      chefInfo: null,
+      orderReview: null
     };
   },
   computed: {
@@ -45,8 +52,24 @@ const _sfc_main = {
     showRefundButton() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.PAID;
     },
-    showReviewButton() {
-      return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED && !this.isReviewed;
+    chefDisplay() {
+      return {
+        name: this.orderDetail.chefName || this.chefInfo && this.chefInfo.name || "",
+        avatar: this.orderDetail.chefAvatar || this.chefInfo && this.chefInfo.avatar || "",
+        phone: this.orderDetail.chefPhone || this.chefInfo && this.chefInfo.phone || "",
+        specialtyCuisine: this.orderDetail.chefSpecialtyCuisine || this.chefInfo && this.chefInfo.specialtyCuisine || "",
+        serviceModeDesc: this.orderDetail.chefServiceModeDesc || this.chefInfo && this.chefInfo.serviceModeDesc || ""
+      };
+    },
+    showChefInfoSection() {
+      const status = this.orderDetail.orderStatus;
+      return (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE || status === utils_orderStatus.ORDER_STATUS.COMPLETED) && !!this.chefDisplay.name;
+    },
+    showReviewSection() {
+      return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED;
+    },
+    hasOrderReview() {
+      return !!(this.orderReview && this.orderReview.id);
     },
     showStatusNotice() {
       return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.PAID || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.IN_SERVICE || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REJECTED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.CANCELLED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REFUNDED;
@@ -71,10 +94,11 @@ const _sfc_main = {
       return this.showCancelButton || this.showRefundButton;
     },
     showActionBar() {
-      return this.showCancelButton || this.showPayButton || this.showRefundButton || this.showReviewButton || this.showStatusNotice || this.showBackHomeButton;
+      return this.showCancelButton || this.showPayButton || this.showRefundButton || this.showStatusNotice || this.showBackHomeButton;
     }
   },
   onLoad(options) {
+    this.userId = common_vendor.index.getStorageSync(USER_ID_KEY) || "";
     this.id = options && options.id ? options.id : "";
     if (!this.id) {
       common_vendor.index.showToast({ title: "缺少订单 id", icon: "none" });
@@ -98,16 +122,90 @@ const _sfc_main = {
       }
       return value || "-";
     },
+    getChefInitial(name) {
+      return name ? String(name).slice(0, 1) : "厨";
+    },
     async loadOrderDetail() {
       this.loading = true;
       try {
         const data = await api_order.getOrderDetail(this.id);
         this.orderDetail = data || {};
+        if (!this.userId && data && data.userId) {
+          this.userId = data.userId;
+        }
+        await Promise.all([
+          this.loadChefInfo(),
+          this.loadOrderReview()
+        ]);
       } catch (error) {
         this.orderDetail = {};
+        this.chefInfo = null;
+        this.orderReview = null;
       } finally {
         this.loading = false;
       }
+    },
+    async loadChefInfo() {
+      this.chefInfo = null;
+      const status = this.orderDetail.orderStatus;
+      if (status !== utils_orderStatus.ORDER_STATUS.IN_SERVICE && status !== utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return;
+      }
+      if (this.orderDetail.chefName || this.orderDetail.chefAvatar || this.orderDetail.chefPhone) {
+        return;
+      }
+      if (!this.orderDetail.chefId) {
+        return;
+      }
+      try {
+        this.chefInfo = await api_chef.getChefDetail(this.orderDetail.chefId);
+      } catch (error) {
+        this.chefInfo = null;
+      }
+    },
+    async loadOrderReview() {
+      this.orderReview = null;
+      if (this.orderDetail.orderStatus !== utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return;
+      }
+      if (!this.userId && !this.orderDetail.userId) {
+        return;
+      }
+      this.reviewLoading = true;
+      try {
+        const data = await api_review.getMyReviewList(this.userId || this.orderDetail.userId);
+        const reviewList = Array.isArray(data) ? data : [];
+        this.orderReview = reviewList.find((item) => {
+          if (!item) {
+            return false;
+          }
+          const sameOrderId = item.orderId && String(item.orderId) === String(this.orderDetail.id);
+          const sameOrderNo = item.orderNo && this.orderDetail.orderNo && String(item.orderNo) === String(this.orderDetail.orderNo);
+          return sameOrderId || sameOrderNo;
+        }) || null;
+      } catch (error) {
+        this.orderReview = null;
+      } finally {
+        this.reviewLoading = false;
+      }
+    },
+    parseImageUrls(imageUrls) {
+      if (!imageUrls) {
+        return [];
+      }
+      return String(imageUrls).split(",").map((item) => item.trim()).filter(Boolean);
+    },
+    previewImages(urls, currentIndex) {
+      common_vendor.index.previewImage({
+        urls,
+        current: urls[currentIndex]
+      });
+    },
+    formatScore(score) {
+      if (score === 0) {
+        return "0";
+      }
+      return score || "-";
     },
     formatAmount(value) {
       if (value === 0) {
@@ -139,7 +237,6 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "取消成功", icon: "success" });
         this.showCancelModal = false;
         await this.loadOrderDetail();
-      } catch (error) {
       } finally {
         this.cancelSubmitting = false;
       }
@@ -172,7 +269,6 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "退款申请成功", icon: "success" });
         this.showRefundModal = false;
         await this.loadOrderDetail();
-      } catch (error) {
       } finally {
         this.refundSubmitting = false;
       }
@@ -189,13 +285,12 @@ const _sfc_main = {
         setTimeout(() => {
           common_vendor.index.navigateTo({ url: `/pages/pay/result?orderId=${this.orderDetail.id}` });
         }, 300);
-      } catch (error) {
       } finally {
         this.paying = false;
       }
     },
     goReview() {
-      if (this.isReviewed) {
+      if (this.isReviewed || !this.orderDetail.id) {
         return;
       }
       common_vendor.index.navigateTo({ url: `/pages/review/create?orderId=${this.orderDetail.id}&chefId=${this.orderDetail.chefId}&userId=${this.orderDetail.userId}` });
@@ -217,83 +312,127 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     h: common_vendor.t($options.getTimeSlotText($data.orderDetail.timeSlot)),
     i: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceStartTime)),
     j: common_vendor.t($options.formatScheduleDateTime($data.orderDetail.serviceEndTime)),
-    k: common_vendor.t($data.orderDetail.peopleCount || "-"),
-    l: common_vendor.t($data.orderDetail.tastePreference || "-"),
-    m: common_vendor.t($data.orderDetail.tabooFood || "-"),
-    n: common_vendor.t($data.orderDetail.specialRequirement || "-"),
-    o: common_vendor.t($options.getIngredientModeText($data.orderDetail.ingredientMode)),
-    p: common_vendor.t($data.orderDetail.ingredientList || "-"),
-    q: common_vendor.t($data.orderDetail.contactName || "-"),
-    r: common_vendor.t($data.orderDetail.contactPhone || "-"),
-    s: common_vendor.t($data.orderDetail.fullAddress || "-"),
-    t: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
-    v: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
-    w: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
+    k: $options.showChefInfoSection
+  }, $options.showChefInfoSection ? common_vendor.e({
+    l: $options.chefDisplay.avatar
+  }, $options.chefDisplay.avatar ? {
+    m: $options.chefDisplay.avatar
+  } : {
+    n: common_vendor.t($options.getChefInitial($options.chefDisplay.name))
+  }, {
+    o: common_vendor.t($options.chefDisplay.name || "未命名厨师"),
+    p: common_vendor.t($options.chefDisplay.specialtyCuisine || $options.chefDisplay.serviceModeDesc || "已开始为你服务"),
+    q: common_vendor.t($options.chefDisplay.phone || "-")
+  }) : {}, {
+    r: common_vendor.t($data.orderDetail.peopleCount || "-"),
+    s: common_vendor.t($data.orderDetail.tastePreference || "-"),
+    t: common_vendor.t($data.orderDetail.tabooFood || "-"),
+    v: common_vendor.t($data.orderDetail.specialRequirement || "-"),
+    w: common_vendor.t($options.getIngredientModeText($data.orderDetail.ingredientMode)),
+    x: common_vendor.t($data.orderDetail.ingredientList || "-"),
+    y: common_vendor.t($data.orderDetail.contactName || "-"),
+    z: common_vendor.t($data.orderDetail.contactPhone || "-"),
+    A: common_vendor.t($data.orderDetail.fullAddress || "-"),
+    B: common_vendor.t($options.formatAmount($data.orderDetail.totalAmount)),
+    C: common_vendor.t($options.formatAmount($data.orderDetail.payAmount)),
+    D: $data.orderDetail.cancelReason || $data.orderDetail.refundReason
   }, $data.orderDetail.cancelReason || $data.orderDetail.refundReason ? common_vendor.e({
-    x: $data.orderDetail.cancelReason
+    E: $data.orderDetail.cancelReason
   }, $data.orderDetail.cancelReason ? {
-    y: common_vendor.t($data.orderDetail.cancelReason)
+    F: common_vendor.t($data.orderDetail.cancelReason)
   } : {}, {
-    z: $data.orderDetail.refundReason
+    G: $data.orderDetail.refundReason
   }, $data.orderDetail.refundReason ? {
-    A: common_vendor.t($data.orderDetail.refundReason)
-  } : {}) : {}), {
-    b: !$data.orderDetail.id,
-    B: $options.showActionBar
-  }, $options.showActionBar ? common_vendor.e({
-    C: $options.showCancelButton
-  }, $options.showCancelButton ? {
-    D: $data.cancelSubmitting,
-    E: $data.cancelSubmitting || $data.paying || $data.refundSubmitting,
-    F: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
-  } : {}, {
-    G: $options.showPayButton
-  }, $options.showPayButton ? {
-    H: $data.paying,
-    I: $data.paying || $data.cancelSubmitting || $data.refundSubmitting,
-    J: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
-  } : {}, {
-    K: $options.showRefundButton
-  }, $options.showRefundButton ? {
-    L: $data.refundSubmitting,
-    M: $data.refundSubmitting || $data.paying || $data.cancelSubmitting,
-    N: common_vendor.o((...args) => $options.openRefundPopup && $options.openRefundPopup(...args))
-  } : {}, {
-    O: $options.showReviewButton
-  }, $options.showReviewButton ? {
-    P: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
-  } : {}, {
-    Q: $options.showStatusNotice
-  }, $options.showStatusNotice ? {
-    R: common_vendor.t($options.statusNoticeText)
-  } : {}, {
-    S: $options.showBackHomeButton
-  }, $options.showBackHomeButton ? {
-    T: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
+    H: common_vendor.t($data.orderDetail.refundReason)
   } : {}) : {}, {
-    U: $data.showCancelModal
-  }, $data.showCancelModal ? {
-    V: $data.cancelReason,
-    W: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
-    X: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
-    Y: $data.cancelSubmitting,
-    Z: $data.cancelSubmitting,
-    aa: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
-    ab: common_vendor.o(() => {
-    }),
-    ac: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+    I: $options.showReviewSection
+  }, $options.showReviewSection ? common_vendor.e({
+    J: $options.hasOrderReview
+  }, $options.hasOrderReview ? {
+    K: common_vendor.t($options.formatScore($data.orderReview.overallScore))
   } : {}, {
-    ad: $data.showRefundModal
-  }, $data.showRefundModal ? {
-    ae: $data.refundReason,
-    af: common_vendor.o(($event) => $data.refundReason = $event.detail.value),
-    ag: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args)),
-    ah: $data.refundSubmitting,
-    ai: $data.refundSubmitting,
-    aj: common_vendor.o((...args) => $options.submitRefund && $options.submitRefund(...args)),
-    ak: common_vendor.o(() => {
+    L: $data.reviewLoading
+  }, $data.reviewLoading ? {} : $options.hasOrderReview ? common_vendor.e({
+    N: common_vendor.t($data.orderReview.isAnonymous === 1 ? "匿名评价" : "实名评价"),
+    O: common_vendor.t($options.formatFullDateTime($data.orderReview.createdAt)),
+    P: common_vendor.t($options.formatScore($data.orderReview.dishScore)),
+    Q: common_vendor.t($options.formatScore($data.orderReview.serviceScore)),
+    R: common_vendor.t($options.formatScore($data.orderReview.skillScore)),
+    S: common_vendor.t($options.formatScore($data.orderReview.environmentScore)),
+    T: common_vendor.t($data.orderReview.content || "未填写评价内容"),
+    U: $options.parseImageUrls($data.orderReview.imageUrls).length
+  }, $options.parseImageUrls($data.orderReview.imageUrls).length ? {
+    V: common_vendor.f($options.parseImageUrls($data.orderReview.imageUrls), (url, index, i0) => {
+      return {
+        a: `${$data.orderReview.id}-${index}`,
+        b: url,
+        c: common_vendor.o(($event) => $options.previewImages($options.parseImageUrls($data.orderReview.imageUrls), index), `${$data.orderReview.id}-${index}`)
+      };
+    })
+  } : {}, {
+    W: $data.orderReview.replyContent
+  }, $data.orderReview.replyContent ? common_vendor.e({
+    X: common_vendor.t($data.orderReview.replyContent),
+    Y: $data.orderReview.replyAt
+  }, $data.orderReview.replyAt ? {
+    Z: common_vendor.t($options.formatFullDateTime($data.orderReview.replyAt))
+  } : {}) : {}) : {
+    aa: common_vendor.o((...args) => $options.goReview && $options.goReview(...args))
+  }, {
+    M: $options.hasOrderReview
+  }) : {}), {
+    b: !$data.orderDetail.id,
+    ab: $options.showActionBar
+  }, $options.showActionBar ? common_vendor.e({
+    ac: $options.showCancelButton
+  }, $options.showCancelButton ? {
+    ad: $data.cancelSubmitting,
+    ae: $data.cancelSubmitting || $data.paying || $data.refundSubmitting,
+    af: common_vendor.o((...args) => $options.openCancelPopup && $options.openCancelPopup(...args))
+  } : {}, {
+    ag: $options.showPayButton
+  }, $options.showPayButton ? {
+    ah: $data.paying,
+    ai: $data.paying || $data.cancelSubmitting || $data.refundSubmitting,
+    aj: common_vendor.o((...args) => $options.handlePay && $options.handlePay(...args))
+  } : {}, {
+    ak: $options.showRefundButton
+  }, $options.showRefundButton ? {
+    al: $data.refundSubmitting,
+    am: $data.refundSubmitting || $data.paying || $data.cancelSubmitting,
+    an: common_vendor.o((...args) => $options.openRefundPopup && $options.openRefundPopup(...args))
+  } : {}, {
+    ao: $options.showStatusNotice
+  }, $options.showStatusNotice ? {
+    ap: common_vendor.t($options.statusNoticeText)
+  } : {}, {
+    aq: $options.showBackHomeButton
+  }, $options.showBackHomeButton ? {
+    ar: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
+  } : {}) : {}, {
+    as: $data.showCancelModal
+  }, $data.showCancelModal ? {
+    at: $data.cancelReason,
+    av: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
+    aw: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
+    ax: $data.cancelSubmitting,
+    ay: $data.cancelSubmitting,
+    az: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
+    aA: common_vendor.o(() => {
     }),
-    al: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args))
+    aB: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+  } : {}, {
+    aC: $data.showRefundModal
+  }, $data.showRefundModal ? {
+    aD: $data.refundReason,
+    aE: common_vendor.o(($event) => $data.refundReason = $event.detail.value),
+    aF: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args)),
+    aG: $data.refundSubmitting,
+    aH: $data.refundSubmitting,
+    aI: common_vendor.o((...args) => $options.submitRefund && $options.submitRefund(...args)),
+    aJ: common_vendor.o(() => {
+    }),
+    aK: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-6b23c96c"]]);
