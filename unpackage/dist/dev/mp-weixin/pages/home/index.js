@@ -335,15 +335,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         c: common_vendor.t($options.getNameInitial(item.name))
       }, {
         d: common_vendor.t(item.name || "未命名厨师"),
-        e: common_vendor.t($options.formatDistance(item.distanceKm)),
-        f: common_vendor.t(item.specialtyCuisine || "-"),
+        e: common_vendor.t(item.specialtyCuisine || "-"),
+        f: common_vendor.t($options.formatDistance(item.distanceKm)),
         g: common_vendor.t(item.serviceAreaText || "暂未设置服务地址"),
-        h: common_vendor.t(item.serviceModeDesc || $options.getChefServiceModeText(item.serviceMode)),
-        i: common_vendor.t($options.formatRadius(item.serviceRadiusKm)),
-        j: common_vendor.t($options.formatExperience(item.yearsOfExperience)),
-        k: common_vendor.t($options.formatNumber(item.ratingAvg)),
-        l: common_vendor.t($options.formatCount(item.orderCount)),
-        m: common_vendor.t($options.formatRate(item.goodReviewRate)),
+        h: common_vendor.t($options.formatNumber(item.ratingAvg)),
+        i: common_vendor.t($options.formatCount(item.orderCount)),
+        j: common_vendor.t($options.formatRate(item.goodReviewRate)),
+        k: common_vendor.t(item.serviceModeDesc || $options.getChefServiceModeText(item.serviceMode)),
+        l: common_vendor.t($options.formatRadius(item.serviceRadiusKm)),
+        m: common_vendor.t($options.formatExperience(item.yearsOfExperience)),
         n: item.id,
         o: common_vendor.o(($event) => $options.goToDetail(item.id), item.id)
       });

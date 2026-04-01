@@ -27,53 +27,58 @@
         v-for="item in orderList"
         :key="item.id"
         class="order-card"
+        :class="getOrderCardClass(item.orderStatus)"
         @click="goDetail(item.id)"
       >
         <view class="card-head">
-          <text class="order-no">订单号：{{ item.orderNo || '-' }}</text>
-          <text class="status-tag" :class="getStatusClass(item.orderStatus)">
-            {{ getStatusLabel(item.orderStatus) }}
-          </text>
+          <view class="head-main">
+            <text class="order-no">订单号：{{ item.orderNo || '-' }}</text>
+            <view class="service-meta">
+              <text class="meta-chip">{{ item.serviceDate || '-' }}</text>
+              <text class="meta-chip">{{ getTimeSlotText(item.timeSlot) }}</text>
+            </view>
+          </view>
+          <view class="head-side">
+            <text class="status-tag" :class="getStatusClass(item.orderStatus)">
+              {{ getStatusLabel(item.orderStatus) }}
+            </text>
+            <text class="amount-label">实付金额</text>
+            <text class="amount-value">￥{{ formatAmount(item.payAmount) }}</text>
+          </view>
         </view>
 
-        <view class="info-line">
-          <text class="info-label">服务日期</text>
-          <text class="info-value">{{ item.serviceDate || '-' }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">时间段</text>
-          <text class="info-value">{{ getTimeSlotText(item.timeSlot) }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">订单金额</text>
-          <text class="info-value amount">￥{{ formatAmount(item.payAmount) }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">联系人</text>
-          <text class="info-value">{{ item.contactName || '-' }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">联系电话</text>
-          <text class="info-value">{{ item.contactPhone || '-' }}</text>
-        </view>
-        <view class="address-line">
-          <text class="info-label">服务地址</text>
-          <text class="address-value">{{ item.fullAddress || '-' }}</text>
-        </view>
-        <view class="info-line">
-          <text class="info-label">创建时间</text>
-          <text class="info-value">{{ formatFullDateTime(item.createdAt) }}</text>
+        <view class="summary-panel">
+          <view class="summary-row">
+            <text class="summary-label">联系人</text>
+            <text class="summary-value">{{ item.contactName || '-' }}</text>
+          </view>
+          <view class="summary-row">
+            <text class="summary-label">联系电话</text>
+            <text class="summary-value">{{ item.contactPhone || '-' }}</text>
+          </view>
+          <view class="summary-row address-row">
+            <text class="summary-label">服务地址</text>
+            <text class="summary-address">{{ item.fullAddress || '-' }}</text>
+          </view>
+          <view class="summary-row">
+            <text class="summary-label">创建时间</text>
+            <text class="summary-value">{{ formatFullDateTime(item.createdAt) }}</text>
+          </view>
         </view>
 
-        <view v-if="item.orderStatus === ORDER_STATUS.COMPLETED" class="review-row" @click.stop>
-          <button
-            v-if="isReviewed(item) === false"
-            class="review-btn"
-            @click="goReview(item)"
-          >
-            去评价
-          </button>
-          <text v-else-if="isReviewed(item) === true" class="reviewed-text">已评价</text>
+        <view class="card-footer" @click.stop>
+          <text class="footer-tip">{{ getStatusHint(item.orderStatus) }}</text>
+          <view v-if="item.orderStatus === ORDER_STATUS.COMPLETED" class="review-row">
+            <button
+              v-if="isReviewed(item) === false"
+              class="review-btn"
+              @click="goReview(item)"
+            >
+              去评价
+            </button>
+            <text v-else-if="isReviewed(item) === true" class="reviewed-text">已评价</text>
+          </view>
+          <text v-else class="detail-link">查看详情</text>
         </view>
       </view>
     </view>
@@ -184,6 +189,60 @@ export default {
     getStatusClass(status) {
       return getOrderStatusClass(status)
     },
+    getOrderCardClass(status) {
+      if (status === ORDER_STATUS.COMPLETED) {
+        return 'completed'
+      }
+
+      if (status === ORDER_STATUS.IN_SERVICE || status === ORDER_STATUS.PAID) {
+        return 'serving'
+      }
+
+      if (status === ORDER_STATUS.PENDING_CONFIRM || status === ORDER_STATUS.WAIT_PAY) {
+        return 'pending'
+      }
+
+      if (status === ORDER_STATUS.REJECTED || status === ORDER_STATUS.CANCELLED || status === ORDER_STATUS.REFUNDED) {
+        return 'closed'
+      }
+
+      return ''
+    },
+    getStatusHint(status) {
+      if (status === ORDER_STATUS.PENDING_CONFIRM) {
+        return '等待厨师确认订单后，将进入支付流程'
+      }
+
+      if (status === ORDER_STATUS.WAIT_PAY) {
+        return '订单已确认，请尽快完成支付'
+      }
+
+      if (status === ORDER_STATUS.PAID) {
+        return '订单已支付，等待厨师开始服务'
+      }
+
+      if (status === ORDER_STATUS.IN_SERVICE) {
+        return '厨师正在上门服务中'
+      }
+
+      if (status === ORDER_STATUS.COMPLETED) {
+        return '服务已完成，可以查看本单记录'
+      }
+
+      if (status === ORDER_STATUS.REJECTED) {
+        return '订单已被厨师拒绝'
+      }
+
+      if (status === ORDER_STATUS.CANCELLED) {
+        return '订单已取消'
+      }
+
+      if (status === ORDER_STATUS.REFUNDED) {
+        return '订单已退款完成'
+      }
+
+      return '查看订单详情'
+    },
     formatAmount(value) {
       if (value === 0) {
         return '0'
@@ -263,33 +322,81 @@ export default {
 
 .order-card {
   padding: 28rpx;
+  border: 2rpx solid #eef0f4;
+  box-shadow: 0 14rpx 36rpx rgba(32, 37, 43, 0.06);
+}
+
+.order-card.pending {
+  border-color: #f5dbc8;
+}
+
+.order-card.serving {
+  border-color: #d8eadf;
+}
+
+.order-card.completed {
+  border-color: #dbe7f5;
+}
+
+.order-card.closed {
+  border-color: #f0e1e1;
 }
 
 .card-head,
-.info-line {
+.summary-row,
+.card-footer {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 16rpx;
 }
 
 .card-head {
-  margin-bottom: 18rpx;
+  align-items: flex-start;
+  margin-bottom: 22rpx;
+}
+
+.head-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .order-no {
+  display: block;
   flex: 1;
   min-width: 0;
-  font-size: 26rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #1f2329;
 }
 
-.status-tag {
-  flex-shrink: 0;
+.service-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 14rpx;
+}
+
+.meta-chip {
   padding: 8rpx 16rpx;
   border-radius: 999rpx;
+  background: #f7f8fb;
   font-size: 22rpx;
+  color: #68707d;
+}
+
+.head-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.status-tag {
+  flex-shrink: 0;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
 .status-tag.pending {
@@ -307,46 +414,73 @@ export default {
   color: #d14a4a;
 }
 
-.info-line {
-  padding: 12rpx 0;
+.amount-label {
+  margin-top: 18rpx;
+  font-size: 22rpx;
+  color: #8a8f99;
 }
 
-.address-line {
-  padding: 12rpx 0;
+.amount-value {
+  margin-top: 6rpx;
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #d96c3a;
 }
 
-.info-label {
+.summary-panel {
+  padding: 22rpx 24rpx;
+  border-radius: 22rpx;
+  background: #f8f9fc;
+}
+
+.summary-row {
+  align-items: flex-start;
+  padding: 10rpx 0;
+}
+
+.summary-label {
   flex-shrink: 0;
   font-size: 26rpx;
   color: #8a8f99;
 }
 
-.info-value {
+.summary-value {
   font-size: 26rpx;
   color: #4f5662;
   text-align: right;
 }
 
-.address-value {
+.address-row {
   display: block;
-  margin-top: 8rpx;
+}
+
+.summary-address {
+  display: block;
+  margin-top: 10rpx;
   font-size: 26rpx;
   line-height: 1.6;
   color: #4f5662;
 }
 
-.amount {
-  color: #d96c3a;
-  font-weight: 600;
+.card-footer {
+  align-items: center;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid #f1f3f6;
+}
+
+.footer-tip {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #7b838f;
 }
 
 .review-row {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 2rpx solid #f1f3f6;
 }
 
 .review-btn {
@@ -369,5 +503,12 @@ export default {
   font-size: 26rpx;
   font-weight: 600;
   color: #8a8f99;
+}
+
+.detail-link {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #d96c3a;
 }
 </style>

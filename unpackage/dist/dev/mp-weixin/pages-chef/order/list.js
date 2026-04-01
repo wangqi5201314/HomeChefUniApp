@@ -73,6 +73,75 @@ const _sfc_main = {
     getStatusClass(status) {
       return utils_orderStatus.getOrderStatusClass(status);
     },
+    getOrderCardTone(status) {
+      if (status === utils_orderStatus.ORDER_STATUS.PENDING_CONFIRM || status === utils_orderStatus.ORDER_STATUS.WAIT_PAY) {
+        return "tone-pending";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.PAID || status === utils_orderStatus.ORDER_STATUS.IN_SERVICE) {
+        return "tone-serving";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return "tone-completed";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REJECTED || status === utils_orderStatus.ORDER_STATUS.CANCELLED || status === utils_orderStatus.ORDER_STATUS.REFUNDED) {
+        return "tone-closed";
+      }
+      return "";
+    },
+    getStatusCaption(status) {
+      if (status === utils_orderStatus.ORDER_STATUS.PENDING_CONFIRM) {
+        return "待你处理";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.WAIT_PAY) {
+        return "等待用户支付";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.PAID) {
+        return "已准备就绪";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE) {
+        return "正在服务";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return "服务闭环完成";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REJECTED) {
+        return "订单已拒绝";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.CANCELLED) {
+        return "订单已取消";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REFUNDED) {
+        return "订单已退款";
+      }
+      return "订单状态";
+    },
+    getStatusHint(status) {
+      if (status === utils_orderStatus.ORDER_STATUS.PENDING_CONFIRM) {
+        return "请尽快确认订单，避免影响用户支付";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.WAIT_PAY) {
+        return "订单已确认，等待用户完成支付";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.PAID) {
+        return "用户已支付，可进入开始服务流程";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE) {
+        return "服务进行中，结束后记得完成订单";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return "订单已完成，可查看本单评价与服务记录";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REJECTED) {
+        return "该订单已拒绝，无需继续处理";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.CANCELLED) {
+        return "该订单已取消";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REFUNDED) {
+        return "退款已处理完成";
+      }
+      return "查看订单详情";
+    },
     formatPeopleCount(value) {
       if (value === 0) {
         return "0人";
@@ -105,19 +174,24 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.loading ? {} : $data.orderList.length === 0 ? {} : {
     d: common_vendor.f($data.orderList, (item, k0, i0) => {
       return {
-        a: common_vendor.t(item.orderNo || "-"),
+        a: common_vendor.t($options.getStatusCaption(item.orderStatus)),
         b: common_vendor.t($options.getStatusLabel(item.orderStatus)),
-        c: common_vendor.n($options.getStatusClass(item.orderStatus)),
-        d: common_vendor.t(item.serviceDate || "-"),
-        e: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
-        f: common_vendor.t($options.formatPeopleCount(item.peopleCount)),
-        g: common_vendor.t($options.formatAmount(item.payAmount)),
-        h: common_vendor.t(item.contactName || "-"),
-        i: common_vendor.t(item.contactPhone || "-"),
-        j: common_vendor.t(item.fullAddress || "-"),
-        k: common_vendor.t($options.formatFullDateTime(item.createdAt)),
-        l: item.id,
-        m: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
+        c: common_vendor.t($options.formatAmount(item.payAmount)),
+        d: common_vendor.t(item.orderNo || "-"),
+        e: common_vendor.t($options.getStatusLabel(item.orderStatus)),
+        f: common_vendor.n($options.getStatusClass(item.orderStatus)),
+        g: common_vendor.t(item.serviceDate || "-"),
+        h: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
+        i: common_vendor.t($options.formatPeopleCount(item.peopleCount)),
+        j: common_vendor.t($options.formatAmount(item.payAmount)),
+        k: common_vendor.t(item.contactName || "-"),
+        l: common_vendor.t(item.contactPhone || "-"),
+        m: common_vendor.t(item.fullAddress || "-"),
+        n: common_vendor.t($options.formatFullDateTime(item.createdAt)),
+        o: common_vendor.t($options.getStatusHint(item.orderStatus)),
+        p: item.id,
+        q: common_vendor.n($options.getOrderCardTone(item.orderStatus)),
+        r: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
       };
     })
   }, {

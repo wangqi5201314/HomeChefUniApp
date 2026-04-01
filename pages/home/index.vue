@@ -154,20 +154,34 @@
 
           <view class="chef-info">
             <view class="chef-header">
-              <text class="chef-name">{{ item.name || '未命名厨师' }}</text>
+              <view class="chef-title-wrap">
+                <text class="chef-name">{{ item.name || '未命名厨师' }}</text>
+                <text class="chef-cuisine">擅长菜系：{{ item.specialtyCuisine || '-' }}</text>
+              </view>
               <text class="distance-tag">{{ formatDistance(item.distanceKm) }}</text>
             </view>
-            <text class="chef-cuisine">擅长菜系：{{ item.specialtyCuisine || '-' }}</text>
             <text class="chef-address">当前服务地址：{{ item.serviceAreaText || '暂未设置服务地址' }}</text>
+            <view class="stats-row">
+              <view class="stat-badge rating">
+                <text class="stat-label">评分</text>
+                <text class="stat-value">{{ formatNumber(item.ratingAvg) }}</text>
+              </view>
+              <view class="stat-badge orders">
+                <text class="stat-label">订单量</text>
+                <text class="stat-value">{{ formatCount(item.orderCount) }}</text>
+              </view>
+              <view class="stat-badge reviews">
+                <text class="stat-label">好评率</text>
+                <text class="stat-value">{{ formatRate(item.goodReviewRate) }}</text>
+              </view>
+            </view>
             <view class="tag-row">
               <text class="data-tag">{{ item.serviceModeDesc || getChefServiceModeText(item.serviceMode) }}</text>
               <text class="data-tag">服务半径 {{ formatRadius(item.serviceRadiusKm) }}</text>
             </view>
-            <view class="meta-row">
-              <text class="meta-text">从业 {{ formatExperience(item.yearsOfExperience) }}</text>
-              <text class="meta-text">评分 {{ formatNumber(item.ratingAvg) }}</text>
-              <text class="meta-text">订单 {{ formatCount(item.orderCount) }}</text>
-              <text class="meta-text">好评率 {{ formatRate(item.goodReviewRate) }}</text>
+            <view class="card-foot">
+              <text class="experience-text">从业 {{ formatExperience(item.yearsOfExperience) }}</text>
+              <text class="detail-text">查看详情</text>
             </view>
           </view>
         </view>
@@ -868,6 +882,8 @@ export default {
   display: flex;
   align-items: flex-start;
   padding: 24rpx;
+  border: 2rpx solid rgba(233, 222, 213, 0.8);
+  box-shadow: 0 16rpx 36rpx rgba(32, 37, 43, 0.06);
 }
 
 .avatar-wrap {
@@ -899,32 +915,88 @@ export default {
   min-width: 0;
 }
 
+.chef-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
 .chef-name {
+  display: block;
   font-size: 34rpx;
   font-weight: 600;
   color: #222222;
 }
 
-.distance-tag {
-  flex-shrink: 0;
-  padding: 8rpx 16rpx;
-  border-radius: 999rpx;
-  background: #fff2eb;
-  font-size: 22rpx;
-  color: #c76335;
+.chef-cuisine {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 25rpx;
+  color: #6f7784;
 }
 
-.chef-cuisine,
+.distance-tag {
+  flex-shrink: 0;
+  padding: 10rpx 18rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #fff1e8 0%, #ffe5d5 100%);
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #c76335;
+  box-shadow: inset 0 0 0 2rpx rgba(217, 108, 58, 0.08);
+}
+
 .chef-address {
   display: block;
   margin-top: 14rpx;
-  font-size: 27rpx;
-  line-height: 1.6;
+  font-size: 26rpx;
+  line-height: 1.7;
   color: #5c6470;
 }
 
+.stats-row {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.stat-badge {
+  flex: 1;
+  min-width: 0;
+  padding: 16rpx 14rpx;
+  border-radius: 20rpx;
+}
+
+.stat-badge.rating {
+  background: linear-gradient(135deg, #fff7ea 0%, #fff0d2 100%);
+}
+
+.stat-badge.orders {
+  background: linear-gradient(135deg, #f3f8ff 0%, #e8f1ff 100%);
+}
+
+.stat-badge.reviews {
+  background: linear-gradient(135deg, #eefaf2 0%, #e1f3e8 100%);
+}
+
+.stat-label,
+.stat-value {
+  display: block;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #7c8693;
+}
+
+.stat-value {
+  margin-top: 8rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #24303b;
+}
+
 .tag-row,
-.meta-row {
+.card-foot {
   display: flex;
   flex-wrap: wrap;
   gap: 12rpx 16rpx;
@@ -935,20 +1007,29 @@ export default {
 }
 
 .data-tag {
-  padding: 8rpx 14rpx;
+  padding: 10rpx 16rpx;
   border-radius: 999rpx;
   background: #f7f8fb;
   font-size: 22rpx;
   color: #6d7581;
+  box-shadow: inset 0 0 0 2rpx #edf0f4;
 }
 
-.meta-row {
-  margin-top: 16rpx;
+.card-foot {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18rpx;
 }
 
-.meta-text {
-  font-size: 25rpx;
+.experience-text {
+  font-size: 24rpx;
   color: #8a8f99;
+}
+
+.detail-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #c76335;
 }
 
 @keyframes shimmer {

@@ -93,6 +93,48 @@ const _sfc_main = {
     getStatusClass(status) {
       return utils_orderStatus.getOrderStatusClass(status);
     },
+    getOrderCardClass(status) {
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return "completed";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE || status === utils_orderStatus.ORDER_STATUS.PAID) {
+        return "serving";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.PENDING_CONFIRM || status === utils_orderStatus.ORDER_STATUS.WAIT_PAY) {
+        return "pending";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REJECTED || status === utils_orderStatus.ORDER_STATUS.CANCELLED || status === utils_orderStatus.ORDER_STATUS.REFUNDED) {
+        return "closed";
+      }
+      return "";
+    },
+    getStatusHint(status) {
+      if (status === utils_orderStatus.ORDER_STATUS.PENDING_CONFIRM) {
+        return "等待厨师确认订单后，将进入支付流程";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.WAIT_PAY) {
+        return "订单已确认，请尽快完成支付";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.PAID) {
+        return "订单已支付，等待厨师开始服务";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE) {
+        return "厨师正在上门服务中";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED) {
+        return "服务已完成，可以查看本单记录";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REJECTED) {
+        return "订单已被厨师拒绝";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.CANCELLED) {
+        return "订单已取消";
+      }
+      if (status === utils_orderStatus.ORDER_STATUS.REFUNDED) {
+        return "订单已退款完成";
+      }
+      return "查看订单详情";
+    },
     formatAmount(value) {
       if (value === 0) {
         return "0";
@@ -116,27 +158,29 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: common_vendor.f($data.orderList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.orderNo || "-"),
-        b: common_vendor.t($options.getStatusLabel(item.orderStatus)),
-        c: common_vendor.n($options.getStatusClass(item.orderStatus)),
-        d: common_vendor.t(item.serviceDate || "-"),
-        e: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
+        b: common_vendor.t(item.serviceDate || "-"),
+        c: common_vendor.t($options.getTimeSlotText(item.timeSlot)),
+        d: common_vendor.t($options.getStatusLabel(item.orderStatus)),
+        e: common_vendor.n($options.getStatusClass(item.orderStatus)),
         f: common_vendor.t($options.formatAmount(item.payAmount)),
         g: common_vendor.t(item.contactName || "-"),
         h: common_vendor.t(item.contactPhone || "-"),
         i: common_vendor.t(item.fullAddress || "-"),
         j: common_vendor.t($options.formatFullDateTime(item.createdAt)),
-        k: item.orderStatus === $data.ORDER_STATUS.COMPLETED
+        k: common_vendor.t($options.getStatusHint(item.orderStatus)),
+        l: item.orderStatus === $data.ORDER_STATUS.COMPLETED
       }, item.orderStatus === $data.ORDER_STATUS.COMPLETED ? common_vendor.e({
-        l: $options.isReviewed(item) === false
+        m: $options.isReviewed(item) === false
       }, $options.isReviewed(item) === false ? {
-        m: common_vendor.o(($event) => $options.goReview(item), item.id)
+        n: common_vendor.o(($event) => $options.goReview(item), item.id)
       } : $options.isReviewed(item) === true ? {} : {}, {
-        n: $options.isReviewed(item) === true,
-        o: common_vendor.o(() => {
-        }, item.id)
+        o: $options.isReviewed(item) === true
       }) : {}, {
-        p: item.id,
-        q: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
+        p: common_vendor.o(() => {
+        }, item.id),
+        q: item.id,
+        r: common_vendor.n($options.getOrderCardClass(item.orderStatus)),
+        s: common_vendor.o(($event) => $options.goDetail(item.id), item.id)
       });
     })
   }, {

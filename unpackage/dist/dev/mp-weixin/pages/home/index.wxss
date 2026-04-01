@@ -309,6 +309,8 @@
   display: flex;
   align-items: flex-start;
   padding: 24rpx;
+  border: 2rpx solid rgba(233, 222, 213, 0.8);
+  box-shadow: 0 16rpx 36rpx rgba(32, 37, 43, 0.06);
 }
 .avatar-wrap.data-v-4978fed5 {
   flex-shrink: 0;
@@ -334,29 +336,75 @@
   flex: 1;
   min-width: 0;
 }
+.chef-title-wrap.data-v-4978fed5 {
+  flex: 1;
+  min-width: 0;
+}
 .chef-name.data-v-4978fed5 {
+  display: block;
   font-size: 34rpx;
   font-weight: 600;
   color: #222222;
 }
+.chef-cuisine.data-v-4978fed5 {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 25rpx;
+  color: #6f7784;
+}
 .distance-tag.data-v-4978fed5 {
   flex-shrink: 0;
-  padding: 8rpx 16rpx;
-  border-radius: 999rpx;
-  background: #fff2eb;
+  padding: 10rpx 18rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #fff1e8 0%, #ffe5d5 100%);
   font-size: 22rpx;
+  font-weight: 600;
   color: #c76335;
+  box-shadow: inset 0 0 0 2rpx rgba(217, 108, 58, 0.08);
 }
-.chef-cuisine.data-v-4978fed5,
 .chef-address.data-v-4978fed5 {
   display: block;
   margin-top: 14rpx;
-  font-size: 27rpx;
-  line-height: 1.6;
+  font-size: 26rpx;
+  line-height: 1.7;
   color: #5c6470;
 }
+.stats-row.data-v-4978fed5 {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+.stat-badge.data-v-4978fed5 {
+  flex: 1;
+  min-width: 0;
+  padding: 16rpx 14rpx;
+  border-radius: 20rpx;
+}
+.stat-badge.rating.data-v-4978fed5 {
+  background: linear-gradient(135deg, #fff7ea 0%, #fff0d2 100%);
+}
+.stat-badge.orders.data-v-4978fed5 {
+  background: linear-gradient(135deg, #f3f8ff 0%, #e8f1ff 100%);
+}
+.stat-badge.reviews.data-v-4978fed5 {
+  background: linear-gradient(135deg, #eefaf2 0%, #e1f3e8 100%);
+}
+.stat-label.data-v-4978fed5,
+.stat-value.data-v-4978fed5 {
+  display: block;
+}
+.stat-label.data-v-4978fed5 {
+  font-size: 22rpx;
+  color: #7c8693;
+}
+.stat-value.data-v-4978fed5 {
+  margin-top: 8rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #24303b;
+}
 .tag-row.data-v-4978fed5,
-.meta-row.data-v-4978fed5 {
+.card-foot.data-v-4978fed5 {
   display: flex;
   flex-wrap: wrap;
   gap: 12rpx 16rpx;
@@ -365,18 +413,26 @@
   margin-top: 16rpx;
 }
 .data-tag.data-v-4978fed5 {
-  padding: 8rpx 14rpx;
+  padding: 10rpx 16rpx;
   border-radius: 999rpx;
   background: #f7f8fb;
   font-size: 22rpx;
   color: #6d7581;
+  box-shadow: inset 0 0 0 2rpx #edf0f4;
 }
-.meta-row.data-v-4978fed5 {
-  margin-top: 16rpx;
+.card-foot.data-v-4978fed5 {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18rpx;
 }
-.meta-text.data-v-4978fed5 {
-  font-size: 25rpx;
+.experience-text.data-v-4978fed5 {
+  font-size: 24rpx;
   color: #8a8f99;
+}
+.detail-text.data-v-4978fed5 {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #c76335;
 }
 @keyframes shimmer-4978fed5 {
 0% {
