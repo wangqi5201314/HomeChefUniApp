@@ -197,7 +197,6 @@
         >
           申请退款
         </button>
-        <view v-if="showStatusNotice" class="status-notice-wrap"><text class="status-notice">{{ statusNoticeText }}</text></view>
       </view>
 
       <button v-if="showBackHomeButton" class="home-btn" @click="goHome">返回首页</button>
@@ -405,24 +404,6 @@ export default {
     hasOrderReview() {
       return !!(this.orderReview && this.orderReview.id)
     },
-    showStatusNotice() {
-      return this.orderDetail.orderStatus === ORDER_STATUS.PAID ||
-        this.orderDetail.orderStatus === ORDER_STATUS.IN_SERVICE ||
-        this.orderDetail.orderStatus === ORDER_STATUS.COMPLETED ||
-        this.orderDetail.orderStatus === ORDER_STATUS.REJECTED ||
-        this.orderDetail.orderStatus === ORDER_STATUS.CANCELLED ||
-        this.orderDetail.orderStatus === ORDER_STATUS.REFUNDED
-    },
-    statusNoticeText() {
-      const status = this.orderDetail.orderStatus
-      if (status === ORDER_STATUS.PAID) return '已支付'
-      if (status === ORDER_STATUS.IN_SERVICE) return '服务中'
-      if (status === ORDER_STATUS.COMPLETED) return this.isReviewed ? '已评价' : '已完成'
-      if (status === ORDER_STATUS.REJECTED) return '厨师已拒单'
-      if (status === ORDER_STATUS.CANCELLED) return '已取消'
-      if (status === ORDER_STATUS.REFUNDED) return '已退款'
-      return ''
-    },
     showBackHomeButton() {
       return this.showCancelButton || this.showRefundButton
     },
@@ -430,7 +411,6 @@ export default {
       return this.showCancelButton ||
         this.showPayButton ||
         this.showRefundButton ||
-        this.showStatusNotice ||
         this.showBackHomeButton
     }
   },
@@ -1176,23 +1156,6 @@ export default {
 .action-btn.danger {
   background: #fdeeee;
   color: #d14a4a;
-}
-
-.status-notice-wrap {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.status-notice {
-  padding: 0 28rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 999rpx;
-  background: #f2f4f7;
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #8a8f99;
 }
 
 .home-btn {

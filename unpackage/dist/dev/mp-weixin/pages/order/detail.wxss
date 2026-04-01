@@ -441,21 +441,6 @@
   background: #fdeeee;
   color: #d14a4a;
 }
-.status-notice-wrap.data-v-6b23c96c {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-}
-.status-notice.data-v-6b23c96c {
-  padding: 0 28rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 999rpx;
-  background: #f2f4f7;
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #8a8f99;
-}
 .home-btn.data-v-6b23c96c {
   width: 100%;
   height: 84rpx;

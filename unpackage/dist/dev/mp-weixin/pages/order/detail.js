@@ -152,30 +152,11 @@ const _sfc_main = {
     hasOrderReview() {
       return !!(this.orderReview && this.orderReview.id);
     },
-    showStatusNotice() {
-      return this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.PAID || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.IN_SERVICE || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.COMPLETED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REJECTED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.CANCELLED || this.orderDetail.orderStatus === utils_orderStatus.ORDER_STATUS.REFUNDED;
-    },
-    statusNoticeText() {
-      const status = this.orderDetail.orderStatus;
-      if (status === utils_orderStatus.ORDER_STATUS.PAID)
-        return "已支付";
-      if (status === utils_orderStatus.ORDER_STATUS.IN_SERVICE)
-        return "服务中";
-      if (status === utils_orderStatus.ORDER_STATUS.COMPLETED)
-        return this.isReviewed ? "已评价" : "已完成";
-      if (status === utils_orderStatus.ORDER_STATUS.REJECTED)
-        return "厨师已拒单";
-      if (status === utils_orderStatus.ORDER_STATUS.CANCELLED)
-        return "已取消";
-      if (status === utils_orderStatus.ORDER_STATUS.REFUNDED)
-        return "已退款";
-      return "";
-    },
     showBackHomeButton() {
       return this.showCancelButton || this.showRefundButton;
     },
     showActionBar() {
-      return this.showCancelButton || this.showPayButton || this.showRefundButton || this.showStatusNotice || this.showBackHomeButton;
+      return this.showCancelButton || this.showPayButton || this.showRefundButton || this.showBackHomeButton;
     }
   },
   onLoad(options) {
@@ -504,37 +485,33 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     av: $data.refundSubmitting || $data.paying || $data.cancelSubmitting,
     aw: common_vendor.o((...args) => $options.openRefundPopup && $options.openRefundPopup(...args))
   } : {}, {
-    ax: $options.showStatusNotice
-  }, $options.showStatusNotice ? {
-    ay: common_vendor.t($options.statusNoticeText)
-  } : {}, {
-    az: $options.showBackHomeButton
+    ax: $options.showBackHomeButton
   }, $options.showBackHomeButton ? {
-    aA: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
+    ay: common_vendor.o((...args) => $options.goHome && $options.goHome(...args))
   } : {}) : {}, {
-    aB: $data.showCancelModal
+    az: $data.showCancelModal
   }, $data.showCancelModal ? {
-    aC: $data.cancelReason,
-    aD: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
-    aE: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
-    aF: $data.cancelSubmitting,
-    aG: $data.cancelSubmitting,
-    aH: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
-    aI: common_vendor.o(() => {
+    aA: $data.cancelReason,
+    aB: common_vendor.o(($event) => $data.cancelReason = $event.detail.value),
+    aC: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args)),
+    aD: $data.cancelSubmitting,
+    aE: $data.cancelSubmitting,
+    aF: common_vendor.o((...args) => $options.submitCancel && $options.submitCancel(...args)),
+    aG: common_vendor.o(() => {
     }),
-    aJ: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
+    aH: common_vendor.o((...args) => $options.closeCancelPopup && $options.closeCancelPopup(...args))
   } : {}, {
-    aK: $data.showRefundModal
+    aI: $data.showRefundModal
   }, $data.showRefundModal ? {
-    aL: $data.refundReason,
-    aM: common_vendor.o(($event) => $data.refundReason = $event.detail.value),
-    aN: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args)),
-    aO: $data.refundSubmitting,
-    aP: $data.refundSubmitting,
-    aQ: common_vendor.o((...args) => $options.submitRefund && $options.submitRefund(...args)),
-    aR: common_vendor.o(() => {
+    aJ: $data.refundReason,
+    aK: common_vendor.o(($event) => $data.refundReason = $event.detail.value),
+    aL: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args)),
+    aM: $data.refundSubmitting,
+    aN: $data.refundSubmitting,
+    aO: common_vendor.o((...args) => $options.submitRefund && $options.submitRefund(...args)),
+    aP: common_vendor.o(() => {
     }),
-    aS: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args))
+    aQ: common_vendor.o((...args) => $options.closeRefundPopup && $options.closeRefundPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-6b23c96c"]]);
