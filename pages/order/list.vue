@@ -66,13 +66,13 @@
           </view>
         </view>
 
-        <view class="card-footer" @click.stop>
+        <view class="card-footer">
           <text class="footer-tip">{{ getStatusHint(item.orderStatus) }}</text>
-          <view v-if="item.orderStatus === ORDER_STATUS.COMPLETED" class="review-row">
+          <view v-if="item.orderStatus === ORDER_STATUS.COMPLETED" class="review-row" @click.stop>
             <button
               v-if="isReviewed(item) === false"
               class="review-btn"
-              @click="goReview(item)"
+              @click.stop="goReview(item)"
             >
               去评价
             </button>

@@ -9,18 +9,26 @@
     </view>
 
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">实名信息</text>
+        <text class="section-desc">请填写与证件一致的真实身份信息，便于平台审核。</text>
+      </view>
       <view class="form-item">
         <text class="label">真实姓名</text>
-        <input v-model="form.realName" class="input" placeholder="请输入真实姓名" />
+        <input v-model="form.realName" class="input" placeholder="请输入真实姓名" placeholder-class="input-placeholder" />
       </view>
 
       <view class="form-item no-border">
         <text class="label">身份证号</text>
-        <input v-model="form.idCardNo" class="input" placeholder="请输入身份证号" />
+        <input v-model="form.idCardNo" class="input" placeholder="请输入身份证号" placeholder-class="input-placeholder" />
       </view>
     </view>
 
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">证书照片</text>
+        <text class="section-desc">优先上传清晰、完整、无遮挡的证书照片，审核会更顺畅。</text>
+      </view>
       <view class="upload-item" v-for="item in uploadFields" :key="item.key">
         <text class="label">{{ item.label }}</text>
         <view class="upload-box" @click="chooseCertImage(item.key)">
@@ -39,14 +47,16 @@
       </view>
     </view>
 
-    <button
-      class="submit-btn"
-      :loading="saving"
-      :disabled="saving || !!uploadingKey"
-      @click="submitCertification"
-    >
-      提交认证资料
-    </button>
+    <view class="bottom-bar">
+      <button
+        class="submit-btn"
+        :loading="saving"
+        :disabled="saving || !!uploadingKey"
+        @click="submitCertification"
+      >
+        提交认证资料
+      </button>
+    </view>
   </view>
 </template>
 
@@ -307,17 +317,19 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 24rpx;
-  background: linear-gradient(180deg, #edf7f0 0%, #f6f7fb 36%, #f6f7fb 100%);
+  padding: 24rpx 24rpx 176rpx;
+  background:
+    radial-gradient(circle at top right, rgba(47, 143, 85, 0.1), transparent 30%),
+    linear-gradient(180deg, #edf7f0 0%, #f6f7fb 36%, #f6f7fb 100%);
   box-sizing: border-box;
 }
 
 .status-card,
 .section-card {
   margin-bottom: 24rpx;
-  padding: 28rpx;
+  padding: 30rpx;
   border-radius: 28rpx;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 14rpx 36rpx rgba(28, 39, 31, 0.06);
 }
 
@@ -350,8 +362,27 @@ export default {
   color: #5d6873;
 }
 
+.section-head {
+  margin-bottom: 22rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.section-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #7a837d;
+}
+
 .form-item {
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
 }
 
 .form-item.no-border {
@@ -360,20 +391,25 @@ export default {
 
 .label {
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: 16rpx;
   font-size: 26rpx;
-  color: #4d5d52;
+  color: #5d6873;
 }
 
 .input {
   width: 100%;
-  min-height: 84rpx;
+  min-height: 88rpx;
   padding: 24rpx;
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   background: #f5f7f6;
+  box-shadow: inset 0 0 0 2rpx #edf1ee;
   box-sizing: border-box;
   font-size: 28rpx;
   color: #1f2329;
+}
+
+.input-placeholder {
+  color: #9ea8a2;
 }
 
 .upload-item {
@@ -386,8 +422,9 @@ export default {
 
 .upload-box {
   overflow: hidden;
-  border-radius: 22rpx;
+  border-radius: 24rpx;
   background: #f5f7f6;
+  box-shadow: inset 0 0 0 2rpx #edf1ee;
 }
 
 .upload-image,
@@ -407,15 +444,27 @@ export default {
   color: #7a837d;
 }
 
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 22rpx 24rpx calc(26rpx + env(safe-area-inset-bottom));
+  background: rgba(246, 247, 251, 0.92);
+  backdrop-filter: blur(14rpx);
+  box-sizing: border-box;
+}
+
 .submit-btn {
   width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: 92rpx;
+  line-height: 92rpx;
   border: none;
-  border-radius: 20rpx;
+  border-radius: 999rpx;
   background: #2f8f55;
   font-size: 30rpx;
   color: #ffffff;
+  box-shadow: 0 16rpx 34rpx rgba(47, 143, 85, 0.22);
 }
 
 .submit-btn::after {

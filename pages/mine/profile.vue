@@ -1,6 +1,10 @@
 <template>
   <view class="page">
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">头像信息</text>
+        <text class="section-desc">上传更清晰的头像，方便厨师识别联系人。</text>
+      </view>
       <view class="avatar-row">
         <text class="label">头像</text>
         <view class="avatar-area" @click="chooseAvatar">
@@ -14,6 +18,10 @@
     </view>
 
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">账号信息</text>
+        <text class="section-desc">手机号和账号状态会用于通知与登录。</text>
+      </view>
       <view class="form-item">
         <text class="label">手机号</text>
         <input
@@ -22,6 +30,7 @@
           type="number"
           maxlength="11"
           placeholder="请输入手机号"
+          placeholder-class="input-placeholder"
         />
       </view>
       <view class="form-item readonly-item no-border">
@@ -31,9 +40,13 @@
     </view>
 
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">个人偏好</text>
+        <text class="section-desc">这部分信息有助于更快确认你的服务需求。</text>
+      </view>
       <view class="form-item">
         <text class="label">昵称</text>
-        <input v-model="form.nickname" class="input" placeholder="请输入昵称" />
+        <input v-model="form.nickname" class="input" placeholder="请输入昵称" placeholder-class="input-placeholder" />
       </view>
       <view class="form-item">
         <text class="label">性别</text>
@@ -49,19 +62,19 @@
       </view>
       <view class="form-item">
         <text class="label">口味偏好</text>
-        <input v-model="form.tastePreference" class="input" placeholder="请输入口味偏好" />
+        <input v-model="form.tastePreference" class="input" placeholder="请输入口味偏好" placeholder-class="input-placeholder" />
       </view>
       <view class="form-item">
         <text class="label">过敏信息</text>
-        <textarea v-model="form.allergyInfo" class="textarea" placeholder="请输入过敏信息" />
+        <textarea v-model="form.allergyInfo" class="textarea" placeholder="请输入过敏信息" placeholder-class="input-placeholder" />
       </view>
       <view class="form-item">
         <text class="label">紧急联系人</text>
-        <input v-model="form.emergencyContactName" class="input" placeholder="请输入紧急联系人姓名" />
+        <input v-model="form.emergencyContactName" class="input" placeholder="请输入紧急联系人姓名" placeholder-class="input-placeholder" />
       </view>
       <view class="form-item no-border">
         <text class="label">紧急联系人电话</text>
-        <input v-model="form.emergencyContactPhone" class="input" type="number" maxlength="11" placeholder="请输入紧急联系人电话" />
+        <input v-model="form.emergencyContactPhone" class="input" type="number" maxlength="11" placeholder="请输入紧急联系人电话" placeholder-class="input-placeholder" />
       </view>
     </view>
 
@@ -296,25 +309,177 @@ export default {
 </script>
 
 <style scoped>
-.page { min-height: 100vh; padding: 24rpx 24rpx 160rpx; background: #f6f7fb; box-sizing: border-box; }
-.section-card { margin-bottom: 24rpx; padding: 28rpx; border-radius: 24rpx; background: #ffffff; box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05); }
-.avatar-row { display: flex; align-items: center; justify-content: space-between; gap: 24rpx; }
-.avatar-area { display: flex; align-items: center; gap: 20rpx; }
-.avatar { width: 116rpx; height: 116rpx; border-radius: 50%; background: #f1e1d9; }
-.avatar-placeholder { display: flex; align-items: center; justify-content: center; }
-.avatar-text { font-size: 42rpx; font-weight: 600; color: #b96845; }
-.upload-text { font-size: 26rpx; color: #d96c3a; }
-.form-item { padding: 20rpx 0; border-bottom: 2rpx solid #f1f3f6; }
-.form-item.no-border { border-bottom: none; padding-bottom: 0; }
-.readonly-item { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
-.label { display: block; margin-bottom: 16rpx; font-size: 28rpx; color: #1f2329; }
-.readonly-item .label { margin-bottom: 0; }
-.readonly-value, .picker-value { font-size: 28rpx; color: #4f5662; text-align: right; }
-.input, .textarea, .picker-value { width: 100%; border-radius: 16rpx; background: #f7f8fb; box-sizing: border-box; }
-.input { height: 84rpx; padding: 0 24rpx; font-size: 28rpx; color: #222222; }
-.textarea { min-height: 160rpx; padding: 22rpx 24rpx; font-size: 28rpx; color: #222222; }
-.picker-value { min-height: 84rpx; padding: 24rpx; color: #4f5662; }
-.bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, 0.98); box-shadow: 0 -8rpx 24rpx rgba(32, 37, 43, 0.06); box-sizing: border-box; }
-.save-btn { width: 100%; height: 88rpx; line-height: 88rpx; border: none; border-radius: 999rpx; background: #d96c3a; font-size: 30rpx; font-weight: 500; }
-.save-btn::after { border: none; }
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 184rpx;
+  background:
+    radial-gradient(circle at top right, rgba(217, 108, 58, 0.1), transparent 30%),
+    linear-gradient(180deg, #fff8f2 0%, #f6f7fb 34%, #f6f7fb 100%);
+  box-sizing: border-box;
+}
+
+.section-card {
+  margin-bottom: 24rpx;
+  padding: 30rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14rpx 34rpx rgba(32, 37, 43, 0.06);
+}
+
+.section-head {
+  margin-bottom: 22rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.section-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #8a8f99;
+}
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.avatar-area {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.avatar {
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: 50%;
+  background: #f1e1d9;
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-text {
+  font-size: 42rpx;
+  font-weight: 600;
+  color: #b96845;
+}
+
+.upload-text {
+  font-size: 26rpx;
+  color: #d96c3a;
+}
+
+.form-item {
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid #f1f3f6;
+}
+
+.form-item:first-of-type {
+  padding-top: 0;
+}
+
+.form-item.no-border {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.readonly-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.label {
+  display: block;
+  margin-bottom: 18rpx;
+  font-size: 26rpx;
+  color: #5f6672;
+}
+
+.readonly-item .label {
+  margin-bottom: 0;
+}
+
+.readonly-value,
+.picker-value {
+  font-size: 28rpx;
+  color: #4f5662;
+  text-align: right;
+}
+
+.input,
+.textarea,
+.picker-value {
+  width: 100%;
+  border-radius: 20rpx;
+  background: #f8f9fc;
+  box-shadow: inset 0 0 0 2rpx #f0f2f6;
+  box-sizing: border-box;
+}
+
+.input {
+  height: 88rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #222222;
+}
+
+.textarea {
+  min-height: 172rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #222222;
+}
+
+.picker-value {
+  min-height: 88rpx;
+  padding: 24rpx;
+  color: #4f5662;
+}
+
+.input-placeholder {
+  color: #a5adba;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 22rpx 24rpx calc(26rpx + env(safe-area-inset-bottom));
+  background: rgba(246, 247, 251, 0.92);
+  backdrop-filter: blur(14rpx);
+  box-sizing: border-box;
+}
+
+.save-btn {
+  width: 100%;
+  height: 92rpx;
+  line-height: 92rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #d96c3a;
+  font-size: 30rpx;
+  font-weight: 500;
+  box-shadow: 0 16rpx 34rpx rgba(217, 108, 58, 0.22);
+}
+
+.save-btn::after {
+  border: none;
+}
 </style>

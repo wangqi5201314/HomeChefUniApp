@@ -1,7 +1,10 @@
 <template>
   <view class="page">
     <view class="form-card">
-      <view class="section-title">联系人信息</view>
+      <view class="section-head section-head--stack">
+        <text class="section-title">联系人信息</text>
+        <text class="section-desc">先确认本次上门服务的联系人与联系电话。</text>
+      </view>
 
       <view class="form-item">
         <text class="label">联系人</text>
@@ -10,6 +13,7 @@
           class="input"
           maxlength="20"
           placeholder="请输入联系人姓名"
+          placeholder-class="input-placeholder"
         />
       </view>
 
@@ -21,6 +25,7 @@
           type="number"
           maxlength="11"
           placeholder="请输入联系电话"
+          placeholder-class="input-placeholder"
         />
       </view>
     </view>
@@ -37,6 +42,7 @@
           class="search-input"
           confirm-type="search"
           placeholder="搜索小区、写字楼、街道等地址"
+          placeholder-class="input-placeholder"
           @input="handleKeywordInput"
           @confirm="handleSearch"
         />
@@ -80,7 +86,10 @@
     </view>
 
     <view class="form-card">
-      <view class="section-title">地址信息</view>
+      <view class="section-head section-head--stack">
+        <text class="section-title">地址信息</text>
+        <text class="section-desc">先选择结构化地区，再补充门牌号和楼栋信息。</text>
+      </view>
 
       <view class="form-item">
         <text class="label">省份</text>
@@ -123,6 +132,7 @@
           class="textarea"
           maxlength="120"
           placeholder="请输入门牌号、楼栋号、房号等详细信息"
+          placeholder-class="input-placeholder"
         />
       </view>
 
@@ -796,10 +806,10 @@ export default {
 
 .form-card {
   margin-bottom: 24rpx;
-  padding: 28rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
+  padding: 30rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14rpx 34rpx rgba(32, 37, 43, 0.06);
 }
 
 .section-head {
@@ -808,6 +818,11 @@ export default {
   align-items: center;
   gap: 16rpx;
   margin-bottom: 20rpx;
+}
+
+.section-head--stack {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .section-title {
@@ -827,6 +842,12 @@ export default {
   color: #8a8f99;
 }
 
+.section-desc {
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #8a8f99;
+}
+
 .search-bar {
   display: flex;
   align-items: center;
@@ -835,10 +856,11 @@ export default {
 
 .search-input {
   flex: 1;
-  height: 84rpx;
+  height: 88rpx;
   padding: 0 24rpx;
-  border-radius: 16rpx;
-  background: #f7f8fb;
+  border-radius: 20rpx;
+  background: #f8f9fc;
+  box-shadow: inset 0 0 0 2rpx #f0f2f6;
   font-size: 28rpx;
   color: #222222;
   box-sizing: border-box;
@@ -847,10 +869,10 @@ export default {
 .search-btn {
   margin: 0;
   width: 140rpx;
-  height: 84rpx;
-  line-height: 84rpx;
+  height: 88rpx;
+  line-height: 88rpx;
   border: none;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   background: #d96c3a;
   font-size: 28rpx;
 }
@@ -862,9 +884,10 @@ export default {
 
 .search-result-list {
   margin-top: 20rpx;
-  border: 2rpx solid #f1f3f6;
-  border-radius: 20rpx;
+  border-radius: 24rpx;
   overflow: hidden;
+  background: #fbfbfd;
+  box-shadow: inset 0 0 0 2rpx #f1f3f6;
 }
 
 .search-result-item {
@@ -921,9 +944,10 @@ export default {
 
 .selected-location {
   margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 16rpx;
-  background: #fff5ee;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #fff8f3 0%, #fff1e8 100%);
+  box-shadow: inset 0 0 0 2rpx #f7e4d9;
 }
 
 .selected-location-label {
@@ -952,17 +976,18 @@ export default {
 
 .label {
   display: block;
-  margin-bottom: 16rpx;
-  font-size: 28rpx;
-  color: #1f2329;
+  margin-bottom: 18rpx;
+  font-size: 26rpx;
+  color: #5f6672;
 }
 
 .input,
 .picker-value,
 .textarea {
   width: 100%;
-  border-radius: 16rpx;
-  background: #f7f8fb;
+  border-radius: 20rpx;
+  background: #f8f9fc;
+  box-shadow: inset 0 0 0 2rpx #f0f2f6;
   font-size: 28rpx;
   color: #222222;
   box-sizing: border-box;
@@ -970,18 +995,20 @@ export default {
 
 .input,
 .picker-value {
-  height: 84rpx;
-  line-height: 84rpx;
+  height: 88rpx;
+  line-height: 88rpx;
   padding: 0 24rpx;
 }
 
+.input-placeholder,
 .picker-placeholder {
-  color: #9aa1ad;
+  color: #a5adba;
 }
 
 .textarea {
-  min-height: 168rpx;
-  padding: 22rpx 24rpx;
+  min-height: 180rpx;
+  padding: 24rpx;
+  line-height: 1.7;
 }
 
 .switch-item {
@@ -1000,20 +1027,21 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 -8rpx 24rpx rgba(32, 37, 43, 0.06);
+  padding: 22rpx 24rpx calc(26rpx + env(safe-area-inset-bottom));
+  background: rgba(246, 247, 251, 0.92);
+  backdrop-filter: blur(14rpx);
   box-sizing: border-box;
 }
 
 .save-btn {
   width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: 92rpx;
+  line-height: 92rpx;
   border: none;
   border-radius: 999rpx;
   background: #d96c3a;
   font-size: 30rpx;
   font-weight: 500;
+  box-shadow: 0 16rpx 34rpx rgba(217, 108, 58, 0.22);
 }
 </style>

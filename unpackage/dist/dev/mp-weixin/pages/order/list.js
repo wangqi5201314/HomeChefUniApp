@@ -174,10 +174,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       }, $options.isReviewed(item) === false ? {
         n: common_vendor.o(($event) => $options.goReview(item), item.id)
       } : $options.isReviewed(item) === true ? {} : {}, {
-        o: $options.isReviewed(item) === true
-      }) : {}, {
+        o: $options.isReviewed(item) === true,
         p: common_vendor.o(() => {
-        }, item.id),
+        }, item.id)
+      }) : {}, {
         q: item.id,
         r: common_vendor.n($options.getOrderCardClass(item.orderStatus)),
         s: common_vendor.o(($event) => $options.goDetail(item.id), item.id)

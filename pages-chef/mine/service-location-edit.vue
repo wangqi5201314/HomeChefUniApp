@@ -11,6 +11,10 @@
       </view>
 
       <view class="form-card">
+        <view class="section-head">
+          <text class="section-title">基础信息</text>
+          <text class="section-desc">先给这个服务位置起个名字，方便后续切换和管理。</text>
+        </view>
         <view class="form-item first-item">
           <text class="label">位置名称</text>
           <input
@@ -18,6 +22,7 @@
             class="input"
             maxlength="20"
             placeholder="例如：家、工作室、大学城服务点"
+            placeholder-class="input-placeholder"
           />
         </view>
       </view>
@@ -34,6 +39,7 @@
             class="search-input"
             confirm-type="search"
             placeholder="搜索小区、街道、写字楼等地址"
+            placeholder-class="input-placeholder"
             @confirm="handleSearch"
           />
           <button class="search-btn" type="primary" size="mini" :loading="searching" @click="handleSearch">
@@ -54,6 +60,9 @@
         </scroll-view>
 
         <view class="map-wrapper">
+          <view class="map-guide-banner">
+            <text class="map-guide-text">拖动地图，让中心图钉对准你的服务出发地</text>
+          </view>
           <map
             id="serviceLocationMap"
             class="map"
@@ -76,7 +85,10 @@
       </view>
 
       <view class="form-card">
-        <text class="section-title">结构化地址</text>
+        <view class="section-head">
+          <text class="section-title">结构化地址</text>
+          <text class="section-desc">重要字段放在前面，详细说明放在最后补充即可。</text>
+        </view>
 
         <view class="form-item">
           <text class="label">省份</text>
@@ -121,6 +133,7 @@
             class="textarea"
             maxlength="120"
             placeholder="请输入更具体的位置说明，例如某路口、某楼栋、某园区入口"
+            placeholder-class="input-placeholder"
           />
         </view>
       </view>
@@ -769,6 +782,12 @@ export default {
   color: #223128;
 }
 
+.section-desc {
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #7a837d;
+}
+
 .section-tip {
   font-size: 24rpx;
   color: #7a837d;
@@ -816,6 +835,10 @@ export default {
   font-size: 28rpx;
   line-height: 1.6;
   color: #1f2329;
+}
+
+.input-placeholder {
+  color: #9ea8a2;
 }
 
 .picker-placeholder {
@@ -885,6 +908,24 @@ export default {
   border-radius: 24rpx;
 }
 
+.map-guide-banner {
+  position: absolute;
+  left: 20rpx;
+  right: 20rpx;
+  top: 20rpx;
+  z-index: 3;
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(31, 35, 41, 0.7);
+}
+
+.map-guide-text {
+  display: block;
+  font-size: 22rpx;
+  text-align: center;
+  color: #ffffff;
+}
+
 .map {
   width: 100%;
   height: 420rpx;
@@ -908,9 +949,10 @@ export default {
 
 .selected-location {
   margin-top: 20rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 22rpx;
-  background: #f7f9f8;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #f7fbf8 0%, #eef7f1 100%);
+  box-shadow: inset 0 0 0 2rpx #e3efe7;
 }
 
 .selected-label {
@@ -933,7 +975,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 20rpx 24rpx 28rpx;
+  padding: 22rpx 24rpx calc(26rpx + env(safe-area-inset-bottom));
   background: rgba(246, 247, 251, 0.96);
   backdrop-filter: blur(10rpx);
   box-sizing: border-box;

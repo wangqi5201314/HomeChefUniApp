@@ -1,6 +1,10 @@
 <template>
   <view class="page">
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">头像信息</text>
+        <text class="section-desc">设置清晰头像，方便用户在订单中识别你。</text>
+      </view>
       <view class="avatar-row">
         <text class="label label-inline">头像</text>
         <view class="avatar-area" @click="chooseAvatar">
@@ -19,6 +23,10 @@
     </view>
 
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">账号信息</text>
+        <text class="section-desc">手机号和认证状态会影响接单与联系。</text>
+      </view>
       <view class="form-item">
         <text class="label label-inline">手机号</text>
         <input
@@ -27,6 +35,7 @@
           type="number"
           maxlength="11"
           placeholder="请输入手机号"
+          placeholder-class="input-placeholder"
         />
       </view>
       <view class="form-item readonly-item no-border">
@@ -36,9 +45,13 @@
     </view>
 
     <view class="section-card">
+      <view class="section-head">
+        <text class="section-title">服务资料</text>
+        <text class="section-desc">优先完善核心展示信息，再补充服务能力与接单偏好。</text>
+      </view>
       <view class="form-item">
         <text class="label">姓名</text>
-        <input v-model="form.name" class="input" placeholder="请输入姓名" />
+        <input v-model="form.name" class="input" placeholder="请输入姓名" placeholder-class="input-placeholder" />
       </view>
 
       <view class="form-item">
@@ -73,17 +86,17 @@
 
       <view class="form-item">
         <text class="label">个人介绍</text>
-        <textarea v-model="form.introduction" class="textarea" maxlength="500" placeholder="请输入个人介绍" />
+        <textarea v-model="form.introduction" class="textarea" maxlength="500" placeholder="请输入个人介绍" placeholder-class="input-placeholder" />
       </view>
 
       <view class="form-item">
         <text class="label">擅长菜系</text>
-        <input v-model="form.specialtyCuisine" class="input" placeholder="请输入擅长菜系" />
+        <input v-model="form.specialtyCuisine" class="input" placeholder="请输入擅长菜系" placeholder-class="input-placeholder" />
       </view>
 
       <view class="form-item">
         <text class="label">技能标签</text>
-        <input v-model="form.specialtyTags" class="input" placeholder="请输入技能标签，多个可用逗号分隔" />
+        <input v-model="form.specialtyTags" class="input" placeholder="请输入技能标签，多个可用逗号分隔" placeholder-class="input-placeholder" />
       </view>
 
       <view class="form-item">
@@ -465,10 +478,29 @@ export default {
 
 .section-card {
   margin-bottom: 24rpx;
-  padding: 28rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(32, 37, 43, 0.05);
+  padding: 30rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14rpx 34rpx rgba(32, 37, 43, 0.06);
+}
+
+.section-head {
+  margin-bottom: 22rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.section-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #7a837d;
 }
 
 .avatar-row {
@@ -509,8 +541,12 @@ export default {
 }
 
 .form-item {
-  padding: 20rpx 0;
+  padding: 24rpx 0;
   border-bottom: 2rpx solid #eef1ef;
+}
+
+.form-item:first-of-type {
+  padding-top: 0;
 }
 
 .form-item.no-border {
@@ -527,9 +563,9 @@ export default {
 
 .label {
   display: block;
-  margin-bottom: 16rpx;
-  font-size: 28rpx;
-  color: #1f2329;
+  margin-bottom: 18rpx;
+  font-size: 26rpx;
+  color: #5d6873;
 }
 
 .label-inline {
@@ -552,19 +588,21 @@ export default {
 .textarea,
 .picker-value {
   width: 100%;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   background: #f5f7f6;
+  box-shadow: inset 0 0 0 2rpx #edf1ee;
   box-sizing: border-box;
 }
 
 .input {
-  min-height: 84rpx;
+  min-height: 88rpx;
   padding: 24rpx;
 }
 
 .textarea {
-  min-height: 180rpx;
+  min-height: 188rpx;
   padding: 24rpx;
+  line-height: 1.7;
 }
 
 .picker-wrap {
@@ -572,10 +610,14 @@ export default {
 }
 
 .picker-value {
-  min-height: 84rpx;
+  min-height: 88rpx;
   padding: 24rpx;
   display: flex;
   align-items: center;
+}
+
+.input-placeholder {
+  color: #9ea8a2;
 }
 
 .bottom-bar {
@@ -583,21 +625,22 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 -8rpx 24rpx rgba(32, 37, 43, 0.06);
+  padding: 22rpx 24rpx calc(26rpx + env(safe-area-inset-bottom));
+  background: rgba(246, 247, 251, 0.92);
+  backdrop-filter: blur(14rpx);
   box-sizing: border-box;
 }
 
 .save-btn {
   width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: 92rpx;
+  line-height: 92rpx;
   border: none;
   border-radius: 999rpx;
   background: #2f8f55;
   font-size: 30rpx;
   color: #ffffff;
+  box-shadow: 0 16rpx 34rpx rgba(47, 143, 85, 0.22);
 }
 
 .save-btn::after {
