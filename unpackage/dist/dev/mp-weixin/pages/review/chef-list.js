@@ -58,6 +58,14 @@ const _sfc_main = {
         return "0";
       }
       return value || "-";
+    },
+    renderStars(score) {
+      const numericScore = Number(score);
+      if (!Number.isFinite(numericScore) || numericScore <= 0) {
+        return "☆☆☆☆☆";
+      }
+      const fullStars = Math.max(0, Math.min(5, Math.round(numericScore)));
+      return `${"★".repeat(fullStars)}${"☆".repeat(5 - fullStars)}`;
     }
   }
 };
@@ -68,16 +76,24 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     c: common_vendor.f($data.reviewList, (item, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.isAnonymous === 1 ? "匿名用户" : $options.getReviewUserName(item)),
-        b: common_vendor.t($options.formatPlain(item.overallScore)),
-        c: common_vendor.t($options.formatPlain(item.dishScore)),
-        d: common_vendor.t($options.formatPlain(item.serviceScore)),
-        e: common_vendor.t($options.formatPlain(item.skillScore)),
-        f: common_vendor.t($options.formatPlain(item.environmentScore)),
-        g: common_vendor.t(item.content || "用户未填写评价内容"),
-        h: common_vendor.t($options.formatFullDateTime(item.createdAt)),
-        i: $options.parseImageUrls(item.imageUrls).length
+        b: common_vendor.t(item.isAnonymous === 1 ? "匿名评价" : "实名评价"),
+        c: item.isAnonymous === 1 ? 1 : "",
+        d: common_vendor.t($options.formatFullDateTime(item.createdAt)),
+        e: common_vendor.t($options.formatPlain(item.overallScore)),
+        f: common_vendor.t($options.renderStars(item.overallScore)),
+        g: common_vendor.t($options.renderStars(item.dishScore)),
+        h: common_vendor.t($options.formatPlain(item.dishScore)),
+        i: common_vendor.t($options.renderStars(item.serviceScore)),
+        j: common_vendor.t($options.formatPlain(item.serviceScore)),
+        k: common_vendor.t($options.renderStars(item.skillScore)),
+        l: common_vendor.t($options.formatPlain(item.skillScore)),
+        m: common_vendor.t($options.renderStars(item.environmentScore)),
+        n: common_vendor.t($options.formatPlain(item.environmentScore)),
+        o: common_vendor.t(item.content || "用户未填写评价内容"),
+        p: $options.parseImageUrls(item.imageUrls).length
       }, $options.parseImageUrls(item.imageUrls).length ? {
-        j: common_vendor.f($options.parseImageUrls(item.imageUrls), (url, index, i1) => {
+        q: common_vendor.t($options.parseImageUrls(item.imageUrls).length),
+        r: common_vendor.f($options.parseImageUrls(item.imageUrls), (url, index, i1) => {
           return {
             a: `${item.id}-${index}`,
             b: url,
@@ -85,14 +101,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
           };
         })
       } : {}, {
-        k: item.replyContent
+        s: item.replyContent
       }, item.replyContent ? common_vendor.e({
-        l: common_vendor.t(item.replyContent),
-        m: item.replyAt
+        t: common_vendor.t(item.replyContent),
+        v: item.replyAt
       }, item.replyAt ? {
-        n: common_vendor.t($options.formatFullDateTime(item.replyAt))
+        w: common_vendor.t($options.formatFullDateTime(item.replyAt))
       } : {}) : {}, {
-        o: item.id
+        x: item.id
       });
     })
   }, {

@@ -29,43 +29,108 @@
 }
 .review-card.data-v-eeac79e8 {
   padding: 28rpx;
+  border: 2rpx solid #f1e7df;
 }
 .card-header.data-v-eeac79e8 {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 20rpx;
+}
+.header-main.data-v-eeac79e8 {
+  flex: 1;
+  min-width: 0;
 }
 .order-no.data-v-eeac79e8 {
   font-size: 26rpx;
-  color: #5f6671;
-}
-.overall-score.data-v-eeac79e8 {
-  font-size: 28rpx;
   font-weight: 600;
-  color: #d96c3a;
+  color: #374151;
 }
-.score-row.data-v-eeac79e8 {
+.identity-row.data-v-eeac79e8 {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx 24rpx;
-  margin-top: 20rpx;
+  gap: 12rpx 16rpx;
+  margin-top: 14rpx;
 }
-.score-item.data-v-eeac79e8 {
-  font-size: 26rpx;
-  color: #333333;
+.identity-tag.data-v-eeac79e8 {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eef5ff;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #5678a6;
 }
-.meta-row.data-v-eeac79e8 {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-  margin-top: 20rpx;
+.identity-tag.anonymous.data-v-eeac79e8 {
+  background: #f4f5f7;
+  color: #7b838f;
+}
+.overall-box.data-v-eeac79e8 {
+  flex-shrink: 0;
+  min-width: 176rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #fff8ef 0%, #fff2de 100%);
+  text-align: right;
+}
+.overall-label.data-v-eeac79e8,
+.overall-score.data-v-eeac79e8,
+.overall-stars.data-v-eeac79e8 {
+  display: block;
+}
+.overall-label.data-v-eeac79e8 {
+  font-size: 22rpx;
+  color: #8a735f;
+}
+.overall-score.data-v-eeac79e8 {
+  margin-top: 8rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #d96c3a;
+}
+.overall-stars.data-v-eeac79e8 {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: #f0a34a;
+}
+.score-grid.data-v-eeac79e8 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+.score-item-card.data-v-eeac79e8 {
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+  background: #faf7f4;
+}
+.score-name.data-v-eeac79e8,
+.score-stars.data-v-eeac79e8,
+.score-value.data-v-eeac79e8 {
+  display: block;
+}
+.score-name.data-v-eeac79e8 {
+  font-size: 24rpx;
+  color: #6b7280;
+}
+.score-stars.data-v-eeac79e8 {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  color: #f0a34a;
+}
+.score-value.data-v-eeac79e8 {
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2f3743;
 }
 .meta-text.data-v-eeac79e8 {
   font-size: 24rpx;
   color: #8a8f99;
 }
-.content-block.data-v-eeac79e8 {
+.content-block.data-v-eeac79e8,
+.gallery-block.data-v-eeac79e8 {
   margin-top: 24rpx;
 }
 .block-title.data-v-eeac79e8 {
@@ -76,10 +141,21 @@
 }
 .content-text.data-v-eeac79e8 {
   display: block;
-  margin-top: 12rpx;
+  margin-top: 14rpx;
   font-size: 28rpx;
-  line-height: 1.7;
+  line-height: 1.8;
   color: #333333;
+}
+.gallery-head.data-v-eeac79e8 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.gallery-count.data-v-eeac79e8 {
+  font-size: 24rpx;
+  color: #8a8f99;
 }
 .image-list.data-v-eeac79e8 {
   display: flex;
@@ -90,14 +166,25 @@
 .review-image.data-v-eeac79e8 {
   width: 180rpx;
   height: 180rpx;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   background: #f3f4f6;
+  box-shadow: 0 10rpx 24rpx rgba(32, 37, 43, 0.08);
 }
 .reply-card.data-v-eeac79e8 {
+  position: relative;
   margin-top: 24rpx;
-  padding: 20rpx;
-  border-radius: 18rpx;
-  background: #fff6ef;
+  padding: 24rpx 24rpx 24rpx 34rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #fff8f1 0%, #fff3e7 100%);
+}
+.reply-accent.data-v-eeac79e8 {
+  position: absolute;
+  left: 18rpx;
+  top: 24rpx;
+  bottom: 24rpx;
+  width: 6rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, #f1a45f 0%, #d96c3a 100%);
 }
 .reply-title.data-v-eeac79e8 {
   display: block;
@@ -107,7 +194,7 @@
 }
 .reply-content.data-v-eeac79e8 {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 12rpx;
   font-size: 26rpx;
   line-height: 1.7;
   color: #5a3d2f;
