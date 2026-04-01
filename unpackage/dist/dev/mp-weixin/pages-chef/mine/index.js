@@ -5,6 +5,7 @@ const api_chefProfile = require("../../api/chef-profile.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_chefCertStatus = require("../../utils/chef-cert-status.js");
 const utils_chefStatus = require("../../utils/chef-status.js");
+const common_assets = require("../../common/assets.js");
 const ChefTabbar = () => "../../components/chef-tabbar.js";
 const _sfc_main = {
   name: "ChefMinePage",
@@ -115,15 +116,21 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.t($options.chefStatusText),
     h: common_vendor.t($options.formatValue($data.chefInfo.ratingAvg)),
     i: common_vendor.t($options.formatValue($data.chefInfo.orderCount)),
-    j: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
-    k: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/change-password")),
-    l: common_vendor.t($options.certStatusText),
-    m: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
+    j: common_assets._imports_0,
+    k: common_vendor.t($options.certStatusText),
+    l: common_vendor.o(($event) => $options.goPage("/pages-chef/certification/index")),
+    m: common_assets._imports_1,
     n: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/service-location-list")),
-    o: common_vendor.o(($event) => $options.goPage("/pages-chef/review/list")),
-    p: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
-    q: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args)),
-    r: common_vendor.p({
+    o: common_assets._imports_2,
+    p: common_vendor.o(($event) => $options.goPage("/pages-chef/review/list")),
+    q: common_assets._imports_3,
+    r: common_vendor.o(($event) => $options.goPage("/pages-chef/schedule/index")),
+    s: common_assets._imports_0,
+    t: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/profile")),
+    v: common_assets._imports_4,
+    w: common_vendor.o(($event) => $options.goPage("/pages-chef/mine/change-password")),
+    x: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args)),
+    y: common_vendor.p({
       current: "mine"
     })
   });

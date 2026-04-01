@@ -5,6 +5,7 @@ const api_order = require("../../api/order.js");
 const api_user = require("../../api/user.js");
 const utils_auth = require("../../utils/auth.js");
 const utils_userStatus = require("../../utils/user-status.js");
+const common_assets = require("../../common/assets.js");
 const USER_ID_KEY = "user_id";
 const USER_TYPE_KEY = "user_type";
 const ADMIN_ID_KEY = "admin_id";
@@ -113,12 +114,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.t($options.userStatusText),
     g: common_vendor.t($data.orderCount),
     h: common_vendor.t($data.addressCount),
-    i: common_vendor.o((...args) => $options.goProfile && $options.goProfile(...args)),
-    j: common_vendor.o((...args) => $options.goReviewList && $options.goReviewList(...args)),
-    k: common_vendor.o((...args) => $options.goChangePassword && $options.goChangePassword(...args)),
-    l: common_vendor.o((...args) => $options.goAddressList && $options.goAddressList(...args)),
-    m: common_vendor.o((...args) => $options.goOrderList && $options.goOrderList(...args)),
-    n: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    i: common_assets._imports_3,
+    j: common_vendor.t($data.orderCount),
+    k: common_vendor.o((...args) => $options.goOrderList && $options.goOrderList(...args)),
+    l: common_assets._imports_1,
+    m: common_vendor.t($data.addressCount),
+    n: common_vendor.o((...args) => $options.goAddressList && $options.goAddressList(...args)),
+    o: common_assets._imports_2,
+    p: common_vendor.o((...args) => $options.goReviewList && $options.goReviewList(...args)),
+    q: common_assets._imports_0,
+    r: common_vendor.o((...args) => $options.goProfile && $options.goProfile(...args)),
+    s: common_assets._imports_4,
+    t: common_vendor.o((...args) => $options.goChangePassword && $options.goChangePassword(...args)),
+    v: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-569e925a"]]);
