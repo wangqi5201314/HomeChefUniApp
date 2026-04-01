@@ -11,7 +11,7 @@
     <view v-else class="review-list">
       <view v-for="item in reviewList" :key="item.id" class="review-card">
         <view class="card-header">
-          <text class="order-no">订单号：{{ item.orderId || '-' }}</text>
+          <text class="order-no">订单号：{{ item.orderNo || item.orderId || '-' }}</text>
           <text class="overall-score">综合评分 {{ formatScore(item.overallScore) }}</text>
         </view>
 
