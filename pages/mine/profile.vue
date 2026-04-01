@@ -14,9 +14,15 @@
     </view>
 
     <view class="section-card">
-      <view class="form-item readonly-item">
+      <view class="form-item">
         <text class="label">手机号</text>
-        <text class="readonly-value">{{ phoneDisplay }}</text>
+        <input
+          v-model="form.phone"
+          class="input"
+          type="number"
+          maxlength="11"
+          placeholder="请输入手机号"
+        />
       </view>
       <view class="form-item readonly-item no-border">
         <text class="label">状态</text>
@@ -117,9 +123,6 @@ export default {
       const current = this.genderOptions.find((item) => item.value === Number(this.form.gender))
       return current ? current.label : '未知'
     },
-    phoneDisplay() {
-      return this.form.phone || '-'
-    },
     statusDisplay() {
       if (this.form.statusDesc) {
         return this.form.statusDesc
@@ -164,6 +167,7 @@ export default {
     },
     async handleAvatarUploaded(fileUrl) {
       await updateCurrentUserInfo({
+        phone: this.form.phone.trim(),
         nickname: this.form.nickname.trim(),
         avatar: fileUrl || '',
         gender: Number(this.form.gender),
@@ -238,6 +242,7 @@ export default {
     },
     buildPayload() {
       return {
+        phone: this.form.phone.trim(),
         nickname: this.form.nickname.trim(),
         avatar: this.form.avatar || '',
         gender: Number(this.form.gender),
@@ -252,6 +257,24 @@ export default {
       if (this.saving || this.avatarUploading) {
         return
       }
+
+      const phone = this.form.phone.trim()
+      if (!phone) {
+        uni.showToast({
+          title: '请输入手机号',
+          icon: 'none'
+        })
+        return
+      }
+
+      if (!/^1\d{10}$/.test(phone)) {
+        uni.showToast({
+          title: '请输入正确的手机号',
+          icon: 'none'
+        })
+        return
+      }
+
       this.saving = true
       try {
         await updateCurrentUserInfo(this.buildPayload())

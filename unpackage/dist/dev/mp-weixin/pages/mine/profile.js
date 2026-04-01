@@ -47,9 +47,6 @@ const _sfc_main = {
       const current = this.genderOptions.find((item) => item.value === Number(this.form.gender));
       return current ? current.label : "未知";
     },
-    phoneDisplay() {
-      return this.form.phone || "-";
-    },
     statusDisplay() {
       if (this.form.statusDesc) {
         return this.form.statusDesc;
@@ -94,6 +91,7 @@ const _sfc_main = {
     },
     async handleAvatarUploaded(fileUrl) {
       await api_user.updateCurrentUserInfo({
+        phone: this.form.phone.trim(),
         nickname: this.form.nickname.trim(),
         avatar: fileUrl || "",
         gender: Number(this.form.gender),
@@ -168,6 +166,7 @@ const _sfc_main = {
     },
     buildPayload() {
       return {
+        phone: this.form.phone.trim(),
         nickname: this.form.nickname.trim(),
         avatar: this.form.avatar || "",
         gender: Number(this.form.gender),
@@ -180,6 +179,21 @@ const _sfc_main = {
     },
     async submitProfile() {
       if (this.saving || this.avatarUploading) {
+        return;
+      }
+      const phone = this.form.phone.trim();
+      if (!phone) {
+        common_vendor.index.showToast({
+          title: "请输入手机号",
+          icon: "none"
+        });
+        return;
+      }
+      if (!/^1\d{10}$/.test(phone)) {
+        common_vendor.index.showToast({
+          title: "请输入正确的手机号",
+          icon: "none"
+        });
         return;
       }
       this.saving = true;
@@ -210,29 +224,30 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     d: common_vendor.t($data.avatarUploading ? "上传中..." : "更换头像"),
     e: common_vendor.o((...args) => $options.chooseAvatar && $options.chooseAvatar(...args)),
-    f: common_vendor.t($options.phoneDisplay),
-    g: common_vendor.t($options.statusDisplay),
-    h: $data.form.nickname,
-    i: common_vendor.o(($event) => $data.form.nickname = $event.detail.value),
-    j: common_vendor.t($options.genderLabel),
-    k: $data.genderOptions,
-    l: $options.genderIndex,
-    m: common_vendor.o((...args) => $options.handleGenderChange && $options.handleGenderChange(...args)),
-    n: common_vendor.t($data.form.birthday || "请选择生日"),
-    o: $data.form.birthday,
-    p: common_vendor.o((...args) => $options.handleBirthdayChange && $options.handleBirthdayChange(...args)),
-    q: $data.form.tastePreference,
-    r: common_vendor.o(($event) => $data.form.tastePreference = $event.detail.value),
-    s: $data.form.allergyInfo,
-    t: common_vendor.o(($event) => $data.form.allergyInfo = $event.detail.value),
-    v: $data.form.emergencyContactName,
-    w: common_vendor.o(($event) => $data.form.emergencyContactName = $event.detail.value),
-    x: $data.form.emergencyContactPhone,
-    y: common_vendor.o(($event) => $data.form.emergencyContactPhone = $event.detail.value),
-    z: common_vendor.t($data.saving ? "保存中..." : "保存资料"),
-    A: $data.saving,
-    B: $data.saving || $data.avatarUploading,
-    C: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
+    f: $data.form.phone,
+    g: common_vendor.o(($event) => $data.form.phone = $event.detail.value),
+    h: common_vendor.t($options.statusDisplay),
+    i: $data.form.nickname,
+    j: common_vendor.o(($event) => $data.form.nickname = $event.detail.value),
+    k: common_vendor.t($options.genderLabel),
+    l: $data.genderOptions,
+    m: $options.genderIndex,
+    n: common_vendor.o((...args) => $options.handleGenderChange && $options.handleGenderChange(...args)),
+    o: common_vendor.t($data.form.birthday || "请选择生日"),
+    p: $data.form.birthday,
+    q: common_vendor.o((...args) => $options.handleBirthdayChange && $options.handleBirthdayChange(...args)),
+    r: $data.form.tastePreference,
+    s: common_vendor.o(($event) => $data.form.tastePreference = $event.detail.value),
+    t: $data.form.allergyInfo,
+    v: common_vendor.o(($event) => $data.form.allergyInfo = $event.detail.value),
+    w: $data.form.emergencyContactName,
+    x: common_vendor.o(($event) => $data.form.emergencyContactName = $event.detail.value),
+    y: $data.form.emergencyContactPhone,
+    z: common_vendor.o(($event) => $data.form.emergencyContactPhone = $event.detail.value),
+    A: common_vendor.t($data.saving ? "保存中..." : "保存资料"),
+    B: $data.saving,
+    C: $data.saving || $data.avatarUploading,
+    D: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-935803c6"]]);

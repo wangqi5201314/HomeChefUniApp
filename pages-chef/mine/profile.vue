@@ -19,9 +19,15 @@
     </view>
 
     <view class="section-card">
-      <view class="form-item readonly-item">
+      <view class="form-item">
         <text class="label label-inline">手机号</text>
-        <text class="readonly-value">{{ phoneDisplay }}</text>
+        <input
+          v-model="form.phone"
+          class="input"
+          type="number"
+          maxlength="11"
+          placeholder="请输入手机号"
+        />
       </view>
       <view class="form-item readonly-item no-border">
         <text class="label label-inline">认证状态</text>
@@ -202,9 +208,6 @@ export default {
       const text = this.form.name || this.form.phone || '厨'
       return String(text).slice(0, 1)
     },
-    phoneDisplay() {
-      return this.form.phone || '-'
-    },
     certStatusText() {
       if (this.form.certStatusDesc) {
         return this.form.certStatusDesc
@@ -319,6 +322,7 @@ export default {
     },
     buildPayload() {
       return {
+        phone: this.form.phone.trim(),
         name: this.form.name.trim(),
         avatar: this.form.avatar || '',
         gender: Number(this.form.gender || 0),
@@ -403,6 +407,23 @@ export default {
     },
     async submitProfile() {
       if (this.saving || this.avatarUploading) {
+        return
+      }
+
+      const phone = this.form.phone.trim()
+      if (!phone) {
+        uni.showToast({
+          title: '请输入手机号',
+          icon: 'none'
+        })
+        return
+      }
+
+      if (!/^1\d{10}$/.test(phone)) {
+        uni.showToast({
+          title: '请输入正确的手机号',
+          icon: 'none'
+        })
         return
       }
 

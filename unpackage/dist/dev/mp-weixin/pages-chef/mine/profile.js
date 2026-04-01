@@ -61,9 +61,6 @@ const _sfc_main = {
       const text = this.form.name || this.form.phone || "厨";
       return String(text).slice(0, 1);
     },
-    phoneDisplay() {
-      return this.form.phone || "-";
-    },
     certStatusText() {
       if (this.form.certStatusDesc) {
         return this.form.certStatusDesc;
@@ -171,6 +168,7 @@ const _sfc_main = {
     },
     buildPayload() {
       return {
+        phone: this.form.phone.trim(),
         name: this.form.name.trim(),
         avatar: this.form.avatar || "",
         gender: Number(this.form.gender || 0),
@@ -248,6 +246,21 @@ const _sfc_main = {
       if (this.saving || this.avatarUploading) {
         return;
       }
+      const phone = this.form.phone.trim();
+      if (!phone) {
+        common_vendor.index.showToast({
+          title: "请输入手机号",
+          icon: "none"
+        });
+        return;
+      }
+      if (!/^1\d{10}$/.test(phone)) {
+        common_vendor.index.showToast({
+          title: "请输入正确的手机号",
+          icon: "none"
+        });
+        return;
+      }
       this.saving = true;
       try {
         await api_chefProfile.updateCurrentChefProfile(this.buildPayload());
@@ -280,39 +293,40 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     d: common_vendor.t($data.avatarUploading ? "上传中..." : "更换头像"),
     e: common_vendor.o((...args) => $options.chooseAvatar && $options.chooseAvatar(...args)),
-    f: common_vendor.t($options.phoneDisplay),
-    g: common_vendor.t($options.certStatusText),
-    h: $data.form.name,
-    i: common_vendor.o(($event) => $data.form.name = $event.detail.value),
-    j: common_vendor.t($options.currentGenderText),
-    k: $options.genderRange,
-    l: $options.genderIndex,
-    m: common_vendor.o((...args) => $options.handleGenderChange && $options.handleGenderChange(...args)),
-    n: common_vendor.t($options.currentAgeText),
-    o: $options.ageRange,
-    p: $options.ageIndex,
-    q: common_vendor.o((...args) => $options.handleAgeChange && $options.handleAgeChange(...args)),
-    r: $data.form.introduction,
-    s: common_vendor.o(($event) => $data.form.introduction = $event.detail.value),
-    t: $data.form.specialtyCuisine,
-    v: common_vendor.o(($event) => $data.form.specialtyCuisine = $event.detail.value),
-    w: $data.form.specialtyTags,
-    x: common_vendor.o(($event) => $data.form.specialtyTags = $event.detail.value),
-    y: common_vendor.t($options.currentExperienceText),
-    z: $options.experienceRange,
-    A: $options.experienceIndex,
-    B: common_vendor.o((...args) => $options.handleExperienceChange && $options.handleExperienceChange(...args)),
-    C: common_vendor.t($options.currentServiceRadiusText),
-    D: $options.serviceRadiusRange,
-    E: $options.serviceRadiusIndex,
-    F: common_vendor.o((...args) => $options.handleServiceRadiusChange && $options.handleServiceRadiusChange(...args)),
-    G: common_vendor.t($options.currentServiceModeText),
-    H: $options.serviceModeRange,
-    I: $options.serviceModeIndex,
-    J: common_vendor.o((...args) => $options.handleServiceModeChange && $options.handleServiceModeChange(...args)),
-    K: $data.saving,
-    L: $data.saving || $data.avatarUploading,
-    M: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
+    f: $data.form.phone,
+    g: common_vendor.o(($event) => $data.form.phone = $event.detail.value),
+    h: common_vendor.t($options.certStatusText),
+    i: $data.form.name,
+    j: common_vendor.o(($event) => $data.form.name = $event.detail.value),
+    k: common_vendor.t($options.currentGenderText),
+    l: $options.genderRange,
+    m: $options.genderIndex,
+    n: common_vendor.o((...args) => $options.handleGenderChange && $options.handleGenderChange(...args)),
+    o: common_vendor.t($options.currentAgeText),
+    p: $options.ageRange,
+    q: $options.ageIndex,
+    r: common_vendor.o((...args) => $options.handleAgeChange && $options.handleAgeChange(...args)),
+    s: $data.form.introduction,
+    t: common_vendor.o(($event) => $data.form.introduction = $event.detail.value),
+    v: $data.form.specialtyCuisine,
+    w: common_vendor.o(($event) => $data.form.specialtyCuisine = $event.detail.value),
+    x: $data.form.specialtyTags,
+    y: common_vendor.o(($event) => $data.form.specialtyTags = $event.detail.value),
+    z: common_vendor.t($options.currentExperienceText),
+    A: $options.experienceRange,
+    B: $options.experienceIndex,
+    C: common_vendor.o((...args) => $options.handleExperienceChange && $options.handleExperienceChange(...args)),
+    D: common_vendor.t($options.currentServiceRadiusText),
+    E: $options.serviceRadiusRange,
+    F: $options.serviceRadiusIndex,
+    G: common_vendor.o((...args) => $options.handleServiceRadiusChange && $options.handleServiceRadiusChange(...args)),
+    H: common_vendor.t($options.currentServiceModeText),
+    I: $options.serviceModeRange,
+    J: $options.serviceModeIndex,
+    K: common_vendor.o((...args) => $options.handleServiceModeChange && $options.handleServiceModeChange(...args)),
+    L: $data.saving,
+    M: $data.saving || $data.avatarUploading,
+    N: common_vendor.o((...args) => $options.submitProfile && $options.submitProfile(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-22f0af08"]]);
