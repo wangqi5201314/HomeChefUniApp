@@ -170,6 +170,51 @@
   margin-bottom: 24rpx;
   padding: 24rpx;
 }
+.filter-head.data-v-4978fed5 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+.filter-head-copy.data-v-4978fed5 {
+  flex: 1;
+  min-width: 0;
+}
+.filter-head-title.data-v-4978fed5 {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+.filter-head-desc.data-v-4978fed5 {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #8a8f99;
+}
+.filter-toggle.data-v-4978fed5 {
+  flex-shrink: 0;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: #fff1e8;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #c76335;
+}
+.filter-collapsed.data-v-4978fed5 {
+  margin-top: 20rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 22rpx;
+  background: #fff8f3;
+  box-shadow: inset 0 0 0 2rpx #f7e4d9;
+}
+.filter-collapsed-text.data-v-4978fed5 {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #8a8f99;
+}
 .card-link.data-v-4978fed5 {
   font-size: 26rpx;
   color: #d96c3a;
@@ -192,6 +237,22 @@
 }
 .filter-section.no-margin.data-v-4978fed5 {
   margin-bottom: 0;
+}
+.filter-action-row.data-v-4978fed5 {
+  margin-top: 24rpx;
+}
+.filter-query-btn.data-v-4978fed5 {
+  width: 100%;
+  height: 84rpx;
+  line-height: 84rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #d96c3a;
+  font-size: 28rpx;
+  color: #ffffff;
+}
+.filter-query-btn.data-v-4978fed5::after {
+  border: none;
 }
 .filter-title.data-v-4978fed5 {
   display: block;
@@ -411,6 +472,26 @@
 }
 .tag-row.data-v-4978fed5 {
   margin-top: 16rpx;
+}
+.next-slot-row.data-v-4978fed5 {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  flex-wrap: wrap;
+  margin-top: 16rpx;
+}
+.next-slot-tag.data-v-4978fed5 {
+  flex-shrink: 0;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #fff8eb;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #c98a1f;
+}
+.next-slot-text.data-v-4978fed5 {
+  font-size: 24rpx;
+  color: #5f6672;
 }
 .data-tag.data-v-4978fed5 {
   padding: 10rpx 16rpx;

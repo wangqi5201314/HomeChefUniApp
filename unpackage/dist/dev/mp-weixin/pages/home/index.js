@@ -62,6 +62,8 @@ const _sfc_main = {
       loading: false,
       chefList: [],
       selectedAddress: null,
+      advancedFilterVisible: false,
+      currentRecommendMode: "default",
       form: {
         ingredientMode: 1,
         serviceDate: getTodayDate(),
@@ -172,13 +174,16 @@ const _sfc_main = {
       }
       this.loading = true;
       try {
-        const data = await api_chef.recommendChefs({
+        const data = this.currentRecommendMode === "advanced" ? await api_chef.recommendChefs({
           userId: Number(this.userId),
           addressId: Number(this.selectedAddress.id),
           ingredientMode: Number(this.form.ingredientMode),
           serviceDate: this.form.serviceDate,
           timeSlot: this.form.timeSlot,
           sortType: this.form.sortType
+        }) : await api_chef.getDefaultRecommendChefs({
+          userId: Number(this.userId),
+          addressId: Number(this.selectedAddress.id)
         });
         this.chefList = Array.isArray(data) ? data : [];
       } catch (error) {
@@ -192,12 +197,18 @@ const _sfc_main = {
         url: "/pages/address/list?mode=select"
       });
     },
+    toggleAdvancedFilter() {
+      this.advancedFilterVisible = !this.advancedFilterVisible;
+    },
+    handleAdvancedQuery() {
+      this.currentRecommendMode = "advanced";
+      this.fetchRecommendList();
+    },
     handleIngredientModeChange(value) {
       if (this.form.ingredientMode === value) {
         return;
       }
       this.form.ingredientMode = value;
-      this.fetchRecommendList();
     },
     handleDateChange(event) {
       const value = event && event.detail ? event.detail.value : "";
@@ -205,7 +216,6 @@ const _sfc_main = {
         return;
       }
       this.form.serviceDate = value;
-      this.fetchRecommendList();
     },
     handleTimeSlotChange(event) {
       const index = Number(event.detail.value);
@@ -214,7 +224,6 @@ const _sfc_main = {
         return;
       }
       this.form.timeSlot = selected.value;
-      this.fetchRecommendList();
     },
     handleSortTypeChange(event) {
       const index = Number(event.detail.value);
@@ -223,7 +232,6 @@ const _sfc_main = {
         return;
       }
       this.form.sortType = selected.value;
-      this.fetchRecommendList();
     },
     goToDetail(id) {
       if (!id) {
@@ -281,6 +289,19 @@ const _sfc_main = {
         return "距离信息暂缺";
       }
       return `距离你 ${Number(value).toFixed(2)} km`;
+    },
+    hasNearestAvailability(item) {
+      return Boolean(item && (item.nearestAvailableDate || item.nearestAvailableTimeSlotDesc || item.nearestAvailableTimeSlot));
+    },
+    formatNearestAvailability(item) {
+      if (!item) {
+        return "-";
+      }
+      const parts = [
+        item.nearestAvailableDate,
+        item.nearestAvailableTimeSlotDesc || utils_timeSlot.getTimeSlotText(item.nearestAvailableTimeSlot)
+      ].filter(Boolean);
+      return parts.length ? parts.join(" ") : "-";
     }
   }
 };
@@ -300,7 +321,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     c: common_vendor.t($options.selectedAddressText)
   } : {}, {
     d: common_vendor.o((...args) => $options.goSelectAddress && $options.goSelectAddress(...args)),
-    e: common_vendor.f($options.ingredientModeOptions, (item, k0, i0) => {
+    e: common_vendor.t($data.advancedFilterVisible ? "调整筛选项后，点击下方查询按钮再刷新结果" : "默认先展示最近 7 天可预约厨师，点此再按条件精查"),
+    f: common_vendor.t($data.advancedFilterVisible ? "收起" : "展开"),
+    g: common_vendor.o((...args) => $options.toggleAdvancedFilter && $options.toggleAdvancedFilter(...args)),
+    h: $data.advancedFilterVisible
+  }, $data.advancedFilterVisible ? {
+    i: common_vendor.f($options.ingredientModeOptions, (item, k0, i0) => {
       return {
         a: common_vendor.t(item.label),
         b: $data.form.ingredientMode === item.value ? 1 : "",
@@ -309,24 +335,28 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.handleIngredientModeChange(item.value), item.value)
       };
     }),
-    f: common_vendor.t($data.form.serviceDate || "请选择服务日期"),
-    g: $data.form.serviceDate,
-    h: common_vendor.o((...args) => $options.handleDateChange && $options.handleDateChange(...args)),
-    i: common_vendor.t($options.timeSlotText),
-    j: $options.timeSlotRange,
-    k: $options.timeSlotIndex,
-    l: common_vendor.o((...args) => $options.handleTimeSlotChange && $options.handleTimeSlotChange(...args)),
-    m: common_vendor.t($options.sortTypeText),
-    n: $options.sortTypeRange,
-    o: $options.sortTypeIndex,
-    p: common_vendor.o((...args) => $options.handleSortTypeChange && $options.handleSortTypeChange(...args)),
-    q: !$options.hasAddress
+    j: common_vendor.t($data.form.serviceDate || "请选择服务日期"),
+    k: $data.form.serviceDate,
+    l: common_vendor.o((...args) => $options.handleDateChange && $options.handleDateChange(...args)),
+    m: common_vendor.t($options.timeSlotText),
+    n: $options.timeSlotRange,
+    o: $options.timeSlotIndex,
+    p: common_vendor.o((...args) => $options.handleTimeSlotChange && $options.handleTimeSlotChange(...args)),
+    q: common_vendor.t($options.sortTypeText),
+    r: $options.sortTypeRange,
+    s: $options.sortTypeIndex,
+    t: common_vendor.o((...args) => $options.handleSortTypeChange && $options.handleSortTypeChange(...args)),
+    v: $data.loading,
+    w: $data.loading || !$options.hasAddress,
+    x: common_vendor.o((...args) => $options.handleAdvancedQuery && $options.handleAdvancedQuery(...args))
+  } : {}, {
+    y: !$options.hasAddress
   }, !$options.hasAddress ? {
-    r: common_vendor.o((...args) => $options.goSelectAddress && $options.goSelectAddress(...args))
+    z: common_vendor.o((...args) => $options.goSelectAddress && $options.goSelectAddress(...args))
   } : $data.loading && !$data.chefList.length ? {} : !$data.loading && $data.chefList.length === 0 ? {} : common_vendor.e({
-    v: $data.loading
+    C: $data.loading
   }, $data.loading ? {} : {}, {
-    w: common_vendor.f($data.chefList, (item, k0, i0) => {
+    D: common_vendor.f($data.chefList, (item, k0, i0) => {
       return common_vendor.e({
         a: item.avatar
       }, item.avatar ? {
@@ -343,14 +373,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         j: common_vendor.t($options.formatRate(item.goodReviewRate)),
         k: common_vendor.t(item.serviceModeDesc || $options.getChefServiceModeText(item.serviceMode)),
         l: common_vendor.t($options.formatRadius(item.serviceRadiusKm)),
-        m: common_vendor.t($options.formatExperience(item.yearsOfExperience)),
-        n: item.id,
-        o: common_vendor.o(($event) => $options.goToDetail(item.id), item.id)
+        m: $options.hasNearestAvailability(item)
+      }, $options.hasNearestAvailability(item) ? {
+        n: common_vendor.t($options.formatNearestAvailability(item))
+      } : {}, {
+        o: common_vendor.t($options.formatExperience(item.yearsOfExperience)),
+        p: item.id,
+        q: common_vendor.o(($event) => $options.goToDetail(item.id), item.id)
       });
     })
   }), {
-    s: $data.loading && !$data.chefList.length,
-    t: !$data.loading && $data.chefList.length === 0
+    A: $data.loading && !$data.chefList.length,
+    B: !$data.loading && $data.chefList.length === 0
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-4978fed5"]]);

@@ -63,53 +63,74 @@
     </view>
 
     <view class="filter-card">
-      <view class="filter-section">
-        <text class="filter-title">食材模式</text>
-        <view class="option-row">
-          <view
-            v-for="item in ingredientModeOptions"
-            :key="item.value"
-            class="option-chip"
-            :class="{ active: form.ingredientMode === item.value }"
-            @click="handleIngredientModeChange(item.value)"
-          >
-            <text
-              class="option-chip-text"
+      <view class="filter-head" @click="toggleAdvancedFilter">
+        <view class="filter-head-copy">
+          <text class="filter-head-title">精细查询</text>
+          <text class="filter-head-desc">
+            {{ advancedFilterVisible ? '调整筛选项后，点击下方查询按钮再刷新结果' : '默认先展示最近 7 天可预约厨师，点此再按条件精查' }}
+          </text>
+        </view>
+        <text class="filter-toggle">{{ advancedFilterVisible ? '收起' : '展开' }}</text>
+      </view>
+
+      <view v-if="advancedFilterVisible">
+        <view class="filter-section">
+          <text class="filter-title">食材模式</text>
+          <view class="option-row">
+            <view
+              v-for="item in ingredientModeOptions"
+              :key="item.value"
+              class="option-chip"
               :class="{ active: form.ingredientMode === item.value }"
+              @click="handleIngredientModeChange(item.value)"
             >
-              {{ item.label }}
-            </text>
+              <text
+                class="option-chip-text"
+                :class="{ active: form.ingredientMode === item.value }"
+              >
+                {{ item.label }}
+              </text>
+            </view>
           </view>
         </view>
-      </view>
 
-      <view class="filter-section">
-        <text class="filter-title">预约时间</text>
-        <view class="picker-stack">
-          <picker mode="date" class="picker-box" :value="form.serviceDate" @change="handleDateChange">
-            <view class="picker-value">{{ form.serviceDate || '请选择服务日期' }}</view>
-          </picker>
+        <view class="filter-section">
+          <text class="filter-title">预约时间</text>
+          <view class="picker-stack">
+            <picker mode="date" class="picker-box" :value="form.serviceDate" @change="handleDateChange">
+              <view class="picker-value">{{ form.serviceDate || '请选择服务日期' }}</view>
+            </picker>
+            <picker
+              class="picker-box"
+              :range="timeSlotRange"
+              :value="timeSlotIndex"
+              @change="handleTimeSlotChange"
+            >
+              <view class="picker-value">{{ timeSlotText }}</view>
+            </picker>
+          </view>
+        </view>
+
+        <view class="filter-section no-margin">
+          <text class="filter-title">排序方式</text>
           <picker
             class="picker-box"
-            :range="timeSlotRange"
-            :value="timeSlotIndex"
-            @change="handleTimeSlotChange"
+            :range="sortTypeRange"
+            :value="sortTypeIndex"
+            @change="handleSortTypeChange"
           >
-            <view class="picker-value">{{ timeSlotText }}</view>
+            <view class="picker-value">{{ sortTypeText }}</view>
           </picker>
         </view>
-      </view>
 
-      <view class="filter-section no-margin">
-        <text class="filter-title">排序方式</text>
-        <picker
-          class="picker-box"
-          :range="sortTypeRange"
-          :value="sortTypeIndex"
-          @change="handleSortTypeChange"
-        >
-          <view class="picker-value">{{ sortTypeText }}</view>
-        </picker>
+        <view class="filter-action-row">
+          <button class="filter-query-btn" type="primary" :loading="loading" :disabled="loading || !hasAddress" @click.stop="handleAdvancedQuery">
+            查询
+          </button>
+        </view>
+      </view>
+      <view v-else class="filter-collapsed">
+        <text class="filter-collapsed-text">当前为默认推荐：按默认地址展示最近 7 天内可预约、且在服务范围内的厨师。</text>
       </view>
     </view>
 
@@ -179,6 +200,10 @@
               <text class="data-tag">{{ item.serviceModeDesc || getChefServiceModeText(item.serviceMode) }}</text>
               <text class="data-tag">服务半径 {{ formatRadius(item.serviceRadiusKm) }}</text>
             </view>
+            <view v-if="hasNearestAvailability(item)" class="next-slot-row">
+              <text class="next-slot-tag">最近可约</text>
+              <text class="next-slot-text">{{ formatNearestAvailability(item) }}</text>
+            </view>
             <view class="card-foot">
               <text class="experience-text">从业 {{ formatExperience(item.yearsOfExperience) }}</text>
               <text class="detail-text">查看详情</text>
@@ -192,7 +217,7 @@
 
 <script>
 import { getDefaultUserAddressSilently } from '../../api/address'
-import { recommendChefs } from '../../api/chef'
+import { getDefaultRecommendChefs, recommendChefs } from '../../api/chef'
 import { getChefServiceModeText } from '../../utils/chef-service-mode'
 import { OSS_PUBLIC_BASE_URL } from '../../utils/config'
 import { SORT_OPTIONS, getSortTypeText } from '../../utils/sort-options'
@@ -261,6 +286,8 @@ export default {
       loading: false,
       chefList: [],
       selectedAddress: null,
+      advancedFilterVisible: false,
+      currentRecommendMode: 'default',
       form: {
         ingredientMode: 1,
         serviceDate: getTodayDate(),
@@ -382,14 +409,19 @@ export default {
       this.loading = true
 
       try {
-        const data = await recommendChefs({
-          userId: Number(this.userId),
-          addressId: Number(this.selectedAddress.id),
-          ingredientMode: Number(this.form.ingredientMode),
-          serviceDate: this.form.serviceDate,
-          timeSlot: this.form.timeSlot,
-          sortType: this.form.sortType
-        })
+        const data = this.currentRecommendMode === 'advanced'
+          ? await recommendChefs({
+            userId: Number(this.userId),
+            addressId: Number(this.selectedAddress.id),
+            ingredientMode: Number(this.form.ingredientMode),
+            serviceDate: this.form.serviceDate,
+            timeSlot: this.form.timeSlot,
+            sortType: this.form.sortType
+          })
+          : await getDefaultRecommendChefs({
+            userId: Number(this.userId),
+            addressId: Number(this.selectedAddress.id)
+          })
         this.chefList = Array.isArray(data) ? data : []
       } catch (error) {
         this.chefList = []
@@ -405,13 +437,19 @@ export default {
         url: '/pages/address/list?mode=select'
       })
     },
+    toggleAdvancedFilter() {
+      this.advancedFilterVisible = !this.advancedFilterVisible
+    },
+    handleAdvancedQuery() {
+      this.currentRecommendMode = 'advanced'
+      this.fetchRecommendList()
+    },
     handleIngredientModeChange(value) {
       if (this.form.ingredientMode === value) {
         return
       }
 
       this.form.ingredientMode = value
-      this.fetchRecommendList()
     },
     handleDateChange(event) {
       const value = event && event.detail ? event.detail.value : ''
@@ -420,7 +458,6 @@ export default {
       }
 
       this.form.serviceDate = value
-      this.fetchRecommendList()
     },
     handleTimeSlotChange(event) {
       const index = Number(event.detail.value)
@@ -431,7 +468,6 @@ export default {
       }
 
       this.form.timeSlot = selected.value
-      this.fetchRecommendList()
     },
     handleSortTypeChange(event) {
       const index = Number(event.detail.value)
@@ -442,7 +478,6 @@ export default {
       }
 
       this.form.sortType = selected.value
-      this.fetchRecommendList()
     },
     goToDetail(id) {
       if (!id) {
@@ -507,6 +542,21 @@ export default {
       }
 
       return `距离你 ${Number(value).toFixed(2)} km`
+    },
+    hasNearestAvailability(item) {
+      return Boolean(item && (item.nearestAvailableDate || item.nearestAvailableTimeSlotDesc || item.nearestAvailableTimeSlot))
+    },
+    formatNearestAvailability(item) {
+      if (!item) {
+        return '-'
+      }
+
+      const parts = [
+        item.nearestAvailableDate,
+        item.nearestAvailableTimeSlotDesc || getTimeSlotText(item.nearestAvailableTimeSlot)
+      ].filter(Boolean)
+
+      return parts.length ? parts.join(' ') : '-'
     }
   }
 }
@@ -715,6 +765,58 @@ export default {
   padding: 24rpx;
 }
 
+.filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.filter-head-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-head-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.filter-head-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #8a8f99;
+}
+
+.filter-toggle {
+  flex-shrink: 0;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: #fff1e8;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #c76335;
+}
+
+.filter-collapsed {
+  margin-top: 20rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 22rpx;
+  background: #fff8f3;
+  box-shadow: inset 0 0 0 2rpx #f7e4d9;
+}
+
+.filter-collapsed-text {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #8a8f99;
+}
+
 .card-link {
   font-size: 26rpx;
   color: #d96c3a;
@@ -742,6 +844,25 @@ export default {
 
 .filter-section.no-margin {
   margin-bottom: 0;
+}
+
+.filter-action-row {
+  margin-top: 24rpx;
+}
+
+.filter-query-btn {
+  width: 100%;
+  height: 84rpx;
+  line-height: 84rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #d96c3a;
+  font-size: 28rpx;
+  color: #ffffff;
+}
+
+.filter-query-btn::after {
+  border: none;
 }
 
 .filter-title {
@@ -1004,6 +1125,29 @@ export default {
 
 .tag-row {
   margin-top: 16rpx;
+}
+
+.next-slot-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  flex-wrap: wrap;
+  margin-top: 16rpx;
+}
+
+.next-slot-tag {
+  flex-shrink: 0;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #fff8eb;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #c98a1f;
+}
+
+.next-slot-text {
+  font-size: 24rpx;
+  color: #5f6672;
 }
 
 .data-tag {

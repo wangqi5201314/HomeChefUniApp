@@ -8,6 +8,10 @@ export function recommendChefs(data) {
   return request.post('/api/chef/recommend', data)
 }
 
+export function getDefaultRecommendChefs(params) {
+  return request.get('/api/chef/recommend/default', params)
+}
+
 export function getChefDetail(id) {
   return request.get(`/api/chef/${id}`)
 }
@@ -19,6 +23,7 @@ export function getChefSchedule(chefId, params) {
 export default {
   getChefList,
   recommendChefs,
+  getDefaultRecommendChefs,
   getChefDetail,
   getChefSchedule
 }
