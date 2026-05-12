@@ -13,7 +13,8 @@ const DIRECT_MESSAGE_MAP = {
   'address not found': '未找到服务地址',
   'default address not found': '未找到默认服务地址',
   'chef not found': '未找到厨师',
-  'order not found': '未找到订单'
+  'order not found': '未找到订单',
+  'review not found': '未找到评价'
 }
 
 function replaceInsensitive(text, pattern, replacement) {
@@ -46,6 +47,7 @@ export function normalizeToastMessage(message) {
   text = replaceInsensitive(text, /default address not found/gi, '未找到默认服务地址')
   text = replaceInsensitive(text, /chef not found/gi, '未找到厨师')
   text = replaceInsensitive(text, /order not found/gi, '未找到订单')
+  text = replaceInsensitive(text, /review not found/gi, '未找到评价')
   text = replaceInsensitive(text, /success/gi, '成功')
   text = replaceInsensitive(text, /failed/gi, '失败')
   text = replaceInsensitive(text, /failure/gi, '失败')
