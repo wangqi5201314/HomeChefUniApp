@@ -14,37 +14,94 @@
     </view>
 
     <view class="form-card">
-      <view class="form-item">
-        <text class="label">手机号</text>
-        <input
-          v-model="form.phone"
-          class="input"
-          type="number"
-          maxlength="11"
-          placeholder="请输入手机号"
-          :disabled="loading || wechatLoading"
-        />
+      <view class="login-tabs">
+        <button
+          class="tab-btn"
+          :class="{ active: loginMode === 'phone' }"
+          :disabled="loading || wechatLoading || emailLoading || codeLoading"
+          @click="switchLoginMode('phone')"
+        >
+          手机号登录
+        </button>
+        <button
+          class="tab-btn"
+          :class="{ active: loginMode === 'email' }"
+          :disabled="loading || wechatLoading || emailLoading || codeLoading"
+          @click="switchLoginMode('email')"
+        >
+          邮箱登录
+        </button>
       </view>
 
-      <view class="form-item">
-        <text class="label">密码</text>
-        <input
-          v-model="form.password"
-          class="input"
-          password
-          placeholder="请输入密码"
-          :disabled="loading || wechatLoading"
-        />
-      </view>
+      <template v-if="loginMode === 'phone'">
+        <view class="form-item">
+          <text class="label">手机号</text>
+          <input
+            v-model="form.phone"
+            class="input"
+            type="number"
+            maxlength="11"
+            placeholder="请输入手机号"
+            :disabled="loading || wechatLoading"
+          />
+        </view>
+
+        <view class="form-item">
+          <text class="label">密码</text>
+          <input
+            v-model="form.password"
+            class="input"
+            password
+            placeholder="请输入密码"
+            :disabled="loading || wechatLoading"
+          />
+        </view>
+      </template>
+
+      <template v-else>
+        <view class="form-item">
+          <text class="label">邮箱</text>
+          <input
+            v-model="emailForm.email"
+            class="input"
+            type="text"
+            maxlength="128"
+            placeholder="请输入邮箱"
+            :disabled="emailLoading || codeLoading"
+          />
+        </view>
+
+        <view class="form-item">
+          <text class="label">验证码</text>
+          <view class="code-row">
+            <input
+              v-model="emailForm.code"
+              class="input code-input"
+              type="number"
+              maxlength="6"
+              placeholder="请输入验证码"
+              :disabled="emailLoading"
+            />
+            <button
+              class="code-btn"
+              :loading="codeLoading"
+              :disabled="emailLoading || codeLoading || codeCountdown > 0"
+              @click="handleSendEmailCode"
+            >
+              {{ codeCountdown > 0 ? `${codeCountdown}s` : '获取验证码' }}
+            </button>
+          </view>
+        </view>
+      </template>
 
       <button
         class="login-btn"
         type="primary"
-        :loading="loading"
-        :disabled="loading || wechatLoading"
-        @click="handleLogin"
+        :loading="currentLoginLoading"
+        :disabled="loading || wechatLoading || emailLoading || codeLoading"
+        @click="handlePrimaryLogin"
       >
-        {{ loading ? '登录中...' : '登录' }}
+        {{ currentLoginLoading ? '登录中...' : '登录' }}
       </button>
 
       <button
@@ -65,7 +122,7 @@
 </template>
 
 <script>
-import { getUserInfo, login, wechatLogin } from '../../api/user'
+import { emailLogin, getUserInfo, login, sendEmailCode, wechatLogin } from '../../api/user'
 import { clearAuth, setAdminId, setToken, setUserId, setUserInfo, setUserType } from '../../utils/auth'
 
 export default {
@@ -74,11 +131,31 @@ export default {
     return {
       loading: false,
       wechatLoading: false,
+      emailLoading: false,
+      codeLoading: false,
+      codeCountdown: 0,
+      codeTimer: null,
+      loginMode: 'phone',
       form: {
         phone: '',
         password: ''
+      },
+      emailForm: {
+        email: '',
+        code: ''
       }
     }
+  },
+  computed: {
+    currentLoginLoading() {
+      return this.loginMode === 'email' ? this.emailLoading : this.loading
+    }
+  },
+  beforeDestroy() {
+    this.clearCodeTimer()
+  },
+  onUnload() {
+    this.clearCodeTimer()
   },
   methods: {
     async handleLoginSuccess(loginData) {
@@ -119,6 +196,19 @@ export default {
 
       return true
     },
+    switchLoginMode(mode) {
+      if (this.loading || this.wechatLoading || this.emailLoading || this.codeLoading) {
+        return
+      }
+      this.loginMode = mode
+    },
+    handlePrimaryLogin() {
+      if (this.loginMode === 'email') {
+        this.handleEmailLogin()
+        return
+      }
+      this.handleLogin()
+    },
     async handleLogin() {
       if (this.loading || !this.validateForm()) {
         return
@@ -137,6 +227,88 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    validateEmail() {
+      const email = this.emailForm.email.trim()
+
+      if (!email) {
+        uni.showToast({ title: '请输入邮箱', icon: 'none' })
+        return false
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        uni.showToast({ title: '请输入正确的邮箱', icon: 'none' })
+        return false
+      }
+
+      return true
+    },
+    validateEmailLoginForm() {
+      if (!this.validateEmail()) {
+        return false
+      }
+
+      const code = this.emailForm.code.trim()
+      if (!/^\d{6}$/.test(code)) {
+        uni.showToast({ title: '请输入6位验证码', icon: 'none' })
+        return false
+      }
+
+      return true
+    },
+    async handleSendEmailCode() {
+      if (this.codeLoading || this.codeCountdown > 0 || !this.validateEmail()) {
+        return
+      }
+
+      this.codeLoading = true
+
+      try {
+        await sendEmailCode({
+          email: this.emailForm.email.trim()
+        })
+        uni.showToast({ title: '验证码已发送', icon: 'none' })
+        this.startCodeCountdown()
+      } finally {
+        this.codeLoading = false
+      }
+    },
+    async handleEmailLogin() {
+      if (this.emailLoading || !this.validateEmailLoginForm()) {
+        return
+      }
+
+      this.emailLoading = true
+
+      try {
+        const loginData = await emailLogin({
+          email: this.emailForm.email.trim(),
+          code: this.emailForm.code.trim()
+        })
+        await this.handleLoginSuccess(loginData)
+      } catch (error) {
+        clearAuth()
+      } finally {
+        this.emailLoading = false
+      }
+    },
+    startCodeCountdown() {
+      this.clearCodeTimer()
+      this.codeCountdown = 60
+      this.codeTimer = setInterval(() => {
+        if (this.codeCountdown <= 1) {
+          this.clearCodeTimer()
+          return
+        }
+        this.codeCountdown -= 1
+      }, 1000)
+    },
+    clearCodeTimer() {
+      if (this.codeTimer) {
+        clearInterval(this.codeTimer)
+        this.codeTimer = null
+      }
+      this.codeCountdown = 0
     },
     handleWechatLogin() {
       if (this.loading || this.wechatLoading) {
@@ -261,6 +433,37 @@ export default {
   color: #8a8f99;
 }
 
+.login-tabs {
+  display: flex;
+  gap: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 32rpx;
+  border-radius: 18rpx;
+  background: #f6f7fb;
+}
+
+.tab-btn {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  border: none;
+  border-radius: 14rpx;
+  background: transparent;
+  color: #69707d;
+  font-size: 28rpx;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: #d96c3a;
+  font-weight: 600;
+  box-shadow: 0 8rpx 24rpx rgba(217, 108, 58, 0.12);
+}
+
+.tab-btn::after {
+  border: none;
+}
+
 .form-item {
   margin-bottom: 32rpx;
 }
@@ -274,12 +477,36 @@ export default {
 
 .input {
   height: 88rpx;
+  width: 100%;
   padding: 0 24rpx;
   border: 2rpx solid #eceef2;
   border-radius: 16rpx;
   background-color: #fafbfc;
   font-size: 30rpx;
   color: #222222;
+  box-sizing: border-box;
+}
+
+.code-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.code-input {
+  flex: 1;
+}
+
+.code-btn {
+  width: 196rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  margin: 0;
+  border: 2rpx solid #f0c5af;
+  border-radius: 16rpx;
+  background: #fff7f0;
+  color: #d96c3a;
+  font-size: 26rpx;
   box-sizing: border-box;
 }
 
@@ -307,7 +534,8 @@ export default {
 }
 
 .login-btn::after,
-.wechat-btn::after {
+.wechat-btn::after,
+.code-btn::after {
   border: none;
 }
 

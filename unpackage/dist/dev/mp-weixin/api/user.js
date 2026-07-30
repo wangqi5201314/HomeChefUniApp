@@ -6,6 +6,12 @@ function login(data) {
 function wechatLogin(data) {
   return api_request.request.post("/api/user/login/wechat", data);
 }
+function sendEmailCode(data) {
+  return api_request.request.post("/api/user/email-code", data);
+}
+function emailLogin(data) {
+  return api_request.request.post("/api/user/login/email", data);
+}
 function register(data) {
   return api_request.request.post("/api/user/register", data);
 }
@@ -21,10 +27,12 @@ function changePassword(data) {
 const getCurrentUserInfo = getUserInfo;
 const updateCurrentUserInfo = updateUserInfo;
 exports.changePassword = changePassword;
+exports.emailLogin = emailLogin;
 exports.getCurrentUserInfo = getCurrentUserInfo;
 exports.getUserInfo = getUserInfo;
 exports.login = login;
 exports.register = register;
+exports.sendEmailCode = sendEmailCode;
 exports.updateCurrentUserInfo = updateCurrentUserInfo;
 exports.wechatLogin = wechatLogin;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/api/user.js.map

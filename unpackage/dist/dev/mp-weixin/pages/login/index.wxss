@@ -61,6 +61,33 @@
   font-size: 28rpx;
   color: #8a8f99;
 }
+.login-tabs.data-v-d08ef7d4 {
+  display: flex;
+  gap: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 32rpx;
+  border-radius: 18rpx;
+  background: #f6f7fb;
+}
+.tab-btn.data-v-d08ef7d4 {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  border: none;
+  border-radius: 14rpx;
+  background: transparent;
+  color: #69707d;
+  font-size: 28rpx;
+}
+.tab-btn.active.data-v-d08ef7d4 {
+  background: #ffffff;
+  color: #d96c3a;
+  font-weight: 600;
+  box-shadow: 0 8rpx 24rpx rgba(217, 108, 58, 0.12);
+}
+.tab-btn.data-v-d08ef7d4::after {
+  border: none;
+}
 .form-item.data-v-d08ef7d4 {
   margin-bottom: 32rpx;
 }
@@ -72,12 +99,33 @@
 }
 .input.data-v-d08ef7d4 {
   height: 88rpx;
+  width: 100%;
   padding: 0 24rpx;
   border: 2rpx solid #eceef2;
   border-radius: 16rpx;
   background-color: #fafbfc;
   font-size: 30rpx;
   color: #222222;
+  box-sizing: border-box;
+}
+.code-row.data-v-d08ef7d4 {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.code-input.data-v-d08ef7d4 {
+  flex: 1;
+}
+.code-btn.data-v-d08ef7d4 {
+  width: 196rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  margin: 0;
+  border: 2rpx solid #f0c5af;
+  border-radius: 16rpx;
+  background: #fff7f0;
+  color: #d96c3a;
+  font-size: 26rpx;
   box-sizing: border-box;
 }
 .login-btn.data-v-d08ef7d4 {
@@ -102,7 +150,8 @@
   color: #2f8f55;
 }
 .login-btn.data-v-d08ef7d4::after,
-.wechat-btn.data-v-d08ef7d4::after {
+.wechat-btn.data-v-d08ef7d4::after,
+.code-btn.data-v-d08ef7d4::after {
   border: none;
 }
 .footer.data-v-d08ef7d4 {
